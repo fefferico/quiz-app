@@ -1,0 +1,264 @@
+<!-- src/app/pages/statistics/statistics.component.html -->
+<div class="max-w-5xl mx-auto p-4 sm:p-6">
+  <header class="mb-8 text-center">
+    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Le tue Statistiche</h1>
+    <p class="text-gray-600 mt-1">Tieni traccia dei tuoi progressi.</p>
+
+    <!-- Esporta Button -->
+    <div *ngIf="!isLoading && !errorLoading && quizAttempts.length > 0" class="flex-shrink-0">
+      <button (click)="exportStatisticsToPDF()" title="Esporta statistiche in PDF" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md text-sm
+                     flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
+            clip-rule="evenodd" />
+        </svg>
+        Esporta in PDF
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="isLoading" class="text-center py-10">
+    <p class="text-xl text-indigo-600">Caricamento statistiche in corso...</p>
+  </div>
+
+  <div *ngIf="errorLoading && !isLoading" class="text-center py-10 bg-red-50 p-6 rounded-lg shadow">
+    <p class="text-2xl text-red-700 font-semibold">Errore!</p>
+    <p class="text-gray-700 mt-2">{{ errorLoading }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorLoading">
+    <div *ngIf="quizAttempts.length > 0; else noStats">
+      <!-- Overall Statistics Cards -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Risultati complessivi</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div class="bg-white p-5 rounded-lg shadow-lg border border-gray-200 text-center">
+            <h3 class="text-lg font-medium text-gray-500">Quiz svolti</h3>
+            <p class="text-4xl font-bold text-indigo-600 mt-1">{{ totalQuizzesTaken }}</p>
+          </div>
+          <div class="bg-white p-5 rounded-lg shadow-lg border border-gray-200 text-center">
+            <h3 class="text-lg font-medium text-gray-500">Domande provate</h3>
+            <p class="text-4xl font-bold text-indigo-600 mt-1">{{ totalQuestionsAttempted }}</p>
+          </div>
+          <div class="bg-white p-5 rounded-lg shadow-lg border border-gray-200 text-center">
+            <h3 class="text-lg font-medium text-gray-500">Precisione complessiva</h3>
+            <p class="text-4xl font-bold text-green-600 mt-1">{{ overallAccuracy | percent:'1.0-1' }}</p>
+          </div>
+          <div class="bg-white p-5 rounded-lg shadow-lg border border-gray-200 text-center">
+            <h3 class="text-lg font-medium text-gray-500">Punteggio medio</h3>
+            <p class="text-4xl font-bold text-blue-600 mt-1">{{ averageScorePercentage | percent:'1.0-1' }}</p>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Daily Performance Trend Chart -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Andamento giornaliero (Ultimi {{dailyPerformance.length}}
+          giorni)</h2>
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200">
+          <div *ngIf="dailyPerformance.length > 0; else noDailyData" class="h-96 sm:h-[450px]">
+            <canvas #dailyPerformanceChart></canvas>
+          </div>
+          <ng-template #noDailyData>
+            <p class="text-gray-500 text-center py-8">Non ci sono abbastanza informazioni, fai ancora qualche quiz per
+              vedere i grafici!</p>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- Today Performance -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Risultato odierno</h2>
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200">
+          <div *ngIf="dailyPerformance.length > 0; else noTodayData" class="h-96 sm:h-[450px]">
+            <canvas #todayPerfomanceChart></canvas>
+          </div>
+          <ng-template #noTodayData>
+            <p class="text-gray-500 text-center py-8">Non ci sono abbastanza informazioni per la giornata odierna, fai
+              ancora qualche quiz per vedere i grafici!</p>
+          </ng-template>
+        </div>
+      </section>
+      <div class="text-center"
+        *ngIf="dailyPerformanceDetailed.length > 0 && dailyPerformanceDetailed[0] && dailyPerformanceDetailed[0].wrongAnswersIds;">
+        <button (click)="startPracticeQuizForTodayWrong()"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 my-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150 ml-4">
+          Esercitati su queste domande sbagliate ({{ dailyPerformanceDetailed[0].wrongAnswersIds.length }})
+        </button>
+      </div>
+
+
+      <!-- Topic Performance Chart -->
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Risultati per argomento</h2>
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200">
+          <div *ngIf="topicPerformance.length > 0; else noTopicData" class="h-80 sm:h-96">
+            <canvas #topicPerformanceChart></canvas>
+          </div>
+          <ng-template #noTopicData>
+            <p class="text-gray-500 text-center py-8">Non ci sono abbastanza informazioni per mostrare grafici per
+              argomento.</p>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- Wrong Answer Breakdown by Topic -->
+      <section class="mb-10" *ngIf="wrongAnswerBreakdown.length > 0">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Focus Area: risposte sbagliate per argomento</h2>
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Argomento</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Risposte sbagliate</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Peso su totale sbagliate</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rateo di fallimento per argomento</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Azioni</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let wa of wrongAnswerBreakdown">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ wa.topic }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ wa.wrongAnswers }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ wa.percentageOfGlobalWrong |
+                  percent:'1.0-1' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold"
+                  [ngClass]="{'text-red-600': wa.topicSpecificFailureRate >= 0.7, 'text-yellow-600': wa.topicSpecificFailureRate < 0.7 && wa.topicSpecificFailureRate >= 0.4, 'text-green-600': wa.topicSpecificFailureRate < 0.4}">
+                  {{ wa.topicSpecificFailureRate | percent:'1.0-1' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <button (click)="startPracticeQuizForTopic(wa.topic)"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150 ml-4">
+                    Esercitati su questo argomento
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Topic Performance Table (Optional, complements the chart) -->
+      <section class="mb-10" *ngIf="topicPerformance.length > 0">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dettaglio argomento</h2>
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Argomento</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Corrette</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tentate</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Precisione</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let tp of topicPerformance">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ tp.topic }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ tp.correct }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ tp.total }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold"
+                  [ngClass]="{'text-green-600': tp.accuracy >= 0.7, 'text-yellow-600': tp.accuracy < 0.7 && tp.accuracy >= 0.4, 'text-red-600': tp.accuracy < 0.4}">
+                  {{ tp.accuracy | percent:'1.0-1' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dettaglio domande affrontate</h2>
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tipologia</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Totali</th>
+                <th scope="col"
+                  class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Azioni</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let tp of tipologiaDomande, index as i">
+                <td class="px-6 py-1 whitespace-nowrap text-sm font-medium text-gray-900">{{ tp.topic }}</td>
+                <td class="px-6 py-1 whitespace-nowrap text-sm font-semibold">
+                  {{ tp.total }}
+                </td>
+                <td class="px-6 py-1 whitespace-nowrap text-sm font-semibold text-center">
+                  <button (click)="startPracticeQuizForGeneralData(i)"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 my-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150 ml-4 text-center">
+                    Esercitati su queste domande
+                  </button>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- The Lightweight Modal -->
+        <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="'Configurazione quiz'"
+          (close)="closeQuizSetupModal()">
+          <!-- Content Projection: Project the feedback form content component here -->
+          <app-setup-modal *ngIf="isQuizSetupModalOpen"
+            [topics]="topics"
+            [modalTitle]="quizSetupModalTitle"
+            (submitFeedback)="handleQuizSetupSubmitted($event)"
+            (cancelFeedback)="closeQuizSetupModal()">
+          </app-setup-modal>
+        </app-simple-modal>
+      </section>
+
+      <!-- Reset Statistics Button -->
+      <section class="mt-10 pt-6 border-t border-gray-300 text-center">
+        <button (click)="resetStatistics()"
+          class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+          Resetta tutte le statistiche
+        </button>
+      </section>
+
+    </div>
+
+    <ng-template #noStats>
+      <div class="text-center py-12 bg-gray-50 rounded-lg shadow">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor" stroke-width="1">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <h2 class="mt-4 text-xl font-semibold text-gray-700">Nessuna statistica disponibile</h2>
+        <p class="mt-1 text-gray-500">Completa qualche quiz per vedere le tue statistiche</p>
+        <div class="mt-6">
+          <a routerLink="/quiz/setup"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm">
+            Fai un Quiz
+          </a>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="mt-8 text-center" *ngIf="!isLoading && !errorLoading">
+    <a routerLink="/study-focus"
+      class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150">
+      Aree da approfondire</a>
+    <a routerLink="/home"
+      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150 ml-4">
+      Torna alla pagina principale
+    </a>
+  </div>
+</div>

@@ -1,0 +1,219 @@
+<!-- src/app/pages/quiz-setup/quiz-setup.component.html -->
+<div class="max-w-2xl mx-auto p-6 sm:p-8 bg-white shadow-xl rounded-lg">
+  <header class="mb-8 text-center">
+    <h2 class="text-3xl font-bold text-indigo-700">Configura il quiz</h2>
+    <p class="text-gray-600 mt-1">Inizia la sfida o scegli gli argomenti che preferisci</p>
+  </header>
+
+  <form (ngSubmit)="startQuiz()" #quizSetupForm="ngForm">
+
+    <!-- Modalità Studio Toggle -->
+    <div class="mb-6 p-4 bg-indigo-50 rounded-lg shadow">
+      <label class="flex items-center justify-between cursor-pointer">
+        <span class="text-lg font-medium text-indigo-700">
+          Modalità Studio <span class="text-sm font-normal text-gray-600">(Visualizza tutte le domande con le relative
+            risposte corrette)</span>
+        </span>
+        <div class="relative">
+          <input type="checkbox" id="studyModeToggle" class="sr-only" [(ngModel)]="isStudyMode"
+            name="isStudyModeToggle">
+          <div class="block bg-gray-200 w-14 h-8 rounded-full"></div>
+          <div
+            class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
+            [ngClass]="{'translate-x-6 !bg-indigo-600': isStudyMode}"></div>
+        </div>
+      </label>
+      <p *ngIf="isStudyMode" class="text-xs text-indigo-600 mt-1">
+        Timer e punteggio disabilitati. Il numero di domande potrebbe essere ignorato per mostrare tutti i criteri
+        corrispondenti.<br><strong>Se si desidera studiare un numero specifico di domande, tohliere la spunta dalla casella "Tutti gli argomenti"</strong>
+      </p>
+    </div>
+
+    <!-- Numero di domande (Global or Sum) -->
+    <div class="mb-6" [ngClass]="{'opacity-60 pointer-events-none': isStudyMode && selectAllTopics}">
+      <label for="numQuestions" class="block text-lg font-medium text-gray-700 mb-2">
+        Numero di domande
+        <span *ngIf="isStudyMode && selectAllTopics" class="text-sm text-gray-500">(Filtri Modalità
+          Studio)</span>:
+      </label>
+      <select id="numQuestions" name="numQuestionsGlobal" [(ngModel)]="selectedNumQuestions"
+        [disabled]="(useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode) || (isStudyMode && selectAllTopics)"
+        (ngModelChange)="calculateTotalQuestionsFromTopicCounts()"
+        class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <option *ngFor="let num of numQuestionsOptions" [value]="num">{{ num }} Domande</option>
+      </select>
+      <p *ngIf="useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode" class="text-xs text-gray-500 mt-1">
+        Il Totale è la somma per argomenti.
+      </p>
+    </div>
+
+    <!-- Topic Selection Mode -->
+    <div class="mb-6">
+      <div class="flex items-center">
+        <input id="selectAllTopics" name="selectAllTopics" type="checkbox" [(ngModel)]="selectAllTopics"
+          (ngModelChange)="onSelectAllTopicsChange()"
+          class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+        <label for="selectAllTopics" class="ml-3 block text-sm font-medium text-gray-700">
+          Tutti gli argomenti
+          <span *ngIf="!isStudyMode" class="text-xs text-gray-500">(modalità semplificata)</span>
+          <span *ngIf="isStudyMode" class="text-xs text-gray-500">(studia tutte le domande)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Detailed Topic Selection (if not selectAllTopics and NOT study mode) -->
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && !isStudyMode" class="mb-8 border-t pt-6">
+      <h3 class="text-lg font-medium text-gray-700 mb-3">Seleziona gli argomenti e il numero di domande per argomento
+        (Modalità personalizzata):
+      </h3>
+      <!-- Checkboxes for selecting topics -->
+      <div class="space-y-2 mb-4">
+        <div *ngFor="let topic of availableTopics" class="flex items-center">
+          <input id="topic-cb-{{topic}}" name="topic-cb-{{topic}}" type="checkbox"
+            [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
+            class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="topic-cb-{{topic}}" class="ml-3 block text-sm font-medium text-gray-900">
+            {{ topic }}
+          </label>
+        </div>
+      </div>
+      <!-- Inputs for counts of selected topics -->
+      <div *ngIf="topicCounts.length > 0" class="space-y-3 border-t pt-4 mt-4">
+        <h4 class="text-md font-medium text-gray-600 mb-2">Imposta il numero di domande per argomento:</h4>
+        <div *ngFor="let topicCountItem of topicCounts; let i = index" class="p-3 border rounded-md bg-gray-50">
+          <div class="flex items-center justify-between">
+            <label for="count-{{topicCountItem.topic}}" class="block text-sm font-medium text-gray-900">
+              {{ topicCountItem.topic }}:
+            </label>
+            <div class="w-28">
+              <input type="number" min="1" id="count-{{topicCountItem.topic}}"
+                name="count-{{topicCountItem.topic}}-{{i}}" [(ngModel)]="topicCountItem.count"
+                (ngModelChange)="calculateTotalQuestionsFromTopicCounts()"
+                class="block w-full p-1.5 text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+          </div>
+        </div>
+      </div>
+      <p *ngIf="topicCounts.length > 0" class="text-sm text-gray-600 mt-3">
+        Totale domande impostate: <strong class="text-indigo-700">{{ selectedNumQuestions }}</strong>
+      </p>
+    </div>
+
+    <!-- Simple Topic Selection (if not selectAllTopics AND study mode) -->
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && isStudyMode" class="mb-8 border-t pt-6">
+      <h3 class="text-lg font-medium text-gray-700 mb-3">Seleziona l'argomento da studiare:</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+        <div *ngFor="let topic of availableTopics" class="flex items-center">
+          <input id="study-topic-cb-{{topic}}" name="study-topic-cb-{{topic}}" type="checkbox"
+            [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
+            class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+          <label for="study-topic-cb-{{topic}}" class="ml-2 block text-sm text-gray-900">
+            {{ topic }}
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyword Filter -->
+    <div class="mb-8">
+      <label for="keywords" class="block text-lg font-medium text-gray-700 mb-2">
+        Filtra per parola chiave (facoltativo):
+      </label>
+      <input type="text" id="keywords" name="keywords" [(ngModel)]="keywordsInput"
+        placeholder="esempio, capitale, fiume, WW2"
+        class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      <p class="text-xs text-gray-500 mt-1">Separa parole chiave multiple con spazi o virgole.</p>
+    </div>
+
+    <!-- Timer Settings (Only for Quiz Mode) -->
+    <div *ngIf="!isStudyMode" class="mb-8 border-t pt-6 mt-6">
+      <h3 class="text-lg font-medium text-gray-700 mb-3">Timer (facoltativo)</h3>
+      <div class="flex items-center mb-4">
+        <input id="enableTimer" name="enableTimer" type="checkbox" [(ngModel)]="enableTimerInput"
+          class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+        <label for="enableTimer" class="ml-3 block text-sm font-medium text-gray-700">
+          Abilita il Timer
+        </label>
+      </div>
+
+      <div *ngIf="enableTimerInput" class="grid grid-cols-3 gap-4 items-end">
+        <div>
+          <label for="timerHours" class="block text-xs font-medium text-gray-700">Ore</label>
+          <input type="number" id="timerHours" name="timerHours" min="0" max="23" [(ngModel)]="timerHoursInput"
+            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="timerMinutes" class="block text-xs font-medium text-gray-700">Minuti</label>
+          <input type="number" id="timerMinutes" name="timerMinutes" min="0" max="59" [(ngModel)]="timerMinutesInput"
+            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div>
+          <label for="timerSeconds" class="block text-xs font-medium text-gray-700">Secondi</label>
+          <input type="number" id="timerSeconds" name="timerSeconds" min="0" max="59" [(ngModel)]="timerSecondsInput"
+            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+      </div>
+      <p *ngIf="enableTimerInput && (timerHoursInput * 3600 + timerMinutesInput * 60 + timerSecondsInput <= 0)"
+        class="text-xs text-red-500 mt-1">
+        Si prega di impostare un timer maggiore di 0 secondi.
+      </p>
+    </div>
+
+
+    <!-- Action Buttons: Start Quiz/Study & Esporta Options -->
+    <div class="mt-10 pt-6 border-t border-gray-200">
+      <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+        <button type="submit" [disabled]="!canStartQuiz() || isExportingPDF" class="w-full sm:w-auto inline-flex order-1 sm:order-none justify-center items-center px-8 py-3 border
+          border-transparent text-base font-medium rounded-md shadow-sm text-white
+          bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+          disabled:bg-gray-300 disabled:cursor-not-allowed">
+          <svg *ngIf="isExportingPDF" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          <span *ngIf="isExportingPDF">Esecuzione in corso...</span>
+          <span *ngIf="!isExportingPDF">{{ isStudyMode ? 'Inizia a studiare' : 'Inizia il Quiz' }}</span>
+        </button>
+
+        <!-- Esporta Options Dropdown -->
+        <div class="relative inline-block text-left order-2 sm:order-none" *ngIf="!isStudyMode">
+          <div class="group">
+            <button type="button" [disabled]="!canStartQuiz() || isExportingPDF"
+              class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+              Esporta domande
+              <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <!-- Dropdown menu -->
+            <div
+              class="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out
+                        origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+              <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                <a (click)="exportQuestionsToPDF(false); $event.preventDefault()" href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  role="menuitem">Esporta (senza risposte)</a>
+                <a (click)="exportQuestionsToPDF(true); $event.preventDefault()" href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  role="menuitem">Esporta (con risposte)</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="mt-6 text-center">
+    <a routerLink="/home"
+      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150 ml-4">
+      Torna alla pagina principale
+    </a>
+  </div>
+</div>

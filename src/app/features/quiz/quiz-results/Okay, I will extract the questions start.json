@@ -1,0 +1,7800 @@
+Okay, I will extract the questions starting from page 3 of the provided OCR output and format them according to your TypeScript interface.
+
+Here's the plan:
+1.  I'll go through the OCR page by page, starting from "==Start of OCR for page 3==".
+2.  I'll identify the topic for each section (e.g., "CULTURA GENERALE", "ITALIANO - Grammatica", etc.).
+3.  For each question, I'll extract the ID (number), text, and options.
+4.  I'll format this information into the `Question` TypeScript interface structure you provided.
+5.  The `correctAnswerIndex` will default to `0`.
+6.  `explanation` will be an empty string.
+7.  `difficulty` will be 'Medium'.
+8.  `timesCorrect`, `timesIncorrect`, and `isFavorite` will be `0`.
+9.  The final output will be a single `.txt` file containing all the formatted questions.
+
+This will be a lengthy process, but I will proceed systematically.
+
+```text
+Question {
+    id: "1",
+    text: "Il simbolo chimico del Potassio?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "K",
+        "Po",
+        "Pb",
+        "Se",
+        "St"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "2",
+    text: "Quante sono le vertebre lombari nell'uomo ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "5",
+        "4",
+        "6",
+        "3",
+        "2"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "3",
+    text: "Il tricheco è possibile trovarlo:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "in ambiente polare",
+        "nella savana",
+        "nella foresta tropicale",
+        "nella prateria",
+        "nella tundra"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "4",
+    text: "Indicare tra questi animali quale non è un carnivoro?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Cervo",
+        "Corvo",
+        "Faina",
+        "Ghepardo",
+        "Iena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "5",
+    text: "Una stalagmite è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un deposito calcareo a forma di cono che si innalza dal pavimento",
+        "Una sorgente sotterranea termale",
+        "Un deposito silicico a forma di cono con punta verso l'alto",
+        "Un deposito calcareo a forma di cono con punta verso il basso",
+        "Un deposito di zolfo che a forma di cono con punta verso il basso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "6",
+    text: "Il termine OGM indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un organismo che possiede un patrimonio genetico modificato tramite tecniche di ingegneria genetica",
+        "un organismo il cui patrimonio genetico è il risultato di selezioni operate dall'uomo",
+        "il patrimonio genetico di un individuo",
+        "un individuo nato da genitori appartenenti a razze o specie diverse",
+        "un cromosoma contenuto in alcune specie di animali"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "7",
+    text: "Indicare tra i seguenti cosa non fa parte dello scheletro umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lingua",
+        "Rotula",
+        "Carpo",
+        "Scapola",
+        "Perone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "8",
+    text: "Il pianeta più vicino al Sole è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Mercurio",
+        "Marte",
+        "Giove",
+        "Luna",
+        "Saturno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "9",
+    text: "Lo scheletro svolge la funzione di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sostenere il corpo, proteggere alcuni organi interni e consentire il movimento",
+        "Sostenere la colonna vertebrale",
+        "Proteggere solo il cuore e il cervello",
+        "La testa, il tronco e gli arti",
+        "Proteggere le vene principali"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "10",
+    text: "Cosè la fusione?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il passaggio dallo stato solido a quello liquido",
+        "il passaggio dallo stato gassoso a quello liquido",
+        "il passaggio dallo stato gassoso a quello solido",
+        "il passaggio dallo stato liquido a quello solido",
+        "il passaggio dallo stato aeriforme a quallo solido"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "11",
+    text: "Indicare tra questi animali quale non è un carnivoro?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Zebra",
+        "Gatto Selvatico",
+        "Donnola",
+        "Ermellino",
+        "Puma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "12",
+    text: "Indicare tra questi animali quale non è un carnivoro?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Maiale",
+        "Lupo",
+        "Leone",
+        "Corvo",
+        "Furetto"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "13",
+    text: "Quale delle seguenti piante non produce fiori e frutti?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "muschio",
+        "fagiolo",
+        "castagno",
+        "rosa",
+        "pesco"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "14",
+    text: "Cos è la Luna?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un satellite",
+        "una galassia",
+        "un pianeta",
+        "una stella",
+        "un asteroide"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "15",
+    text: "Indicare tra i seguenti quello che non fa parte dello scheletro umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Estensore ulnare del carpo",
+        "Falangi",
+        "Carpo",
+        "Tarso",
+        "Femore"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "16",
+    text: "L’attrito volvente si genera:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "quando un oggetto rotola su un altro",
+        "quando due oggetti strisciano uno sull’altro",
+        "quando due oggetti non strisciano",
+        "quando due oggetti urtano violentemente uno contro l'altro",
+        "quando due oggetti corrono sulla stessa parallela ed alla stessa velocità"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "17",
+    text: "Quale delle seguenti è la caratteristica più affascinante di Saturno.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "i famosi anelli planetari",
+        "pochissima luce",
+        "molta acqua",
+        "moltissima luce",
+        "Il suo colore giallo fluorescente"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "18",
+    text: "Indicare tra i seguenti quale non è un muscolo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Clavicola",
+        "Pettorale",
+        "Trapezio",
+        "Bicipite",
+        "Deltoide"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "19",
+    text: "Indicare tra i seguenti quale non fa parte dello scheletro umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tricipite",
+        "Femore",
+        "Rotula",
+        "Malleolo",
+        "Tibia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "20",
+    text: "Cos è lo Stomaco?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "è un organo a forma di sacco e comunica con l'intestino attraverso il piloro",
+        "è un organo a forma di sacco che non comunica con l'intestino",
+        "non è un organo",
+        "è un organo a forma di cuore e comunica con l'intestino attraverso il piloro",
+        "è un organo a forma di imbuto che contiene nel suo interno muscoli e nervi principali"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "21",
+    text: "I non metalli:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "si trovano allo stato solido, liquido e aeriforme",
+        "non si trovano allo stato solido, liquido e aeriforme",
+        "non esistono",
+        "si trovano solo ed esclusivamente allo stato aeriforme",
+        "si trova solo allo stato gassoso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "22",
+    text: "Il mammifero più veloce è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il Ghepardo",
+        "il Coccodrillo",
+        "la Giraffa",
+        "il Rinoceronte",
+        "l' elefante"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "23",
+    text: "Cos è il Sistema Solare?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un insieme di corpi celesti in rotazione attorno al Sole",
+        "un insieme di corpi celesti in rotazione attorno alla Luna",
+        "un insieme di corpi celesti in rotazione attorno alla Terra",
+        "un insieme di corpi celesti in rotazione attorno a Giove",
+        "un insieme di corpi celesti in rotazione attorno a Nettuno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "24",
+    text: "Indicare qual è l'animale oviparo.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tartaruga",
+        "Scimmia",
+        "Balena",
+        "Pipistrello",
+        "Maiale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "25",
+    text: "Indicare tra i seguenti quale non è un muscolo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Carpo",
+        "Bicipite femorale",
+        "Soleo",
+        "Gemello mediale",
+        "Deltoide"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "26",
+    text: "Quale dei seguenti attori nel 2018 ha vinto il Golden Globe nella categoria \"miglior attore” in un film drammatico?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gary Oldman",
+        "Tom Hanks",
+        "Denzel Washington",
+        "Timothée Chalamet",
+        "Brad Pitt"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "27",
+    text: "Di quale cantante italiana è il brano \"Oronero\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Giorgia",
+        "Alessandra Amoroso",
+        "Elisa",
+        "Emma Marrone",
+        "Laura Pausini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "28",
+    text: "Alcuni animali subiscono la metamorfosi come la farfalla, indicare quale dei seguenti è uno di questi.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Le rane",
+        "I mammiferi",
+        "Le galline",
+        "I topi",
+        "I maiali"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "29",
+    text: "Indicare l' animale che non è un mammifero?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Libellula",
+        "Porcellino d’india",
+        "Ippopotamo",
+        "Gatto",
+        "Cane"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "30",
+    text: "In un metallo la Durezza Brinell (HB) è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "differente per ogni metallo",
+        "uguale per ogni metallo",
+        "inesistente",
+        "il suo punto di fusione",
+        "il punto di liquefazione"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "31",
+    text: "Indicare tra i seguenti l' animale invertebrato.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sanguisuga",
+        "Toro",
+        "Giraffa",
+        "Pesce",
+        "Leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "32",
+    text: "I Nervi Spinali fanno parte del sistema nervoso volontario?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "si",
+        "a volte",
+        "no",
+        "sono nervi che fanno parte del sistema nervoso involontario",
+        "no, perché sono nervi che si trovano nella testa"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "33",
+    text: "L'urea viene rimossa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "dai Reni",
+        "dalla Milza",
+        "dal Fegato",
+        "dalla bile",
+        "dallo stomaco"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "34",
+    text: "L' apparato circolatorio dei mammiferi è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Con il cuore diviso in quattro cavità e quindi circolazione doppia e completa",
+        "non hanno apparato circolatorio sono eterotermi",
+        "Hanno il cuore diviso in due cavità",
+        "hanno una sola vena centrale",
+        "Con il cuore diciso in due cavità e quindi circolazione singola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "35",
+    text: "Che tipo di trasformazione si realizza nel processo di fotosintesi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "L' anidride carbonica e acqua si trasformano in glucosio e ossigeno",
+        "Il glucosio e ossigeno si trasformano in acqua e anidride carbonica",
+        "L' anidride carbonica e acqua si trasformano in lipidi e ossigeno",
+        "L' anidride carbonica e acqua si trasformano in proteine e ossigeno",
+        "L'anidride carbonica e acqua si trasformano in amminoacidi e proteine"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "36",
+    text: "Un corpo fermo per il principio d’inerzia:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "resta fermo",
+        "inizia a muoversi",
+        "continua a muoversi",
+        "si muove con moto accelerato",
+        "si muove con moto rettilineo uniforme"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "37",
+    text: "Di quale sistema nervoso fa parte il telencefalo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "centrale",
+        "periferico",
+        "del diencefalo",
+        "del tronco dell’encefalo",
+        "Sottocutaneo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "38",
+    text: "Nel mare quale delle seguenti sostanze saline è maggiormente contenuta?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Cloruro di sodio",
+        "Fosfato",
+        "Nitrato",
+        "Zolfo",
+        "Potassio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "39",
+    text: "Cos è il pinguino?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un uccello",
+        "Un pesce",
+        "Un rettile marino",
+        "Un mammifero marino",
+        "Un tipo di lucertola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "40",
+    text: "Il simbolo chimico dell’Arsenico è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "As",
+        "Ag",
+        "Ne",
+        "He",
+        "Cu"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "41",
+    text: "La massa della Luna è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "circa l'1% di quella della Terra",
+        "circa il 50% della massa della Terra",
+        "circa l'10% di quella del Sole",
+        "circa il 15% della massa della Terra",
+        "circa il 25% della massa della Terra"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "42",
+    text: "Alcuni metalli hanno una proprietà detta sfaldatura, di cosa si tratta?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Di rompersi in particolari modi seguendo la loro forma geometrica",
+        "Di fondersi con altri minerali",
+        "Di unirsi con altri minerali",
+        "Di separasi da altri minerali",
+        "Di rompersi e formare dei triangoli"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "43",
+    text: "Quale tra le seguenti strutture non fa parte dell'apparato uditivo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "L'esofago",
+        "La staffa",
+        "La chiocciola",
+        "Il martello",
+        "Timpano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "44",
+    text: "Il nervo sciatico parte:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Dal plesso sacrale",
+        "Dalla mano",
+        "Dal cervello",
+        "Dal tallone",
+        "Dal perone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "45",
+    text: "Di quale apparato fa parte l'esofago?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "digerente",
+        "endocrino",
+        "circolatorio",
+        "respiratorio",
+        "vascolare"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "46",
+    text: "Quale tra i seguenti animali è un aracnide?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il ragno",
+        "La tigre",
+        "Il lombrico",
+        "La trota",
+        "Il gatto"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "47",
+    text: "Il simbolo chimico dello Zolfo è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "S",
+        "Zo",
+        "Na",
+        "Cl",
+        "F"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "48",
+    text: "Quale animale non fa parte della classe degli anfibi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La lucertola",
+        "La salamandra",
+        "Il rospo",
+        "La raganella",
+        "I tritoni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "49",
+    text: "Indicare quale di queste è una proprietà dell'acqua pura.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "E' un solvente per molte sostanze",
+        "E' leggermente più acida dell'aria",
+        "La sua fase solida è più densa della fase liquida",
+        "Ha una bassa capacità di assorbire calore",
+        "Ha un elevato peso atomico"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "50",
+    text: "Il ragno è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un artropode",
+        "un echinoderma",
+        "un porifero",
+        "un celenterato",
+        "un cnidari"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "51",
+    text: "Indicare l' animali che fa parte degli invertebrati.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pulce",
+        "Gatto",
+        "Scimmia",
+        "Toro",
+        "Cane"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "52",
+    text: "Se un atleta percorre 100m in 10s, quale sarà la velocità media?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "10 m/s",
+        "15 m/s",
+        "105 m/s",
+        "17 m/s",
+        "25 m/s"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "53",
+    text: "Il simbolo chimico del Ferro è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Fe",
+        "Fr",
+        "Fl",
+        "F",
+        "N"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "54",
+    text: "Qual è la caratteristica principale della tundra?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "l’assenza di alberi",
+        "l’elevata presenza di alberi",
+        "l’elevata presenza di vegetazione",
+        "l'elevata presenza di alberi secolari",
+        "la presenza di poca neve ma lunghi periodi estivi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "55",
+    text: "Indicare tra questi animali qual è un erbivoro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Antilope",
+        "Tigre",
+        "Leone",
+        "Coccodrillo",
+        "Iena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "56",
+    text: "Dove si sono tenute le Olimpiadi 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "In Brasile",
+        "In Italia",
+        "In Inghilterra",
+        "In Grecia",
+        "In Francia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "57",
+    text: "Indicare l' animali che non è un carnivoro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Elefante",
+        "Pipistrello",
+        "Ghepardo",
+        "Giaguaro",
+        "Leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "58",
+    text: "Quale film di animazione ha vinto il Golden Globe nel 2018?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Coco",
+        "Baby Boss",
+        "Inside Out",
+        "Loving Vincent",
+        "Frozen"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "59",
+    text: "Come si intitola la serie ispirata alla vita della celebre Regina Elisabetta II?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "The Crown",
+        "Royal",
+        "The Queen",
+        "Elizabeth",
+        "The long reign"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "60",
+    text: "Quale tra le seguenti linee aeree è tedesca?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lufthansa",
+        "Lauda Air",
+        "Swissair",
+        "KLM",
+        "Ita Airways"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "61",
+    text: "Dove ha sede la BBC?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Londra",
+        "California",
+        "New York",
+        "Washington",
+        "Boston"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "62",
+    text: "Cos'è il Giubileo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "È l’anno della remissione dei peccati, della riconciliazione, della conversione e della penitenza sacramentale",
+        "È la cerimonia religiosa per riconciliarsi con le altre religioni",
+        "È l’anno in cui i fedeli cristiani e protestanti possono confessare personalmente al Papa o ai suoi cardinali i propri peccati",
+        "È la festa dei giovani che indice annualmente il Papa",
+        "È la settimana della remissione dei peccati, della riconciliazione, della conversione e della penitenza sacramentale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "63",
+    text: "Entro quanti giorni dalla sua pubblicazione un decreto legge può essere convertito in legge dalle Camere?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "60 giorni",
+        "30 giorni",
+        "80 giorni",
+        "90 giorni",
+        "45 giorni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "64",
+    text: "Cosa sono le elezioni di \"midterm\" in America:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Le elezioni di metà mandato",
+        "Le elezioni che precedono di 4 mesi il mandato",
+        "Le elezioni che precedono di 2 mesi il mandato",
+        "Le elezioni che precedono di 6 mesi il mandato",
+        "Le elezioni di fine mandato"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "65",
+    text: "Quale tra i seguenti artisti viene denominato \"Duca bianco\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "David Bowie",
+        "Sting",
+        "George Michael",
+        "Bono",
+        "Freddie Mercury"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "66",
+    text: "In quale giorno si è verificata la Valanga che ha travolto l’”Hotel Rigopiano-Gran Sasso Resort”, nella quale hanno perso la vita 29 persone?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "18 Gennaio 2017",
+        "13 Gennaio 2017",
+        "18 Dicembre 2016",
+        "30 Gennaio 2016",
+        "18 Gennaio 2018"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "67",
+    text: "In che mese e anno è morto il cantante David Bowie?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gennaio 2016",
+        "Gennaio 2015",
+        "Febbraio 2017",
+        "Giugno 2014",
+        "Dicembre 2020"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "68",
+    text: "Qual è la protagonista del celebre film \"Colazione da Tiffany\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Audrey Hepburn",
+        "Sophia Loren",
+        "Brigitte Anne Marie Bardot",
+        "Liz Taylor",
+        "Jennifer Aniston"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "69",
+    text: "In quale delle seguenti città si svolge ogni anno la “Fiera Internazionale del Libro”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Torino",
+        "Milano",
+        "Roma",
+        "Palermo",
+        "Catania"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "70",
+    text: "Il progetto MOSE di Venezia consiste:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Nella costruzione di un sistema di barriere mobili per impedire alle maree di sommergere il centro della cittadina",
+        "Nella costruzione di una centrale idroelettrica",
+        "Nel progetto di ricostruzione dei più importanti monumenti",
+        "Nella costruzione di una gigantesca idrovore per contrastare l’acqua alta",
+        "Nella costruzione di un sistema di barriere mobili per far sommergere il centro della cittadina dall'alta marea"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "71",
+    text: "Quale film italiano ha vinto l’Oscar nel 2014 nella categoria “Miglior film straniero”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La grande bellezza",
+        "La vita è bella",
+        "La pazza gioia",
+        "Il capitale umano",
+        "Diabolik"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "72",
+    text: "Nel 2017 c’è stata la commemorazione del 25° anniversario di quale evento?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Stragi dei giudici Falcone e Borsellino",
+        "Caduta del muro di Berlino",
+        "Fine dell’Apartheid",
+        "Attacco alle Torri Gemelle",
+        "Sbarco dell'Italia sulla Luna"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "73",
+    text: "La LucasFilm Ltd. da quale grande azienda dei media è stata acquistata nel 2012?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "The Walt Disney Company",
+        "Samsung",
+        "DreamWorks",
+        "Warner Bros",
+        "HBO"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "74",
+    text: "Una delle seguenti organizzazioni ha compiuto nel 2018 60 anni, qual è?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Nasa",
+        "Unicef",
+        "Medici senza frontiere",
+        "Telefono rosa",
+        "Telethon"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "75",
+    text: "Indicare quale attore venne accusato di violenza sessuale nel 2017.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Kevin Spacey",
+        "John Travolta",
+        "Brad Pitt",
+        "Tom Cruise",
+        "Michele Placido"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "76",
+    text: "In quale anno venne eletto presidente della Repubblica francese Emmanuel Macron?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "2017",
+        "2016",
+        "2013",
+        "2014",
+        "2019"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "77",
+    text: "Un servizio informatico on line che permette la realizzazione di reti sociali virtuali, viene indicato con il termine:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Social network",
+        "Social design",
+        "Social line",
+        "Social core",
+        "Social direct"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "78",
+    text: "Il 20 Novembre 2016 terminò uno straordinario Giubileo, quale?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il Giubileo della misericordia",
+        "Il Giubileo del Cuore di Gesù",
+        "Il Giubileo del buon pastore",
+        "Il Giubileo del cuore immacolato di Maria",
+        "Il Giubileo della pecorella smarrita"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "79",
+    text: "Chi fu il presidente della Commissione europea rimasto in carica fino ad ottobre 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Jean-Claude Juncker",
+        "Enzo Braghi",
+        "José Barroso",
+        "Manuel Marín",
+        "Romano Prodi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "80",
+    text: "Qual è il nome della moglie di William, principe del Galles?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Catherine Middleton",
+        "Chelsy Davy",
+        "Meghan Markle",
+        "Diana Spencer",
+        "Lilibet del Sussex"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "81",
+    text: "La sede della Banca Centrale Europea (BCE) è nella città di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Francoforte",
+        "Milano",
+        "Berlino",
+        "Verona",
+        "Napoli"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "82",
+    text: "Con l'appellativo \"Papa emerito\" ci si rivolge a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Papa Benedetto XVI",
+        "Papa Giovanni Paolo II",
+        "Papa Francesco I",
+        "Papa Bonifacio VIII",
+        "Papa Pio XI"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "83",
+    text: "L'informazione genetica si trova depositata:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "nei cromosomi",
+        "nei liposomi",
+        "nei lisosomi",
+        "nel pancreas",
+        "nei globuli rossi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "84",
+    text: "Con il kilowattora si misura:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un'energia",
+        "una forza",
+        "una potenza",
+        "un'accelerazione",
+        "una lunghezza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "85",
+    text: "Quale tra i seguenti è un muscolo involontario.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il cuore",
+        "Il tibiale",
+        "Il bicipite",
+        "Il tricipite",
+        "Il trapezio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "86",
+    text: "Nel settembre del 2022 la Cina è stata testimone di un primato, a livello scientifico, ovvero:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "è stato clonato il primo lupo artico, Maya",
+        "è stata clonata la prima cavalla, Xion-Li",
+        "è stata ricostruita la mascella di un bambino deforme alla nascita",
+        "è stata scoperta la cellula \"EL\"",
+        "è stata scoperta la malattia genetica \"Clovisia\""
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "87",
+    text: "Quanti anni dura la carica di presidente della BCE?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "8",
+        "4",
+        "5",
+        "6",
+        "7"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "88",
+    text: "Indicare l' animali che è un erbivoro?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Porcospino",
+        "Faina",
+        "Ghepardo",
+        "Iena",
+        "Lince"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "89",
+    text: "Quale squadra di calcio ha vinto la Champions League 2016-2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Real Madrid",
+        "Juventus",
+        "Paris Saint-Germain",
+        "Barcellona Fc",
+        "Manchester City"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "90",
+    text: "Quale squadra ha vinto il Campionato italiano di calcio Serie A 2016 – 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Juventus",
+        "Fiorentina",
+        "Roma",
+        "Napoli",
+        "Lazio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "91",
+    text: "Chi interpreta la figura di Papa Pio XIII, protagonista nella celebre serie \"The Young Pope\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Jude Law",
+        "Tom Hardy",
+        "Scott Sheperd",
+        "Silvio Orlando",
+        "Robert De Niro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "92",
+    text: "Dove avviene la consegna annuale dei premi Oscar?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Los Angeles",
+        "New York",
+        "Orlando",
+        "Las Vegas",
+        "Miami"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "93",
+    text: "Il 17 dicembre 2016 Papa Francesco quanti anni ha compiuto?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "80",
+        "60",
+        "70",
+        "75",
+        "85"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "94",
+    text: "Chi ha vinto l’Oscar 2017 nella categoria “migliore attrice protagonista”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Emma Stone",
+        "Natalie Portman",
+        "Dakota Johnson",
+        "Isabelle Huppert",
+        "Jennifer Aniston"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "95",
+    text: "Chi è stato eletto Sindaco di Roma il 22 Giugno 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Virginia Raggi",
+        "Gianni Alemanno",
+        "Mario Monti",
+        "Angelino Alfano",
+        "Giorgia Meloni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "96",
+    text: "Il 27 giugno 2016 a Roma è morto l’attore, nonché nuotatore e pallanuotista italiano Carlo Pedersoli, meglio conosciuto come:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Bud Spencer",
+        "Arnoldo Foà",
+        "Vittorio De Sica",
+        "Aldo Fabrizi",
+        "Giancarlo Fognini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "97",
+    text: "Qual è il titolo del film spin-off della celebre saga di Harry Potter, uscito nelle sale nel 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Animali fantastici e dove trovarli",
+        "Animali fantastici",
+        "Animali fantastici e come trovarli",
+        "Animali fantastici e dove cercarli",
+        "Animali fantastici e come scoprirli"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "98",
+    text: "Chi alla data di gennaio 2018 ricopriva la carica di Sindaco di Napoli?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Luigi De Magistris",
+        "Luigi Di Maio",
+        "Rosa Russo Iervolino",
+        "Gianni Lettieri",
+        "Piersilvio Berlusconi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "99",
+    text: "Quale atleta italiano ha vinto l’oro nel nuoto alle Olimpiadi 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gregorio Paltrinieri",
+        "Diana Bacosi",
+        "Niccolò Campriani",
+        "Daniele Garozzo",
+        "Filippo Magnini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "100",
+    text: "Cos’è il “Cammino di Santiago di Compostela”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Percorso che i pellegrini intraprendono, attraverso la Francia e la Spagna, per giungere al santuario di Santiago di Compostela",
+        "Percorso che i pellegrini compiono tra il Portogallo e la Spagna, per giungere al santuario di Santiago di Compostela",
+        "Percorso che i pellegrini compiono, attraverso la Svizzera e la Francia per arrivare al santuario di Santiago di Compostela",
+        "Percorso che i pellegrini protestanti compiono per arrivare in Portogallo",
+        "Un romanzo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "101",
+    text: "Chi era nel 2017 il presidente della Banca Centrale Europea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Mario Draghi",
+        "Christian Noyer",
+        "Wim Duisenberg",
+        "Mario Monti",
+        "Bernard Sanders"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "102",
+    text: "Tra le opzioni di risposta, quale riporta il nome della capitale mondiale in cui si è svolto il G20, nell'ottobre del 2022?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Bali",
+        "Parigi",
+        "Hong Kong",
+        "Amburgo",
+        "Berlino"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "103",
+    text: "Quale importante quotidiano si è aggiudicato il premio Pulitzer in tre categorie nel 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "New York Times",
+        "TIME",
+        "La Repubblica",
+        "Wall Street Journal",
+        "Gazzetta del Sud"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "104",
+    text: "Qual è stata la squadra vincitrice degli Europei di calcio nel 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Portogallo",
+        "Italia",
+        "Germania",
+        "Inghilterra",
+        "Francia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "105",
+    text: "Nel 2019 è stata la capitale europea della cultura?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Matera",
+        "Ginevra",
+        "Monaco",
+        "Parigi",
+        "Torino"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "106",
+    text: "Quale città fra le seguenti il 24 agosto 2016 è stata colpita dal terremoto?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Amatrice",
+        "Matera",
+        "Napoli",
+        "Potenza",
+        "Brindisi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "107",
+    text: "Qual è l’evento sportivo più importante dell’anno negli Stati Uniti d’America?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Super Bowl",
+        "Finale del canto a cappella",
+        "MBA",
+        "Finale di nuoto americano",
+        "WWE"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "108",
+    text: "A chi appartiene la celebre frase \"non ho paura della cattiveria dei malvagi, ma del silenzio degli onesti\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Martin Luther King",
+        "Steve Jobs",
+        "Mark Zuckerberg",
+        "Mahatma Gandhi",
+        "Yohan Blake"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "109",
+    text: "Quale famoso politico coniò il motto \"Yes, we can\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Barack Obama",
+        "Matteo Renzi",
+        "Angela Merkel",
+        "Hillary Clinton",
+        "Steve Jobs"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "110",
+    text: "Qual è la sede centrale della Banca d’Italia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Roma",
+        "Milano",
+        "Torino",
+        "Firenze",
+        "Napoli"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "111",
+    text: "Quale dei seguenti videogiochi, basato su realtà geolocalizzata con GPS, è stato un vero e proprio fenomeno virale, che ha coinvolto molti giovani di molti Paesi su scala internazionale?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pokemon go",
+        "Candy Crash saga",
+        "Angry birds",
+        "Temple run",
+        "Crash"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "112",
+    text: "Il 22 Maggio 2017 c’è stato un attentato suicida alla Manchester Arena, al termine del concerto di quale cantante?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ariana Grande",
+        "Madonna",
+        "Britney Spears",
+        "Sia",
+        "Beyoncè"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "113",
+    text: "Come si chiama l’autore dei romanzi che ha ispirato la serie Tv \"Il trono di Spade\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "George R. R. Martin",
+        "Terry Brooks",
+        "Ken Follett",
+        "Nicholas Sparks",
+        "J. R. R. Tolkien"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "114",
+    text: "Qual è la più importante agenzia di stampa italiana?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "ANSA",
+        "Italpress",
+        "DIRE",
+        "Il Sole 24 ORE",
+        "Ecopress"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "115",
+    text: "Chi è stato eletto Presidente Degli Stati Uniti d’America il giorno 8 novembre 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Donald Trump",
+        "Hillary Clinton",
+        "Barack Obama",
+        "Bernard Sanders",
+        "George Bush"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "116",
+    text: "Tra i seguenti esseri viventi marini, qual è un crostaceo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Astice",
+        "Cozze",
+        "Vongole",
+        "Ostriche",
+        "Capasanta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "117",
+    text: "Cosa si intende per \"effetto serra\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il riscaldamento della superficie terrestre dovuto all’azione di alcuni gas presenti in atmosfera",
+        "Il raffredamento della superficie terrestre dovuto al buco nello strato di ozono",
+        "Il riscaldamento della superficie terrestre dovuto all’eccessivo disboscamento",
+        "Il raffreddamento della superficie terrestre dovuto alla diminuzione di anidride carbonica",
+        "Umidità causata dalla grandine"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "118",
+    text: "La “Grande Macchia Rossa” si trova su:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Giove",
+        "Saturno",
+        "Terra",
+        "Urano",
+        "Plutone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "119",
+    text: "Cosa indica l'inerzia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La tendenza di un corpo a mantenere il proprio stato",
+        "La tendenza di un corpo a rimanere accelerato",
+        "La tendenza di un corpo a cambiare stato",
+        "La tendenza di un corpo a cambiare direzione",
+        "La tendenza di un corpo ad aumentare il suo peso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "120",
+    text: "Quale tra questi personaggi italiani ha ottenuto, nel 2016, la sua \"stella\" nella celebre \"Walk of Fame\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ennio Morricone",
+        "Gabriele Muccino",
+        "Vittorio De Sica",
+        "Luciano Pavarotti",
+        "Alessandro Gassman"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "121",
+    text: "L’azienda Netflix, operante nella distribuzione via internet di film, serie televisive e altri contenuti d’intrattenimento è nata in quale anno:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "1997",
+        "1996",
+        "2000",
+        "1998",
+        "2012"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "122",
+    text: "Indicare tra i seguenti quale non è un muscolo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tarso",
+        "Lungo supinatore",
+        "Quadricipite",
+        "Bicipite brachiale",
+        "Trapezio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "123",
+    text: "Quale tra i seguenti personaggi è considerato il fondatore dell’organizzazione terroristica al-Qaida?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Osāma Bin Lāden",
+        "Ṣaddām Ḥussein",
+        "Yāsser ʿArafāt",
+        "Ahmad al-Shuqayrī",
+        "Il fondatore ancora non è stato individuato"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "124",
+    text: "Cosa sono i lagomorfi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Dei mammiferi",
+        "Dei rettili",
+        "Dei molluschi",
+        "Dei erbivori",
+        "Dei crostacei"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "125",
+    text: "Il Tevere scorre :",
+    topic: "CULTURA GENERALE",
+    options: [
+        "nelle regioni del Lazio, Umbria, Toscana ed Emilia Romagna",
+        "nelle regioni dell' Abruzzo e Marche",
+        "nelle regioni dell' Abruzzo, Umbria e Toscana",
+        "nelle regioni dell' Emilia Romagna, Toscana e Marche",
+        "nelle regioni del Lazio Marche e Calabria"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "126",
+    text: "Quale motociclista statunitense ha perso la vita nel 2017, a causa di un incidente stradale mentre era in bicicletta?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Nicholas Patrick Hayden",
+        "Marco Simoncelli",
+        "Ayrton Senna",
+        "Luis Salom",
+        "Michael Schumacher"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "127",
+    text: "Indicare tra i seguenti il fiume più lungo d'Italia.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Po",
+        "Tevere",
+        "Reno",
+        "Adige",
+        "Isonzo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "128",
+    text: "Indicare il simbolo chimico dell'oro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Au",
+        "H",
+        "Ac",
+        "Al",
+        "Fe"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "129",
+    text: "Indicare tra gli animali seguenti quello che non fa parte dei mammiferi.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Cigno",
+        "Foche",
+        "Leopardo",
+        "Marmotta",
+        "Leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "130",
+    text: "La bile viene prodotta dal:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "fegato",
+        "cornee",
+        "reni",
+        "cuore",
+        "milza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "131",
+    text: "La Silicon Valley è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un distretto industriale",
+        "Una zona residenziale",
+        "Un'area ricca di risorse minerarie",
+        "Un relitto",
+        "Un antico quadro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "132",
+    text: "L'isola di Lipari, fa parte dell'arcipelago:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "delle Eolie",
+        "delle Ponziane",
+        "delle Tremiti",
+        "delle Egadi",
+        "della Maddalena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "133",
+    text: "Dove ha sede la Banca Centrale Europea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Francoforte",
+        "Strasburgo",
+        "Berlino",
+        "Monaco",
+        "Bruxelles"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "134",
+    text: "“La Nazione” è il quotidiano di quale tra le seguenti città Italiane?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Firenze",
+        "Torino",
+        "Milano",
+        "Cagliari",
+        "Roma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "135",
+    text: "Chi è il regista del film “Il divo”, basato sulla vita di Giulio Andreotti?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Paolo Sorrentino",
+        "Nanni Moretti",
+        "Paolo Virzì",
+        "Roberto Benigni",
+        "Silvio Muccino"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "136",
+    text: "In quale città è stata inaugurata, nel 2017, la pista di atletica intestata al campione Pietro Mennea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Barletta",
+        "Foggia",
+        "Palermo",
+        "Firenze",
+        "Bari"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "137",
+    text: "Quale delle seguenti è stata la prima visita ufficiale di Papa Francesco fuori Roma?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lampedusa",
+        "Napoli",
+        "Trapani",
+        "Milano",
+        "Gerusalemme"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "138",
+    text: "Indicare tra i seguenti animali qual è un mollusco.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "L'ostrica",
+        "La spigola",
+        "Il gambero",
+        "L'anguilla",
+        "Aragosta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "139",
+    text: "Cosa producono le ghiandole salivari?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Producono la saliva che contiene un enzima chiamato ptialina",
+        "Producono il succo pancreatico",
+        "Producono il succo gastrico",
+        "Producono la bile",
+        "Producono l'ossigeno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "140",
+    text: "Indicare tra questi animali quale non è un mammifero.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ape",
+        "Cammello",
+        "Orso bruno",
+        "Leopardo",
+        "Leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "141",
+    text: "Le piante nel terreno in cui vivono prelevano principalmente:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Composti dell'azoto",
+        "Zuccheri",
+        "Composti del carbonio",
+        "Lipidi",
+        "Glucosio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "142",
+    text: "Quale tra i seguenti è un metallo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "L'oro",
+        "La ceralacca",
+        "L'ossigeno",
+        "Il diamante",
+        "Lo zolfo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "143",
+    text: "Indicare tra questi animali quale non è un mammifero.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gabbiano",
+        "Orso bruno",
+        "Leopardo",
+        "Ghepardo",
+        "Iena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "144",
+    text: "Il simbolo chimico del Litio è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Li",
+        "Lu",
+        "Lr",
+        "Hf",
+        "St"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "145",
+    text: "Il simbolo chimico del Bario è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ba",
+        "Zu",
+        "Ao",
+        "Ga",
+        "Cu"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "146",
+    text: "Il nucleo del Sole:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "è il punto dove viene prodotta l’energia",
+        "non produce energia",
+        "corrisponde al disco luminoso del Sole",
+        "è il punto di incontro delle particelle di liquidi presenti nell'atmosfera",
+        "è il punto dove idrogeno e gas si incontrano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "147",
+    text: "L'isola di Ventotene fa parte della regione:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lazio",
+        "Campania",
+        "Calabria",
+        "Marche",
+        "Toscana"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "148",
+    text: "Il passaggio di una sostanza dallo stato solido a quello liquido viene detto:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Fusione",
+        "Liquefazione",
+        "Condensazione",
+        "Sublimazione",
+        "Evaporazione"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "149",
+    text: "Il Down Jones è l’indice della borsa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Newyorkese",
+        "Inglese",
+        "Italiana",
+        "Tedesca",
+        "Giapponese"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "150",
+    text: "Quanto sangue è contenuto di norma, nel sistema circolatorio di un adulto di corporatura media?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "5 litri di sangue",
+        "15 dl di sangue",
+        "8 litri di sangue",
+        "80 dl di sangue",
+        "20 litri di sangue"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "151",
+    text: "L'aorta appartiene all'apparato:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Circolatorio",
+        "Respiratorio",
+        "Digerente",
+        "Muscolo scheletrico",
+        "al sistema nervoso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "152",
+    text: "Quale animale produce uova dotate di guscio rigido?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pinguino",
+        "Canguro",
+        "Trota",
+        "Rana",
+        "Maiale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "153",
+    text: "La Toscana è una regione italiana a statuto ordinario, situata nell'Italia centrale, con capoluogo:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Firenze",
+        "Potenza",
+        "Pisa",
+        "Livorno",
+        "Ancona"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "154",
+    text: "Avellino si può identificare con la sigla:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "AV",
+        "AR",
+        "AG",
+        "AP",
+        "AT"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "155",
+    text: "Il massiccio più alto delle Dolomiti è il gruppo:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "della Marmolada",
+        "del Kilimangiaro",
+        "del Monte Fumaiolo",
+        "del Monte Rosa",
+        "della Gallinola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "156",
+    text: "Qual è il sistema montuoso della Toscana lungo il confine con l'Emilia Romagna?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Appennino",
+        "Dolomiti",
+        "Monte Bianco",
+        "Sila",
+        "Caucaso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "157",
+    text: "Il _______________________è un'ampia insenatura del mar Tirreno Centrale Settore Est, situata a sud della città di Napoli, compresa tra la penisola flegrea a nord-ovest e la penisola sorrentina a sud.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Golfo di Napoli",
+        "Golfo di Tigullio",
+        "Golfo di La Spezia",
+        "Golfo di Trieste",
+        "Golfo di Policastro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "158",
+    text: "In Basilicata il fiume più lungo è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Basento",
+        "Brenta",
+        "Tagliamento",
+        "Adige",
+        "Panaro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "159",
+    text: "Indicare tra i seguenti quale non fa parte dello scheletro umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tendine di Achille",
+        "Osso occipitale",
+        "Costola",
+        "Sterno",
+        "Femore"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "160",
+    text: "In quale zona di Londra si è consumato l’attentato terroristico del 22 marzo 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ponte di Westminster",
+        "London Bridge",
+        "Manchester arena",
+        "Hyde Park",
+        "Buckingam Palace"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "161",
+    text: "In quale città viene assegnato annualmente il premio cinematografico “Orso d’oro”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Berlino",
+        "Madrid",
+        "Torino",
+        "Lisbona",
+        "Helsinki"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "162",
+    text: "Qual è il nome del giornale di Napoli?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il Mattino",
+        "Il Piccolo",
+        "Il Messaggero",
+        "La Nazione",
+        "Il Campano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "163",
+    text: "A quale città sono stati assegnati i giochi olimpici del 2024?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Parigi",
+        "Los Angeles",
+        "Roma",
+        "Pechino",
+        "Tokyo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "164",
+    text: "Il 21 luglio 2017 un terremoto devastante ha colpito quali nazioni del bacino mediterraneo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Grecia e Turchia",
+        "Italia e Spagna",
+        "Turchia e Siria",
+        "Grecia e Albania",
+        "Grecia e Malta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "165",
+    text: "In quale città si è svolto il G7 che ha avuto luogo nel 2017 in Italia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Taormina",
+        "Taranto",
+        "Roma",
+        "Genova",
+        "Firenze"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "166",
+    text: "Quale evento raro si è potuto osservare il 21 Agosto 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Eclissi solare totale",
+        "Eclissi di luna",
+        "Stella cadente più luminosa degli ultimi 10 anni",
+        "Sciame di meteoriti",
+        "Meteorite schiantato nel nord America"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "167",
+    text: "Nel febbraio 2017 la regina Elisabetta è stata la prima sovrana a festeggiare:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il giubileo di zaffiro per i 65 anni sul trono",
+        "Il giubileo d’oro per i 50 anni sul trono",
+        "Il giubileo di platino per i 60 anni sul trono",
+        "Il giubileo di diamante per i 75 anni sul trono",
+        "Il giubileo di zaffiro per i 85 anni sul trono"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "168",
+    text: "Quale importante casa automobilistica italiana ha fatto il suo ingresso nella Borsa italiana?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ferrari",
+        "Lamborghini",
+        "Fiat",
+        "Alfa Romeo",
+        "Lancia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "169",
+    text: "Quale nota serie televisiva è ispirata ad un romanzo di Roberto Saviano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gomorra",
+        "Suburra",
+        "Reality",
+        "Rocco Schiavone",
+        "Mare fuori"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "170",
+    text: "Quale serie televisiva tratta le vicende della criminalità organizzata del quartiere romano di Ostia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Suburra",
+        "Gomorra",
+        "I delitti del barlume",
+        "Preacher",
+        "Mare fuori"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "171",
+    text: "Qual è il titolo del film vincitore del Festival di Cannes 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Parasite",
+        "The square",
+        "La Belle Epoque",
+        "Border",
+        "Titanic"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "172",
+    text: "Di quale celebre Romanzo, oggetto di trasposizione cinematografica, è ricorso nel 2016, l’anniversario degli 80 anni di pubblicazione?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Via col Vento",
+        "Casablanca",
+        "Ben Hur",
+        "Il Padrino",
+        "Il Signore degli Anelli"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "173",
+    text: "Cosa si celebra il 27 gennaio di ogni anno?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il Giorno della Memoria",
+        "La nascita dell’Unione europea",
+        "La Festa dei Lavoratori",
+        "La Festa della Repubblica",
+        "La giornata della pace"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "174",
+    text: "Di quale nazionalità sono gli atleti che sono stati esclusi da Rio 2016 in seguito ad uno scandalo per doping?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Russa",
+        "Greca",
+        "Americana",
+        "Francese",
+        "Pakistana"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "175",
+    text: "In quale città della Russia ha avuto luogo un attentato alla metropolitana nell’aprile 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "San Pietroburgo",
+        "Mosca",
+        "Novosibirsk",
+        "Ekaterinenburg",
+        "Edinburgo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "176",
+    text: "Quale importante figura religiosa è stata canonizzata nel 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Madre Teresa di Calcutta",
+        "Padre Pio",
+        "Papa Giovanni Paolo II",
+        "Pietro Favre",
+        "Natuzza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "177",
+    text: "Nel 2018 ricorre il 70° anniversario dalla costituzione di quale importante documento?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Dichiarazione universale dei diritti dell’uomo",
+        "Dichiarazione di indipendenza",
+        "Statuto dei lavoratori",
+        "Costituzione americana",
+        "Dichiarazione universale dei diritti dei bambini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "178",
+    text: "Di quale compagnia aerea era il velivolo che il 19 maggio 2016, durante la tratta Parigi-Il Cairo, è precipitato nel Mar Mediterraneo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Egyptair",
+        "Air France",
+        "Emirates",
+        "Alitalia",
+        "Transavia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "179",
+    text: "In quale comune della Città Metropolitana di Milano si è verificato il deragliamento di un treno il 25 gennaio 2018?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pioltello",
+        "Garbagnate Milanese",
+        "Rho",
+        "Milano",
+        "Monza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "180",
+    text: "Quale nota manifestazione sportiva ha celebrato il proprio centenario nel 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il Giro d’Italia",
+        "Serie A",
+        "Golden Gala",
+        "Internazionali d’Italia",
+        "Beach volley"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "181",
+    text: "Quale pellicola si è aggiudicata l’Oscar come miglior film nel 2018?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La forma dell’acqua",
+        "Dunkirk",
+        "Lady Bird",
+        "The post",
+        "Sally"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "182",
+    text: "Nel 2017 in Arabia Saudita il re ha fatto una concessione storica, quale?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ha permesso alle donne di guidare",
+        "Ha permesso la libera professione della religione cristiana",
+        "Ha permesso alle donne di circolare senza velo",
+        "Ha permesso alle donne di votare",
+        "Ha permesso alle donne di andare al supermercato"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "183",
+    text: "Il 4 dicembre 2016, in Italia, ha avuto luogo un referendum riguardante la legge Renzi-Boschi, di che carattere ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Costituzionale",
+        "Consultivo",
+        "Abrogativo",
+        "Propositivo",
+        "Figurativo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "184",
+    text: "A quale città sono stati assegnati i giochi olimpici che si terranno nel 2028?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Los Angeles",
+        "Roma",
+        "Parigi",
+        "Atene",
+        "Rio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "185",
+    text: "Chi assume l’incarico di Primo Ministro del Regno Unito nel 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Theresa May",
+        "Nigel Farage",
+        "David Cameron",
+        "Tony Blair",
+        "Gary Jhonson"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "186",
+    text: "In quale mese e anno si è tenuto il referendum meglio conosciuto come Brexit?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Giugno 2016",
+        "Giugno 2017",
+        "Dicembre 2015",
+        "Febbraio 2014",
+        "Luglio 2018"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "187",
+    text: "Chi è stato il principale antagonista politico di Donald Trump durante la corsa alla Casa Bianca?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Hillary Clinton",
+        "Bernie Sanders",
+        "Gary Jhonson",
+        "Barack Obama",
+        "Bill Clinton"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "188",
+    text: "In Italia nel maggio 2016 viene approvata una legge molto discussa, su quale argomento?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Unioni civili dello stesso sesso",
+        "Legge elettorale",
+        "Ius Soli",
+        "Stepchild Adoption",
+        "Vittime della strada"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "189",
+    text: "Quale evento astronomico si è potuto osservare nel maggio 2016?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il transito di Mercurio",
+        "Eclissi di luna",
+        "Eclissi solare",
+        "Il passaggio della cometa di Halley",
+        "Il transito di Uranio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "190",
+    text: "Nel gennaio 2016 l’OMS annuncia lo scoppio dell’epidemia di quale virus?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Zika",
+        "H1N1",
+        "Ebola",
+        "Vaiolo",
+        "Covid-19"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "191",
+    text: "Quale è stato il prodotto agroalimentare più esportato dall’Italia nel 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Vino",
+        "Formaggio",
+        "Pomodori",
+        "Olio d’oliva",
+        "Frutta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "192",
+    text: "Quale quotidiano è anche conosciuto come \"la rosea\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gazzetta dello Sport",
+        "Il Messaggero",
+        "Gazzetta del Sud",
+        "La Repubblica",
+        "Il Mattino"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "193",
+    text: "In Italia, nel 2017, si è celebrato il centenario di un importante avvenimento, ovvero?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Battaglia di Caporetto",
+        "Battaglia del Piave",
+        "Liberazione di Roma",
+        "Liberazione dai Borbone",
+        "Strage dei re"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "194",
+    text: "Quale tra i seguenti Stati nel 2016 ha lanciato dei missili nucleari?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Corea del Nord",
+        "Corea del Sud",
+        "Russia",
+        "Polonia",
+        "Francia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "195",
+    text: "Quale calciatore italiano ha dato l’addio al calcio nel 2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Francesco Totti",
+        "Paolo Maldini",
+        "Alessandro Nesta",
+        "Gianluigi Buffon",
+        "Alessandro Matri"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "196",
+    text: "E' la residenza estiva del Papa?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Castel Gandolfo",
+        "Palazzo Vittorio",
+        "Palazzo Braschi",
+        "Castel del Sarno",
+        "Castello Svevo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "197",
+    text: "Dove viene assegnato ogni anno il premio Nobel per la pace?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Oslo",
+        "Stoccolma",
+        "Londra",
+        "Helsinki",
+        "Roma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "198",
+    text: "Quale tra le seguenti squadre calcistiche sale per la prima volta in serie A, per il campionato di calcio italiano 2016-2017?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Crotone",
+        "Empoli",
+        "Palermo",
+        "Verona",
+        "Foggia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "199",
+    text: "Nell’Ottobre 2017 sono stati ricordati i 100 anni da quale importante rivoluzione?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Rivoluzione Russa",
+        "Rivoluzione del Kosovo",
+        "Rivoluzione Francese",
+        "Rivoluzione americana",
+        "Indipendenza polacca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "200",
+    text: "La casa di produzione cinematografica fondata dal regista Nanni Moretti si chiama:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sacher film",
+        "Medusa film",
+        "Taodue film",
+        "01 Distribution",
+        "Velvet film"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "201",
+    text: "Dove si trova la sede centrale dell’OCSE ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Parigi",
+        "Francoforte",
+        "Bruxelles",
+        "Berlino",
+        "Roma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "202",
+    text: "Tesla è un'azienda specializzata nella produzione di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "veicoli elettrici",
+        "barche a vela",
+        "fertilizzanti",
+        "navi da crociera",
+        "cellulari"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "203",
+    text: "Chi tra i seguenti personaggi ha esercitato per primo la carica di Presidente della Camera dei Deputati?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pier Ferdinando Casini",
+        "Gianfranco Fini",
+        "Laura Boldrini",
+        "Fausto Bertinotti",
+        "Silvio Berlusconi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "204",
+    text: "La fiction \"Don Matteo\" è stata girata nella regione:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Umbria",
+        "Molise",
+        "Sicilia",
+        "Marche",
+        "Calabria"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "205",
+    text: "La riforma universitaria chiamata comunemente 3+2 è stata introdotta da:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Letizia Moratti",
+        "Giovanni Gentile",
+        "Tullio De Mauro",
+        "Patrizio Bianchi",
+        "Lucia Azzolina"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "206",
+    text: "In quale città italiana si svolge il \" maggio dei monumenti \" ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Napoli",
+        "Firenze",
+        "Roma",
+        "Palermo",
+        "Matera"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "207",
+    text: "Di quale paese è stato presidente Kim Il-sung?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Corea del Nord",
+        "Giappone",
+        "Cina",
+        "Taiwan",
+        "Siria"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "208",
+    text: "Quali sigle, tre le seguenti, individuano i servizi segreti italiani?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "AISE e AISI",
+        "SISMI e SISDE",
+        "STASI e MFS",
+        "FSB e DRM",
+        "MI5 e CIA"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "209",
+    text: "Quale dei seguenti paesi, il 1 luglio 2013, è entrato a far parte dell'Unione Europea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Croazia",
+        "Turchia",
+        "Cipro",
+        "Serbia",
+        "Italia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "210",
+    text: "La riunione periodica del clero di una diocesi è chiamata:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sinodo",
+        "Vescovato",
+        "Assemblea",
+        "Conclave",
+        "Riunione"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "211",
+    text: "Nel 2013, quale ministro è stato nominato Ministro dell'Economia e Finanze nel Governo Letta?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Fabrizio Saccomanni",
+        "Pietro Carlo Padoan",
+        "Nunzia De Girolamo",
+        "Maurizio Lupi",
+        "Piero Giarda"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "212",
+    text: "Chi è stato eletto Presidente del Governo Spagnolo nel 2011?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Mariano Rajoy",
+        "Felipe González",
+        "José María Aznar",
+        "José Luis R. Zapatero",
+        "Angela Merkel"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "213",
+    text: "A cosa fa riferimeto il nome di Abu Bakr al-Baghdadi, apparso nelle cronache internazionali nel 2014?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Al progetto di califfato islamico in Siria e Iraq",
+        "Alla guida suprema dell'Iran",
+        "Alla leadership del movimento dei talebani",
+        "Alla presidenza dell'Iraq, dopo la caduta di Saddam Hussein",
+        "Al progetto di califfato islamico in Siria"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "214",
+    text: "Cosa vuol dire, nello scenario medio-orientale, la sigla ISIS?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Stato Islamico dell'Iraq e della Siria",
+        "Federazione Araba Unita",
+        "Movimento Islamico di Resistenza",
+        "Associazione dei Fratelli Musulmani",
+        "Stato Islamico dell'Iran e della Turchia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "215",
+    text: "Piazza Majdan è un teatro di violenti scontri fra oppositori e governativi, avvenuti fra il 2013 e il 2014. Dove si trova questa piazza:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Kiev",
+        "Istanbul",
+        "Il Cairo",
+        "Damasco",
+        "Londra"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "216",
+    text: "Come si chiama la moglie del Principe William d'Inghilterra?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Kate Middletone",
+        "Grace Kelly",
+        "Meghan Markle",
+        "Charlene Witstock",
+        "Sara Ferguson"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "217",
+    text: "Chi è il fondatore del colosso del commercio elettronico \" Amazon \" ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Jeff Bezos",
+        "Larry Page",
+        "Travis Kalanick",
+        "Roman Abramovic",
+        "Pierre Moscovici"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "218",
+    text: "Il termine \" Catfishing \" indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un'attività ingannevole sui social network",
+        "un assegno a vuoto",
+        "una droga sintetica",
+        "una fake news",
+        "un tipo di finanziamento"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "219",
+    text: "\"Il Secolo XIX\" è il quotidiano di quale tra le seguenti città italiane?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Genova",
+        "Firenze",
+        "Bologna",
+        "Torino",
+        "Cosenza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "220",
+    text: "Cosa s'intende con il termine \" Netiquette \" ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un insieme di regole informali che disciplinano il buon comportamento di un utente sul web",
+        "un insieme di regole che disciplinano le vendite online",
+        "le norme che disciplinano il diritto di immagine sul web",
+        "un insieme di regole che stabiliscono i posti all'interno di un aereo",
+        "le norme che disciplinano il diritto di privacy sul web"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "221",
+    text: "A quale scheramento politico appartiene Paola Taverna?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Movimento 5 stelle",
+        "PD",
+        "Forza Italia",
+        "Fratelli d'Italia",
+        "Partito Radicale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "222",
+    text: "In quale città ha sede la Corte di Giustizia dell'Unione europea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lussemburgo",
+        "Strasburgo",
+        "Bruxelles",
+        "Amsterdam",
+        "Roma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "223",
+    text: "Chi ricopriva la carica di segretario generale del sindacato della CGIL nell'ottobre 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Maurizio Landini",
+        "Susanna Camusso",
+        "Annamaria Furlan",
+        "Sergio Cofferati",
+        "Marco Rossi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "224",
+    text: "Con quale soprannome è conosciuto il narcotrafficante messicano Joaquin Guzman?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "El chapo",
+        "El patron",
+        "El pocho",
+        "El nino",
+        "El suerte"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "225",
+    text: "Indicare il vincitore del Festival di Sanremo 2017.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Francesco Gabbani",
+        "Ermal Meta",
+        "Lazza",
+        "Michele Bravi",
+        "Marco Mengoni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "226",
+    text: "L'indice della Borsa di New York è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il Dow Jones",
+        "il Footsie Mib",
+        "il Nasdaq",
+        "l'OMX",
+        "MERVAL"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "227",
+    text: "La società italiana che tutela i diritti degli autori e degli editori viene chiamata:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "SIAE",
+        "SIDAR",
+        "SICAF",
+        "SEAC",
+        "SIOR"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "228",
+    text: "Con quale termine viene indicato il fattorino addetto alla consegna a domicilio di cibo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "rider",
+        "pony express",
+        "sommelier",
+        "gourmet",
+        "fast"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "229",
+    text: "Il premio Nobel per l'economia 2019 è stato assegnato a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Michael Kremer, Abhijit V. Banerjee, Esther Duflo",
+        "Pierre Moscovici",
+        "Warren Buffet",
+        "Valdis Bombrovskis",
+        "Sergey Brin"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "230",
+    text: "Chi, tra le seguenti persone, NON è tra i fondatori di Facebook?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tim Cook",
+        "Andrew McCollum",
+        "Eduardo Saverin",
+        "Dustin Moslovitz",
+        "Chris Hughes"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "231",
+    text: "Chi, tra le seguenti persone, è uno dei fondatori di Google?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sergey Brin",
+        "Bill Gates",
+        "Mark Zuckerberg",
+        "Steve Jobs",
+        "Jean-Claude Juncker"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "232",
+    text: "Dopo le elezioni per il rinnovo del Parlamento europeo, tenutesi nel mese di maggio 2019, la presidenza della Commissione Europea è andata a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ursula Von der Leyen",
+        "Angela Merkel",
+        "Jean-Claude Juncker",
+        "Julia Klockner",
+        "Giuseppe Conte"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "233",
+    text: "\" L'Orso d'oro \" è il riconoscimento per il miglior film in concorso che si assegna:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "al Festival del cinema di Berlino",
+        "al Festival del cinema di Cannes",
+        "alla Festa del cinema di Roma",
+        "al Festival cinematografico internazionale di Mosca",
+        "al Festival cinematografico internazionale di Parigi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "234",
+    text: "Il termine \"intifada\" indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la \"rivolta delle pietre\" dei palestinesi contro gli israeliani",
+        "la repressione israeliana contro i palestinesi",
+        "l' operazione Inverno caldo",
+        "La guerra santa islamica",
+        "Operazione Piombo fuso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "235",
+    text: "Chi ha vinto il \" Premio Strega \" 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Antonio Scurati",
+        "Gianrico Carofiglio",
+        "Roberto Saviano",
+        "Marco Missiroli",
+        "Nicholas Sparks"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "236",
+    text: "Indicare il comune zucchero da cucina.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Saccarosio",
+        "Saccarina",
+        "Lattosio",
+        "Maltosio",
+        "Destrosio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "237",
+    text: "Bill Gates fu fondatore di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Microsoft",
+        "Apple",
+        "IBM",
+        "Winsurf",
+        "Lenovo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "238",
+    text: "Da quale specialista si deve andare se si hanno dolori ai piedi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Podologo",
+        "Pediatra",
+        "Patologo",
+        "Reumatologo",
+        "Immunologo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "239",
+    text: "Il lattosio è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "uno zucchero presente nel latte",
+        "un piccolo peptide presente nel latte",
+        "una vitamina presente nel latte",
+        "uno zucchero presente solo nelle piante",
+        "uno zucchero presente nelle articolazioni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "240",
+    text: "Cosa sono le comete?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Corpi celesti",
+        "Sistemi solari",
+        "Pianeti",
+        "Orbite",
+        "Sfere"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "241",
+    text: "Indicare l'animale invertebrato.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Blatta",
+        "Cavallo",
+        "Asino",
+        "Ippopotamo",
+        "Zebra"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "242",
+    text: "Cosa indica la lettera “m” nella formula della legge fondamentale della dinamica?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La massa dell’oggetto in questione",
+        "La massa molecolare",
+        "La massa atomica",
+        "La molarità",
+        "Il peso atomico"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "243",
+    text: "All'interno delle cellule, il principale trasportatore di energia chimica è detto:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "ATP",
+        "FAD",
+        "AMP",
+        "NAD",
+        "DAP"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "244",
+    text: "Il 04/12/2013, la Corte Costituzionale ha dichiarato l'illegittimità costituzionale delle norme dell'allora legge elettorale che riguardavano:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il premio di maggioranza",
+        "la formazione di coalizioni",
+        "la soglia di sbarramento",
+        "l'indicazione del capolista",
+        "il premio di minoranza"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "245",
+    text: "Tra i seguenti uno non è un osso, quale?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il ginocchio",
+        "La tibia",
+        "La rotula",
+        "Il femore",
+        "La falange"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "246",
+    text: "Come viene chiamato il codice che permette di identificare univocamente un terminale mobile, attraverso una sequenza alfa numerica?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "IMEI",
+        "EMAIL",
+        "PUK",
+        "PIN",
+        "MIIE"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "247",
+    text: "Il fisico Isaac Newton divenne famoso per gli studi sulla:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gravità",
+        "Radioattività",
+        "Magnetismo",
+        "Galleggiamento dei corpi",
+        "L'elettricità"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "248",
+    text: "Chi ha vinto il Giro d'Italia nel 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Richard Carapaz",
+        "Vincenzo Nibali",
+        "Mikel Landa",
+        "Egan bernal",
+        "Jacques Anquetil"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "249",
+    text: "Nel 2020, la rivista \"Time\" scelse come \"persona dell'anno\":",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Joe Biden",
+        "Madonna",
+        "Lady Gaga",
+        "William d'Inghilterra",
+        "Rita Levi Montalcini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "250",
+    text: "La serie tv \"Gomorra\" è ispirata al libro di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Roberto Saviano",
+        "Giorgio Faletti",
+        "Umberto Eco",
+        "Oriana Fallaci",
+        "Pier Paolo Pasolini"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "251",
+    text: "Come si chiama il premio che viene conferito nell'ambito del Festival cinematografico di Venezia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Leone d'oro",
+        "Corona d'oro",
+        "Vela d'oro",
+        "Balena d'oro",
+        "Telefono d'oro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "252",
+    text: "Il cognome della famiglia reale del Principato di Monaco è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Grimaldi",
+        "Winsor",
+        "Catalan",
+        "De Bellis",
+        "Todeman"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "253",
+    text: "Quando avvenne l'attentato suicida a Nassiriya in Iraq?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il 12 novembre 2003",
+        "l'11 agosto 2002",
+        "il 10 settembre 2005",
+        "il 8 marzo 2010",
+        "il 15 Dicembre 2004"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "254",
+    text: "Quali sono i colori della bandiera della Danimarca?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Rosso e bianco",
+        "Nero e giallo",
+        "Giallo e blu",
+        "Nero e rosso",
+        "Blu e rosso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "255",
+    text: "Gli anelli di Saturno sono composta da:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "polveri e frammenti di ghiaccio e minerali",
+        "stelle e roccie",
+        "gas e stelle",
+        "pianetini e frammenti di roccie",
+        "frammenti di cristalli e frammenti di stelle"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "256",
+    text: "In occasione della festa del 2 giugno 2019, crea molte polemiche una dichiarazione del Presidente della Camera dei Deputati, Roberto Fico, che afferma di dedicare la ricorrenza:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "al tema dell'inclusione",
+        "agli Italiani che lavorano all'estero",
+        "alle ONG",
+        "ai morti per incidenti sul lavoro",
+        "alla parità dei sessi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "257",
+    text: "In quale paese il 1 Gennaio 2014 è entrato in vigore l'Euro come moneta corrente?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Lettonia",
+        "Slovacchia",
+        "Estonia",
+        "Slovenia",
+        "Italia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "258",
+    text: "Il termine \" meme \" indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "una sorta di \" tormentone \" che si diffonde sul web in maniera virale",
+        "un virus informatico",
+        "la definizione tecnica che si dà agli allegati di posta elettronica",
+        "la \" traccia informatica \" che lasciamo ogni volta che visitiamo un sito web",
+        "un tipo di pasta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "259",
+    text: "Oscar Farinetti è il fondatore di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Eataly",
+        "Caffè Borbone",
+        "Yamamay",
+        "Rosso Pomodoro",
+        "Costa Crociere"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "260",
+    text: "Il termine \" hashtag \" indica :",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un tipo di etichetta (tag) utilizzato su alcuni servizi web e social network",
+        "un indirizzo web",
+        "un tipo di account di posta elettronica",
+        "una stampante di ultima generazione",
+        "un tipo di tastiera"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "261",
+    text: "Quale dei protagonisti della serie televisiva \" Gomorra \" è anche autore del libro \" Non volevo diventare un boss \" ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Salvatore Esposito",
+        "Arturo Muselli",
+        "Fabio de Caro",
+        "Gianfranco Gallo",
+        "Riccardo Scamarcio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "262",
+    text: "Chi ricopriva la carica di sindaco di Napoli alla data del 30 settembre 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Luigi De Magistris",
+        "Luigi Di Maio",
+        "Antonio Bassolino",
+        "Vincenzo De Luca",
+        "Marco Rossi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "263",
+    text: "Carola Rackete è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un'attivista che lavora per l'ONG tedesca Sea Watch",
+        "una tennista",
+        "una danzatrice austriaca",
+        "un personaggio della sitcom animata \" I Simpson \"",
+        "una deputata italiana"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "264",
+    text: "La consegna annuale dei premi Oscar avviene a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Los Angeles (California)",
+        "San Francisco (California)",
+        "New York (Stati Uniti)",
+        "Washington (Stati Uniti)",
+        "Londra (Inghilterra)"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "265",
+    text: "Chi ha vinto il Premio Nobel per la Pace nel 2009?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Barack Obama",
+        "Liu Xiaobo",
+        "Al Gore",
+        "Unione Europea",
+        "Papa II"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "266",
+    text: "Chi è stato designato come direttore artistico dell'edizione 2020 del Festival di Sanremo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Amadeus",
+        "Gianni Morandi",
+        "Claudio Baglioni",
+        "Carlo Conti",
+        "Maurizio Costanzo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "267",
+    text: "Kim Jong-un è il leader della Corea del Nord dal _____________, quando suo padre morì per un infarto.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "dicembre 2011",
+        "novembre 2012",
+        "marzo 2016",
+        "febbraio 2009",
+        "novembre 2008"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "268",
+    text: "I reni fanno parte di quale apparato?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Urinario",
+        "Digerente",
+        "Respiratorio",
+        "Circolatorio",
+        "Locomotore"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "269",
+    text: "Cosa è la corteccia in una pianta?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un tessuto di rivestimento spesso e duro che ricopre il fusto",
+        "Un tipo di radice",
+        "Un tessuto molto sottile che riveste le foglie",
+        "Uno strato che riveste esclusivamente il seme",
+        "Una vitamina presente sulle radici"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "270",
+    text: "Quale , tra le seguenti serie tv, nella storia degli Emmy Awards ha vinto più volte il premio come migliore serie drammatica?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il trono di spade",
+        "Breaking Bad",
+        "Dallas",
+        "I Soprano",
+        "Dexter"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "271",
+    text: "Quale pellicola è stata premiata con l'Oscar per il miglior film nel 2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Green Book",
+        "Joker",
+        "Bohemian Rhapsody",
+        "A star is borne",
+        "Avatar"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "272",
+    text: "Quale squadra fu vincitrice della \"Champions League\", nella stagione 2018-2019?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Liverpool",
+        "Real Madrid",
+        "PSG",
+        "Inter",
+        "Chelsea"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "273",
+    text: "In quale anno morì Bernardo Provenzano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "2016",
+        "2014",
+        "2008",
+        "2010",
+        "2015"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "274",
+    text: "Uno delle seguenti scuderie nel Campionato mondiale di Formula 1 del 2008 si è aggiudicò il Campionato Costruttori, qual è?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ferrari",
+        "Lotus",
+        "McLaren",
+        "Williams",
+        "Alfa Romeo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "275",
+    text: "Quale grande azienda dei media ha acquistato, nel 2012, la LucasFilm, la società cinematografica che produsse Guerre stellari?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Disney",
+        "Warner Bros",
+        "DreamWorks",
+        "Apple",
+        "Amazon"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "276",
+    text: "Il 2 giugno 2019 la Repubblica Italiana ha compiuto:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "73 anni",
+        "150 anni",
+        "82 anni",
+        "50 anni",
+        "144 anni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "277",
+    text: "Quale tra le piante seguenti è un sempreverde?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il pungitopo",
+        "Il tulipano",
+        "Il garofano",
+        "Il giglio",
+        "La margherita"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "278",
+    text: "In che anno si sono tenute le celebrazioni del 150° anniversario dell'Unità d'Italia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "2011",
+        "2012",
+        "2010",
+        "2009",
+        "2020"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "279",
+    text: "Qual è il significato della parola astenia?:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "assenza di forze",
+        "aumento di forze",
+        "presenza di forze",
+        "diminuzione di forze",
+        "Aumento di energia libera"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "280",
+    text: "Il simbolo chimico dello Zirconio è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Zr",
+        "Zu",
+        "U",
+        "Ga",
+        "Cu"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "281",
+    text: "Quale tra i seguenti è un cambiamento di stato?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Evaporazione",
+        "Elettrolisi",
+        "Salificazione",
+        "Combustione",
+        "Elettroforesi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "282",
+    text: "Dove si trova la faglia sismica di Sant'Andrea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "California",
+        "Florida",
+        "Sri Lanka",
+        "Cile",
+        "Polonia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "283",
+    text: "Da cosa è causato l'alternarsi delle stagioni?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "l'inclinazione dell'asse terrestre rispetto alla normale al piano dell'orbita",
+        "la variazione della distanza tra Sole e Terra",
+        "variazioni del flusso bolometrico del Sole",
+        "le variazioni di periodo annuale dell'eccentricità dell'orbita terrestre",
+        "la varizione della distanza tra il sole ed i pianeti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "284",
+    text: "Cos è la Duttilità di un metallo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "è la capacità dei metalli d'essere ridotti in filo più o meno sottile per mezzo di trafile",
+        "è l'attitudine a riprendere la forma primitiva dopo una deformazione momentanea prodotta da un'azione meccanica esterna",
+        "è la proprietà di lasciarsi ridurre in lamine più o meno sottili per compressione a mezzo laminatoio, maglio o martello",
+        "è la sua durezza",
+        "è la capacità di attrarre verso di sé particelle di zinco"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "285",
+    text: "Quale pianeta tra i seguenti viene chiamato “il Pianeta Rosso”?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Marte",
+        "Saturno",
+        "Giove",
+        "Mercurio",
+        "Nettuno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "286",
+    text: "Quali elementi comprende il gruppo dei gas nobili?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "elio, neon, argon, kripton, xeno e radon",
+        "neon, argon, kripton, xeno e radon",
+        "elio, neon, argon, kripton e xeno",
+        "argon, kripton e xeno",
+        "argon, xeno e zinco"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "287",
+    text: "Cos è la macchia mediterranea?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un bioma",
+        "un insieme di animali",
+        "una popolazione",
+        "un insieme di flora e fauna",
+        "un insieme di specie di uccelli rari"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "288",
+    text: "Indicare tra i seguenti quale non fa parte dello scheletro umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Muscolo estensore",
+        "Falange",
+        "Sterno",
+        "Calcagno",
+        "Tibia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "289",
+    text: "Cosa si muove intorno al nucleo dell'atomo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "elettroni",
+        "protoni",
+        "neutroni",
+        "dna",
+        "mesosomi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "290",
+    text: "Per quale grande scoperta Rita Levi Montalcini ha meritato il premio Nobel per la Medicina?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il fattore della crescita delle cellule nervose",
+        "Le basi genetiche dell'Alzheimer",
+        "L'apparecchio di risonanza magnetica nucleare",
+        "Un nuovo farmaco per la cura dei tumori cerebrali",
+        "Un farmaco contro la demenza senile"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "291",
+    text: "Le ossa più piccole del corpo umano si trovano:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Nell'orecchio",
+        "Nella mano",
+        "Nel collo",
+        "Nell'occhio",
+        "Nella spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "292",
+    text: "Dove sono la staffa, l'incudine e il martello nei mammiferi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "i tre ossicini contenuti dell'orecchio medio",
+        "le tre membrane dell'orecchio",
+        "tre segmenti ossei dello sterno",
+        "le tre vertebre finali dello scheletro",
+        "le tre ossa della spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "293",
+    text: "Cosa produciamo se cambiamo il numero di elettroni di un atomo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "uno ione",
+        "un elemento diverso",
+        "un isotopo",
+        "lo stesso elemento, ma con massa atomica diversa",
+        "un catione carico positivamente"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "294",
+    text: "La differenza tra una stella e un pianeta è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La capacità di emettere luce propria, le stelle, infatti, brillano di luce propria, al contrario dei pianeti",
+        "La dimensione, le stelle hanno dimensioni decisamente più ridotte dei pianeti",
+        "La temperatura, le stelle al contrario dei pianeti hanno una temperatura molto più bassa",
+        "La composizione del suolo, le stelle al contrario dei pianeti hanno una composizione di origine ferrosa",
+        "La capacità delle stelle è quella di produrre gas nobili al contrario dei pianeti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "295",
+    text: "Qual è il nome del fisico italiano che ha dato il nome al neutrino?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Enrico Fermi",
+        "Carlo Rubbia",
+        "Galileo Galilei",
+        "Alessandro Volta",
+        "Marie Curie"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "296",
+    text: "Dove passa il meridiano zero?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Greenwich",
+        "New York",
+        "L' equatore",
+        "Roma",
+        "Milano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "297",
+    text: "Come sono chiamati gli anelli intorno a Saturno ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "planetari",
+        "anelli stellari",
+        "ellittici",
+        "toroidali",
+        "Elicostellari"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "298",
+    text: "Fra i seguenti metalli, quale ha il minore peso specifico?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Zinco",
+        "Manganese",
+        "Cromo",
+        "Stagno",
+        "Acqua a 0 gradi Centrigradi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "299",
+    text: "Tra i seguenti materiali, quale ha il peso specifico maggiore?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Acciaio",
+        "Ghisa",
+        "Stagno",
+        "Cemento",
+        "Acqua a 0 gradi Centrigradi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "300",
+    text: "Tra i seguenti materiali, quale ha il peso specifico maggiore?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Celluloide",
+        "Cera",
+        "Catrame",
+        "Cenere",
+        "Elio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "301",
+    text: "Se l'unità di misura di un grado Celsius corrisponde a 1,8 gradi Fahrenheit e se i valori per il punto di congelamento dell'acqua sono 0° C e 32° F, a quanto corrispondono 146° C?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "294,8° F",
+        "326,8° F",
+        "320,4° F",
+        "113,1° F",
+        "200,5 ° F"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "302",
+    text: "Nel vuoto la velocità della luce è circa pari a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "300000 Km/s",
+        "300000 m/s",
+        "300000 cm/s",
+        "300000 Km/h",
+        "350000 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "303",
+    text: "I tronchi nervosi di quale sistema nervoso fanno parte?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "periferico",
+        "del tronco dell’encefalo",
+        "centrale",
+        "del midollo spinale",
+        "del cervelletto"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "304",
+    text: "Quale paese ha vinto più volte la Palma d'oro come miglior film al Festival di Cannes?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Stati Uniti",
+        "Francia",
+        "Italia",
+        "Germania",
+        "Regno Unito"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "305",
+    text: "Giulio Regeni era un ricercatore italiano dell'Università di Cambridge rapito:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il 25 gennaio 2016; il suo corpo fu ritrovato il 3 febbraio successivo",
+        "il 25 gennaio 2016; il suo corpo non fu mai ritrovato",
+        "il 25 gennaio 2015; il suo corpo fu ritrovato il 3 febbraio successivo",
+        "il 25 gennaio 2014; il suo corpo fu ritrovato il 3 febbraio successivo",
+        "il 25 gennaio 2018; il suo corpo fu ritrovato il 3 febbraio successivo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "306",
+    text: "Il 26 giugno 2015 gli Stati Uniti:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "hanno approvato i matrimoni gay all'interno dell'intera federazione",
+        "hanno bocciato le leggi sulle unioni civili che i singoli stati avevano precedentemente approvato",
+        "hanno approvato le unioni civili solo nella costa occidentale",
+        "hanno approvato le unioni civili in California",
+        "hanno approvato le unioni civili solo in Messico"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "307",
+    text: "Se una soluzione possiede un ph = 2 è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "acida",
+        "neutra",
+        "in eccesso di ossidrilione",
+        "basica",
+        "ossibasica"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "308",
+    text: "Cosa studia la dinamica?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "le relazioni tra i movimenti e le forze che li provocano",
+        "l’accelerazione di un corpo",
+        "la stabilità di un corpo",
+        "La velocità in condizioni di temperature elevate di un corpo",
+        "la spinta di un corpo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "309",
+    text: "Indicare tra questi animali quale non è un carnivoro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pecora",
+        "Ramarro",
+        "Ermellino",
+        "Donnola",
+        "Orca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "310",
+    text: "In una pallina il moto della caduta è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "uniformemente accelerato",
+        "rettilineo uniforme",
+        "lentamente accelerato",
+        "parabolico",
+        "perpedicolare accelerato"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "311",
+    text: "Indicare tra i seguenti quale non fa parte dello scheletro umano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Tricipite brachiale",
+        "Clavicola",
+        "Femore",
+        "Osso Temporale",
+        "Tibia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "312",
+    text: "Indicare la pianta che è caratteristica della Savana.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Baobab",
+        "Quercia",
+        "Pino",
+        "Leccio",
+        "Abete"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "313",
+    text: "La funzione del fiore in una pianta è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La riproduzione",
+        "Esclusivamente l'assorbimento di acqua dall'atmosfera",
+        "Esclusivamente la produzione di sostanze con funzione ormonale",
+        "Esclusivamente la difesa dai parassiti",
+        "la formazione di gas"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "314",
+    text: "La causa principale delle morie di pesci nei fiumi inquinati dai fertilizzanti è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La diminuzione dei livelli di ossigeno",
+        "L'aumento di temperatura dell'acqua",
+        "L'aumento del livello dell'acqua",
+        "La diminuzione dei minerali",
+        "La diminuzione dei livelli di mercurio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "315",
+    text: "Cosa sono i cefalopodi marini?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "molluschi",
+        "crostacei",
+        "piante e alghe",
+        "Vertebrati",
+        "Mammiferi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "316",
+    text: "Se sappiamo che l'unità di misura di un grado Celsius corrisponde a 1,8 gradi Fahrenheit e se i valori per il punto di congelamento dell'acqua sono 0° C e 32° F, a quanto corrispondono 31° C?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "87,8° F",
+        "119,8° F",
+        "113,4° F",
+        "49,2° F",
+        "75,2° F"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "317",
+    text: "I pesci:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "respirano tramite branchie",
+        "respirano tramite polmoni",
+        "respirano esclusivamente tramite la vescica natatoria",
+        "durante la notte escono dall'acqua per respirare",
+        "respirano tramite delle vene"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "318",
+    text: "La riproduzione dei mammiferi:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sono vivipari e hanno la riproduzione sessuata",
+        "Sono ovipari e hanno riproduzione asessuata",
+        "Hanno riproduzione sessuata e asessuata",
+        "hanno riproduzione cellulare unilaterale",
+        "hanno riproduzione cellulare asessuata bilaterale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "319",
+    text: "Dove si trovano le falangi nel corpo umano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "nei piedi e nelle mani",
+        "nella colonna vertebrale",
+        "nella gabbia toracica",
+        "nella coscia",
+        "nella spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "320",
+    text: "Quale funzione svolgono nelle piante le foglie?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "effettuare la fotosintesi",
+        "mantenere la pianta ancorata al terreno",
+        "permettere la riproduzione",
+        "assorbire sostanze nutritive dal terreno",
+        "producono gas nobili"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "321",
+    text: "Cos è il Rame?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "l’unico metallo di color rosso",
+        "è un metallo di colore giallo",
+        "è un metallo di colore verde",
+        "non è un metallo",
+        "l'unico non metallo di colore giallo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "322",
+    text: "Indicare quale degli organi seguenti non fa parte dell'apparato cardiocircolatorio.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Il pancreas",
+        "La vena giugulare",
+        "L'arteria carotide",
+        "Il cuore",
+        "L'arteria femorale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "323",
+    text: "Gli ortaggi e la frutta sono la miglior fonte di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "acqua",
+        "vitamina E",
+        "vitamina D",
+        "amido",
+        "vitamina B1"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "324",
+    text: "Qual è la sequenza dello sviluppo degli esseri viventi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "cellule, tessuti, organi, sistemi",
+        "tessuti, cellule, sistemi, organi",
+        "sistemi, tessuti, cellule, organi",
+        "organi, cellule, tessuti, sistemi",
+        "sistemi, organi, cellule, tessuti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "325",
+    text: "Da cosa sono composti i pianeti gassosi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "da un nucleo roccioso circondato da un mantello liquido, a sua volta ricoperto da uno spesso strato di gas",
+        "da un nucleo di roccia, ricoperto da uno strato di ghiaccio, il tutto circondato da un'atmosfera",
+        "da un nucleo di roccia circondato da un'atmosfera",
+        "da un nucleo roccioso ricoperto da uno spesso strato di gas",
+        "da un nucleo contenente zinco elio e idrogeno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "326",
+    text: "Tra i seguenti il pianeta più vicino al Sole è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Mercurio",
+        "Urano",
+        "Venere",
+        "Giove",
+        "Nettuno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "327",
+    text: "L’osso più lungo di tutto il corpo è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Femore",
+        "Tibia",
+        "Perone",
+        "Ulna",
+        "Scapola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "328",
+    text: "Indicare tra le seguenti strutture quale non fa parte dell'occhio umano.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "La staffa",
+        "L'iride",
+        "La retina",
+        "La pupilla",
+        "La cornea"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "329",
+    text: "Indicare il metallo che ha il punto di fusione più elevato.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Silicio",
+        "Rame",
+        "Oro",
+        "Alluminio",
+        "ghiaccio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "330",
+    text: "Quale degli animali seguenti appartiene all'ordine degli artiodattili?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la capra",
+        "la mangusta",
+        "la zebra",
+        "l'orso",
+        "topo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "331",
+    text: "Indicare tra i seguenti animali quale non è un mammifero:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la Poiana",
+        "il Facocero",
+        "l'Orso",
+        "l'Ornitorinco",
+        "la mucca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "332",
+    text: "Indicare tra i seguenti animali quale non è un mammifero:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la Nocciolaia",
+        "lo Scimpanzé",
+        "il Bufalo",
+        "la Giraffa",
+        "la iena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "333",
+    text: "Quale osso fa parte del cranio ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "palatino",
+        "navicolare",
+        "trapezoide",
+        "perone",
+        "tibia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "334",
+    text: "Nel 650 Otto von Guericke inventò:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la pompa pneumatica per la creazione del vuoto",
+        "il motore a vapore",
+        "il compasso geometrico",
+        "la stampa a caratteri mobili",
+        "la sedia a dondolo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "335",
+    text: "Quale osso fa parte del cranio umano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "occipitale",
+        "ulna",
+        "piramidale",
+        "cuboide",
+        "Tiroide"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "336",
+    text: "L' osso temporale fa parte:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "del cranio",
+        "del piede",
+        "del cinto scapolare",
+        "della mano",
+        "della spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "337",
+    text: "Il perone fa parte:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "degli arti inferiori",
+        "del torace",
+        "della mano",
+        "del piede",
+        "degli arti superiori"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "338",
+    text: "Quale animale appartiene all'ordine degli artiodattili:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il bufalo",
+        "il puma",
+        "il tapiro",
+        "il zibetto",
+        "la lucertola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "339",
+    text: "che cosa è l'argano ?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "una macchina semplice che sfrutta il principio del tornio utilizzata per sollevare carichi pesanti",
+        "è una leva",
+        "è una leva di primo tipo",
+        "funziona attraverso un meccanismo che sfrutta l'inerzia",
+        "si basa su una asta rigida che ruota intorno ad un fulcro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "340",
+    text: "A quanto viaggia un'automobile americana se segna sul tachimetro 52 Mph (miglia orari)?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "84 Km/h",
+        "28 Km/h",
+        "96 Km/h",
+        "32 Km/h",
+        "35 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "341",
+    text: "Nel 1867 Alfred Nobel inventò:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la dinamite",
+        "l'orologio da tasca",
+        "i logaritmi",
+        "la bussola",
+        "i decimali"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "342",
+    text: "Quale tra i seguenti animali appartiene all'ordine degli artiodattili?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il dromedario",
+        "il tapiro",
+        "il ghepardo",
+        "l'elefante",
+        "La papera"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "343",
+    text: "Appartengono all'apparato endocrino:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "le isole di Langerhans",
+        "le ghiandole salivari",
+        "le tonsille",
+        "i leucociti",
+        "i linfociti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "344",
+    text: "Il simbolo del Platino è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Pt",
+        "Pl",
+        "Po",
+        "Pn",
+        "Pc"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "345",
+    text: "I mammiferi respirano:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "con due polmoni",
+        "con le branchie",
+        "sia con le branchie sia con i polmoni",
+        "con le valvole del cuore",
+        "con le vene"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "346",
+    text: "Come è definito il genotipo dei maschi di tutti i mammiferi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "emizigote",
+        "omozigote",
+        "eterozigote",
+        "dominante",
+        "eterotipo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "347",
+    text: "La bile è prodotta da quale organo del corpo umano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Fegato",
+        "Pancreas",
+        "Milza",
+        "Reni",
+        "Cistifellea"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "348",
+    text: "Il principale nutrimento degli erbivori detti granivori sono:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "i semi",
+        "i frutti",
+        "le foglie",
+        "l' erba",
+        "il terriccio"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "349",
+    text: "La \"cellulosa\" è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Una fibra vegetale",
+        "Un monosaccaride molto importante",
+        "Una proteina",
+        "Un enzima",
+        "un amminoacido"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "350",
+    text: "Indicare quale tra questi animali non è un ruminante.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ippopotamo",
+        "Cervo",
+        "Mucca",
+        "Giraffa",
+        "Pecora"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "351",
+    text: "Indicare tra questi animali qual è un erbivoro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Rinoceronte",
+        "Faina",
+        "Ghepardo",
+        "Leone",
+        "Iena"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "352",
+    text: "Indicare tra questi animali qual è un erbivoro.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Porcospino",
+        "Faina",
+        "Ghepardo",
+        "Iena",
+        "Cane"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "353",
+    text: "Indicare tra questi animali qual è un felide.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ghepardo",
+        "Iena",
+        "Foca",
+        "Procione",
+        "Oca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "354",
+    text: "Appartengono al sistema immunitario:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il midollo osseo",
+        "i peli",
+        "le ghiandole surrenali",
+        "le vie biliari",
+        "le tre ossa della spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "355",
+    text: "Quale tra le seguenti è un'unità di misura per l'area?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la centiara",
+        "il litro",
+        "la libbra",
+        "il Reaumur",
+        "la tonnellata"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "356",
+    text: "Quale dei seguenti premi letterari ha a che fare con la città di Venezia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Campiello",
+        "Bancarella",
+        "Strega",
+        "Lovecraft",
+        "Illustre"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "357",
+    text: "Se sappiamo che l'unità di misura di un grado Celsius corrisponde a 1,8 gradi Fahrenheit e se i valori per il punto di congelamento dell'acqua sono 0° C e 32° F, a quanto corrispondono 33° C?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "91,4° F",
+        "123,4° F",
+        "117° F",
+        "50,3° F",
+        "78,3° F"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "358",
+    text: "Se un'automobile americana segna sul tachimetro 129 Mph (migliaorarie). Sta viaggiando, a circa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "208 Km/h",
+        "239 Km/h",
+        "70 Km/h",
+        "80 Km/h",
+        "120 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "359",
+    text: "Il simbolo del Tantalio è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ta",
+        "Tn",
+        "Tt",
+        "Tl",
+        "Ti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "360",
+    text: "Se un'automobile americana segna sul tachimetro 28 Mph (miglia orarie). Sta viaggiando,a circa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "45 Km/h",
+        "52 Km/h",
+        "15 Km/h",
+        "17 Km/h",
+        "57 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "361",
+    text: "Quale dei seguenti appartiene all'ordine dei perissodattili?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il mulo",
+        "l'orso",
+        "la iena",
+        "il bufalo",
+        "la lucertola"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "362",
+    text: "Indicare tra i seguenti animali quello che corre più veloce.",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ghepardo",
+        "Gnu",
+        "Coyote",
+        "Lupo grigio",
+        "Orso bruno"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "363",
+    text: "Nel 1714 Henry Mill inventò:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "la macchina da scrivere",
+        "la navetta per telai",
+        "l'aerostato con equipaggio",
+        "la carta carbone",
+        "la penna ad inchiostro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "364",
+    text: "Quale tra i seguenti animali non è un mammifero?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il Pinguino",
+        "il Castoro",
+        "la Lepre",
+        "la Lince",
+        "Il leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "365",
+    text: "A circa quale distanza si è verificato un fulmine, se lo si scorge e si sente il relativo tuono dopo 36 secondi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "12 km",
+        "36 km",
+        "7,2 km",
+        "9 km",
+        "22 Km"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "366",
+    text: "Fra i seguenti gas, quale ha il punto di fusione più basso?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Elio",
+        "Azoto",
+        "Ossigeno",
+        "Idrogeno",
+        "Argon"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "367",
+    text: "Lo schiaccianoci è una leva:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "di secondo tipo",
+        "di primo tipo",
+        "di terzo tipo",
+        "non è una leva",
+        "di quarto tipo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "368",
+    text: "Il piramidale nello scheletro adulto fa parte:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "della mano",
+        "del torace",
+        "del cranio",
+        "del piede",
+        "del cervelletto"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "369",
+    text: "La vanga che tipo di leva è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "di primo tipo",
+        "di secondo tipo",
+        "non è una leva",
+        "di terzo tipo",
+        "di quarto tipo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "370",
+    text: "Che tipo di leva è il remo da kayak (dove il fulcro è rappresentato dalle mani):",
+    topic: "CULTURA GENERALE",
+    options: [
+        "di primo tipo",
+        "di secondo tipo",
+        "non è una leva",
+        "di terzo tipo",
+        "di quarto tipo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "371",
+    text: "Quale delle seguenti è un'unità di misura per il volume?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il decimetro cubo",
+        "il Celsius",
+        "la tonnellata",
+        "il chilometro quadrato",
+        "il litro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "372",
+    text: "Quale osso fa parte del cranio nello scheletro adulto?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "etmoide",
+        "trapezio",
+        "tibia",
+        "astragalo",
+        "deltoide"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "373",
+    text: "Se sappiamo che l'unità di misura di un grado Celsius corrisponde a 1,8 gradi Fahrenheit e che i valori per il punto di congelamento dell'acqua sono 0° C e 32° F, a quanto corrispondono 180° C?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "356° F",
+        "132° F",
+        "388° F",
+        "381,6° F",
+        "402,6° F"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "374",
+    text: "Nel 1656 Christiaan Huygens inventò?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "l'orologio a pendolo",
+        "la pentola a pressione",
+        "la macchina da scrivere",
+        "la navetta per telai",
+        "La macchina da cucire"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "375",
+    text: "Quale osso fa parte del cranio nello scheletro adulto?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "sfenoide",
+        "pisiforme",
+        "sterno",
+        "femore",
+        "Tibia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "376",
+    text: "La vita media di un furetto è di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "8-10 anni",
+        "12-14 anni",
+        "18-20 anni",
+        "25-30 anni",
+        "30-35 anni"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "377",
+    text: "Se un'automobile americana segna sul tachimetro 163 Mph (miglia orarie). Sta viaggiando, a circa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "262 Km/h",
+        "101 Km/h",
+        "302 Km/h",
+        "88 Km/h",
+        "150 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "378",
+    text: "Quale tra i seguenti animali non è un mammifero?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il Balestruccio",
+        "il Caracal",
+        "la Scimmia",
+        "la Balenottera",
+        "Il leone"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "379",
+    text: "Quale delle seguenti è un'unità di misura per la distanza?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il piede",
+        "il Reaumur",
+        "il pollice cubo",
+        "l'oncia",
+        "il chilogrammo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "380",
+    text: "Se un'automobile americana segna sul tachimetro 132 Mph (miglia orarie). Sta viaggiando, a circa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "212 Km/h",
+        "82 Km/h",
+        "244 Km/h",
+        "71 Km/h",
+        "102 Km/h"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "381",
+    text: "L'osso occipitale nello scheletro adulto fa parte:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "del cranio",
+        "della mano",
+        "del torace",
+        "del piede",
+        "della spalla"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "382",
+    text: "Quale termine indica l'insieme delle azioni volte a ridurre gli sprechi nella spesa pubblica?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "spending review",
+        "dumping",
+        "cash flow",
+        "demurrage",
+        "inflazione"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "383",
+    text: "Che cos'è Telethon?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "In Italia è una fondazione per la raccolta di fondi per combattere le malattie genetiche",
+        "Una maratona sportiva",
+        "Un sistema di finanziamento bancario",
+        "Un varietà della RAI",
+        "Un telegiornale locale"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "384",
+    text: "L'energia elettromagnetica nel processo di fotosintesi viene convertita in energia:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "chimica",
+        "elettrica",
+        "meccanica",
+        "nucleare",
+        "solare"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "385",
+    text: "Beatrice Lorenzin ha avuto l'incarico, prima nel Governo Letta (2013-2014) e poi nel Governo Renzi (2014), di Ministro:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "della Salute",
+        "dei Rapporti con il Parlamento",
+        "della Famiglia",
+        "delle Pari Opportunità",
+        "dell'Economia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "386",
+    text: "Nel 2011, quale ministro è stato nominato Ministro dello Sviluppo Economico e Infrastrutture e Trasporti nel Governo Monti?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Corrado Passera",
+        "Fabrizio Barca",
+        "Francesco Profumo",
+        "Piero Giarda",
+        "Marco Barca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "387",
+    text: "Come si chiama la leader ucraina della cosiddetta \"Rivoluzione Arancione\", liberata nel febbraio 2014?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Julia Tymošenko",
+        "Ludmila Telegina",
+        "Yevhenia Tymošenko",
+        "Mata Hari",
+        "Liu Xiaobo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "388",
+    text: "Nel 2010 un violento terremoto ha causato oltre 200.000 vittime: in quale Paese è avvenuto?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Haiti",
+        "Vietnam",
+        "Cambogia",
+        "Turchia",
+        "Australia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "389",
+    text: "Quale è il Paese organizzatore dei Giochi della XXXII Olimpiade nel 2020?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Giappone",
+        "Russia",
+        "Grecia",
+        "Brasile",
+        "Francia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "390",
+    text: "Nel 2014 chi era il Presidente del Brasile?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Dilma Rousseff",
+        "Luiz Inácio Lula da Silva",
+        "Aécio Neves",
+        "Cristina Fernández de Kirchner",
+        "Julia Tymošenko"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "391",
+    text: "A causa della pandemia un evento è stato rinviato più volte, riuscendo a svolgersi solo nel 2022, dal 22 al 26 maggio, in Svizzera, a Davos-Klosters. Si tratta:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "del World Economic Forum (WEF)",
+        "della Cop26, Conferenza delle Nazioni Unite sui cambiamenti climatici",
+        "del Summit Mondiale sulla Sostenibilità Ambientale",
+        "del Festival del Cinema verde",
+        "del primo concorso di bellezza riservato alle persone LGBTQ"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "392",
+    text: "Cerere, visitato nel 2015 da una sonda della Nasa, è un pianeta di che tipo:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "nano",
+        "gigante",
+        "microbico",
+        "mastodontico",
+        "microscopico"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "393",
+    text: "Nel luglio 2011 un violento attentato da parte di Anders Breivik che ha provocato la morte di 77 persone, ha colpito quale Stato:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Norvegia",
+        "Finlandia",
+        "Svezia",
+        "Danimarca",
+        "Lettonia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "394",
+    text: "Alla data del 16 ottobre 2019, Stefano Patuanelli ricopriva la carica di:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ministro dello Sviluppo Economico",
+        "Ministro del Lavoro",
+        "Ministro della Difesa",
+        "Presidente del Consiglio",
+        "Presidente della Repubblica"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "395",
+    text: "La \"riforma Gelmini\" fa riferimento:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "istruzione",
+        "ambiente",
+        "sistema pensionistico",
+        "lavoro",
+        "viaggi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "396",
+    text: "Qual è il termine usato per indicare le informazioni distorte o inventate?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "fake news",
+        "gossip",
+        "blog",
+        "influencer",
+        "youtuber"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "397",
+    text: "Il film \" El Camino \" è il sequel della serie tv:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Breaking Bad",
+        "Better call Saul",
+        "Stranger Things",
+        "Narcos",
+        "Dark"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "398",
+    text: "Il termine \" troll \" indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un soggeto che disturba una discussione in internet",
+        "un soggetto che si serve dei social network per diffondere espressioni di odio",
+        "un soggetto che viola una rete informatica protetta",
+        "un programma per scaricare musica illegalmente",
+        "un soggetto che si serve dei social network per diffondere espressioni di pace"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "399",
+    text: "Nel 2019 in Italia è nato il primo corso universitario per:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "influencer",
+        "curatori di gispoteche",
+        "enogastronomi",
+        "social manager",
+        "commercialisti"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "400",
+    text: "Il termine \" xenofobia \" indica:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "ostilità nei confronti degli stranieri",
+        "paura dei luoghi all'aperto",
+        "paura dei luoghi chiusi",
+        "paura dell'altezza",
+        "paura di volare"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "401",
+    text: "Quando si parla di \" fuga di cervelli \" ci si riferisce:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "all'emigrazione verso Paesi stranieri di soggetti altamente qualificati",
+        "alla diffusione di lavori per i quali sono richieste scarse competenze professionali",
+        "alla mancanza di offerte di lavoro specializzato",
+        "al traffico di organi",
+        "all'emigrazione verso Paesi stranieri di bambini qualificati"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "402",
+    text: "Giffoni, in provincia di Salerno, è famosa per:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il festival del cinema per ragazzi",
+        "le terme di epoca Romana",
+        "la produzione di kiwi",
+        "la produzione di porcellane",
+        "il festival del cinema per anziani"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "403",
+    text: "Il più lungo tronco autostradale italiano in esercizio è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "l'Autostrada del Sole",
+        "l'Autostrada del Mediterraneo",
+        "l'Autostrada dei Laghi",
+        "l'Autostrada adriatica",
+        "l'Autostrada dei Fiumi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "404",
+    text: "Il \" Russiagate \":",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un'inchiesta giudiziaria",
+        "è uno scandalo politico-sessuale",
+        "una storia di spionaggio che ha coinvolto il servizio segreto inglese",
+        "un gate dell'aeroporto russo",
+        "un programma televisivo russo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "405",
+    text: "La moneta da 1 euro pesa:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "7,5 grammi",
+        "5 grammi",
+        "15 grammi",
+        "10 grammi",
+        "8,5 grammi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "406",
+    text: "\" Autostrade per l'Italia s.p.a. \" fa parte del gruppo:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Atlantia",
+        "GEDI",
+        "Fincantieri",
+        "Luxottica",
+        "Caruso"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "407",
+    text: "Cos'è Charlie Hebdo?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un periodico settimanale satirico francese",
+        "Un quotidiano satirico francese",
+        "Un periodico settimanale satirico belga",
+        "Un quotidiano satirico belga",
+        "Un periodico mensile satirico francese"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "408",
+    text: "Il 15 aprile 2013 due bombe esplodono durante la maratona annuale di quale città:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Boston",
+        "New York",
+        "Berlino",
+        "Londra",
+        "Roma"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "409",
+    text: "La fatturazione elettronica è diventata obbligatoria:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "dal 1° gennaio 2019",
+        "dal 1° luglio 2019",
+        "dal 1° gennaio 2018",
+        "dal 1° marzo 2019",
+        "dal 1° gennaio 2020"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "410",
+    text: "Alla data del 14 ottobre 2019, il presidente di Assolombarda era:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Carlo Bonomi",
+        "Vincenzo Boccia",
+        "Flavio Briatore",
+        "Urbano Cairo",
+        "Luigi Spadafora"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "411",
+    text: "Quale importante innovazione è stata introdotta nei Mondiali di calcio 2018 in Russia?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il VAR",
+        "la goal line technology",
+        "il tempo di gioco effettivo",
+        "il coolink break",
+        "cinque arbitri in campo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "412",
+    text: "L'Agenzia delle Entrate è sottoposta alla vigilanza:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "del MEF",
+        "Dall'Arma dei Carabinieri",
+        "della Ragioneria dello Stato",
+        "della Corte dei Conti",
+        "della Regione"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "413",
+    text: "San Leucio, in provincia di Caserta, è famosa per:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "le seterie",
+        "la produzione di albicocche",
+        "l'industria del legno",
+        "i maestri liutai",
+        "le risaie"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "414",
+    text: "L'attivista svedese per lo sviluppo sostenibile e la difesa dell'ambiente si chiama:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Greta Thunberg",
+        "Greta Van Fleet",
+        "Greta Garbo",
+        "Greta Scacchi",
+        "Greta Casablanca"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "415",
+    text: "L'organizzazione \" Emergency \" è stata fondata da:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Gino Strada",
+        "Roberto Burioni",
+        "Adriano Panzironi",
+        "Bernard Kouchner",
+        "Silvio Berlusconi"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "416",
+    text: "Lo scandalo Weinstein ha dato origine a un movimento chiamato:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "me too",
+        "transfemminismo",
+        "women's power",
+        "women's pride",
+        "me and you"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "417",
+    text: "Nel settembre 2019, quale tipo di provvedimento restrittivo è stato revocato nei confronti dell'ex sindaco di Riace Domenico Lucano?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "divieto di dimora",
+        "arresti domiciliari",
+        "soggiorno obbligato",
+        "nei confronti di Domenico Lucano non è mai stato emesso alcun provvedimento restrittivo",
+        "multa di 100.000 euro"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "418",
+    text: "Kim Jong-un è:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "un leader nord-coreano",
+        "un imperatore giapponese",
+        "un Presidente della Repubblica Popolare Cinese",
+        "un vincitore del Nobel per la letteratura",
+        "un leader thailandese"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "419",
+    text: "Chi ha scritto il romanzo \"Oceano Mare\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Alessandro Baricco",
+        "Niccolò Ammaniti",
+        "Stefano Benni",
+        "Susanna Tamaro",
+        "Federico Moccia"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "420",
+    text: "A seguito di quale operazione la Banca Monte dei Paschi di Siena ha subito un grosso rovescio finanziario?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Acquisizione di Banca Antonveneta",
+        "Acquisizione da parte di Banca Intesa",
+        "Fusione con Unicredit",
+        "Emissione di bond \"tossici\"",
+        "Fusione con BPER"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "421",
+    text: "Dopo essere approdato in Parlamento nel 1996, col ruolo di Presidente della commissione Bilancio della Camera dal 2001 al 2006 e dal 2008 al 2013, Giancarlo Giorgetti è stato nominato:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ministro dell'Economia e delle Finanze, il 22 ottobre 2022",
+        "Ministro delle Imprese e Made in Italy, il 22 ottobre 2022",
+        "Consulente delle società unificate statali, il 22 ottobre 2022",
+        "Presidente dell'Aifa, il 22 ottobre 2022",
+        "Presidente dell'Agenas, il 22 ottobre 2022"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "422",
+    text: "Chi dei seguenti Ministri del Governo Letta dette le dimissioni il 24 giugno 2013?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Iosefa Idem",
+        "Gaetano Quagliariello",
+        "Stefano Fassina",
+        "Nunzia De Girolamo",
+        "Franco Califano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "423",
+    text: "Il 29 ottobre 2013 è stato inaugurato il primo tunnel sottomarino che collega due continenti. Esso passa sotto quale stretto:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "il Bosforo",
+        "la Manica",
+        "lo stretto di Gibilterra",
+        "il canale di Suez",
+        "il canal lungo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "424",
+    text: "Quale regione italiana è stata colpita da un violento ciclone (chiamato \"Cleopatra\") nel novembre 2013, provocando numerosi morti?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Sardegna",
+        "Liguria",
+        "Sicilia",
+        "Lombardia",
+        "Valle d'Aosta"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "425",
+    text: "Che cos'è l' \"Alba Dorata\"?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Un partito greco di estrema destra",
+        "Un movimento fondamentalista islamico",
+        "Un movimento internazionale altermondalista",
+        "Un partito populista francese",
+        "Un partito greco di estrema sinistra"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "426",
+    text: "Il 27 aprile 2014 è avvenuta la canonizzazione di quali papi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Giovanni XXIII e Giovanni Paolo II",
+        "Paolo VI e Pio XI",
+        "Giovanni Paolo I e Giovanni Paolo II",
+        "Pio XII e Giovanni Paolo II",
+        "Pio e Giovanni Paolo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "427",
+    text: "Chi è Alice Munro?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Una scrittrice, premio Nobel per la letteratura",
+        "Una manager di una multinazionale",
+        "Un'attrice di teatro",
+        "Una giornalista e attivista",
+        "Una ballerina della scala di Milano"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "428",
+    text: "Quale tra questi personaggi non ha vinto il premio Nobel?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Margherita Hack",
+        "Rita-Levi Montalcini",
+        "Giosuè Carducci",
+        "Luigi Pirandello",
+        "Albert Einstein"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "429",
+    text: "Quale Paese ha assunto la Presidenza dell'Unione Europea nel secondo semestre del 2014?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Italia",
+        "Germania",
+        "Irlanda",
+        "Spagna",
+        "Portogallo"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "430",
+    text: "In quale Paese è stato abbattuto un aereo di linea (Volo Malaysia Airlines 17) nel luglio del 2014?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Ucraina",
+        "Iraq",
+        "Russia",
+        "Iran",
+        "Spagna"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "431",
+    text: "Quale movimento politico ha ottenuto la maggioranza relativa dei seggi alle elezioni Europee del 2014?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "PPE",
+        "SD",
+        "ADLE",
+        "ECR",
+        "ACA"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "432",
+    text: "Come viene comunemente chiamata la serie di proteste cominciata tra la fine del 2010 e l'inizio del 2011 nei paesi arabi?",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Primavera araba",
+        "Inverno arabo",
+        "Estate araba",
+        "Jihād",
+        "Airan"
+    ],
+    correctAnswerIndex: 0,
+    explanation: "",
+    difficulty: 'Medium',
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    isFavorite: 0
+}
+Question {
+    id: "433",
+    text: "Il Nobel per la pace 2019 è stato assegnato a:",
+    topic: "CULTURA GENERALE",
+    options: [
+        "Abiy Ahmed",
+        "Angela Merkel",
+        "Papa

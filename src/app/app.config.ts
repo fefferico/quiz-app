@@ -1,9 +1,20 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-
+// src/app/app.config.ts
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { provideRouter, TitleStrategy } from '@angular/router'; // Import TitleStrategy
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+// import { HttpClientModule } from '@angular/common/http'; // If you need HttpClient later
+
+// Optional: Custom Title Strategy
+import { FeedbackService } from './core/services/template-page-title-strategy.service';
+import { provideHttpClient } from '@angular/common/http';
+
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(routes), provideClientHydration(withEventReplay())]
+  providers: [
+    provideRouter(routes),
+    provideHttpClient(),
+    // provideHttpClient(), // Example if you were to use HttpClient
+    //{ provide: TitleStrategy, useClass: FeedbackService } // For dynamic page titles
+    // DatabaseService is already providedIn: 'root'
+  ]
 };

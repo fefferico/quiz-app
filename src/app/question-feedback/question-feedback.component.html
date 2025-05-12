@@ -1,0 +1,40 @@
+<button (click)="openFeedbackModal()" class="feedback-trigger-button" aria-label="Segnala un problema con questa domanda">
+  <!-- Icon (e.g., flag) or text -->
+  Segnala
+</button>
+
+<div *ngIf="isModalOpen" class="feedback-modal-overlay">
+  <div class="feedback-modal-content">
+    <h4>Segnala un Problema <span class="close-modal-button" (click)="closeFeedbackModal()">X</span></h4>
+    <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
+      <div class="form-group">
+        <input type="checkbox" id="mark-incorrect-{{questionId}}" formControlName="isMarkedIncorrect">
+        <label for="mark-incorrect-{{questionId}}">Domanda errata o problematica</label>
+      </div>
+
+      <div class="form-group">
+        <label for="reason-{{questionId}}">Motivazione (opzionale):</label>
+        <textarea id="reason-{{questionId}}" formControlName="reasonText" rows="3" placeholder="Descrivi il problema..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="suggestion-{{questionId}}">Suggerimento (opzionale):</label>
+        <textarea id="suggestion-{{questionId}}" formControlName="suggestedCorrectionText" rows="3" placeholder="Qual è la risposta/spiegazione corretta?"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="isLoading">
+          {{ isLoading ? 'Invio in corso...' : 'Invia Segnalazione' }}
+        </button>
+        <button type="button" (click)="closeFeedbackModal()" [disabled]="isLoading">Annulla</button>
+      </div>
+
+      <div *ngIf="submitError" class="error-message">
+        {{ submitError }}
+      </div>
+      <div *ngIf="submitSuccess" class="success-message">
+        {{ submitSuccess }}
+      </div>
+    </form>
+  </div>
+</div>

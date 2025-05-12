@@ -3,6 +3,21 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Debug PDF Scraper",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/chatgpt.py", // Adjust if your script has a different name or path
+      "console": "integratedTerminal",
+      "args": [
+        "banca-dati-1306-agenti-2024.pdf", // 1. REQUIRED: Path to your PDF file
+        "3", // 2. REQUIRED: Starting page number (1-based)
+        "3", // 2. REQUIRED: Ending page number (1-based)
+        "-o", // 3. OPTIONAL: Output file flag
+        "debug_output.json" //    OPTIONAL: Name of the output JSON file
+      ],
+      "justMyCode": true // Set to false if you need to step into library code (like pdfplumber)
+    },
+    {
       "name": "ng serve",
       "type": "chrome",
       "request": "launch",

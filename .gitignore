@@ -40,3 +40,10 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+*.py
+*.pyc
+*.gz
+venv/*
+path/to/venv/*
+
+/release/*

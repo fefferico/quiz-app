@@ -4,25 +4,40 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production --base-href ./",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:quiz-app": "node dist/quiz-app/server/server.mjs"
+    "serve:ssr:quiz-app": "node dist/quiz-app/server/server.mjs",
+    "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
+    "electron:build": "npm run build && electron-builder"
   },
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
-    "@angular/compiler": "^19.2.0",
+    "@angular/compiler": "^19.2.10",
     "@angular/core": "^19.2.0",
     "@angular/forms": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/platform-server": "^19.2.0",
     "@angular/router": "^19.2.0",
+    "@angular/service-worker": "^19.2.0",
     "@angular/ssr": "^19.2.11",
+    "@fortawesome/angular-fontawesome": "1.0",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
+    "dexie": "^4.0.11",
+    "electron-is-dev": "^2.0.0",
     "express": "^4.18.2",
+    "font-awesome": "^4.7.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "uuid": "^11.1.0",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
@@ -32,12 +47,78 @@
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
+    "@types/uuid": "^10.0.0",
+    "concurrently": "^9.1.2",
+    "electron": "^36.2.0",
+    "electron-builder": "^26.0.12",
+    "electron-is-dev": "^3.0.1",
+    "install": "^0.13.0",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.7.2"
-  }
+    "npm": "^11.3.0",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.7.2",
+    "wait-on": "^8.0.3"
+  },
+  "description": "This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.11.",
+  "main": "main.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "build": {
+    "appId": "com.yourcompany.quizapp",
+    "productName": "QuizWiz App",
+    "directories": {
+      "output": "release/",
+      "buildResources": "src/assets"
+    }
+  },
+  "files": [
+    "**/*",
+    "!**/*.ts",
+    "!*.code-workspace",
+    "!LICENSE.md",
+    "!package-lock.json",
+    "!src/",
+    "!e2e/",
+    "!hooks/",
+    "!angular.json",
+    "!electron-builder.yml",
+    "!README.md",
+    "!tsconfig.json",
+    "!tslint.json",
+    "dist/quiz-app/**/*",
+    "main.js"
+  ],
+  "win": {
+    "icon": "src/assets/icons/icon-256x256.png",
+    "target": [
+      "nsis",
+      "portable"
+    ]
+  },
+  "mac": {
+    "icon": "src/assets/icons/icon.icns",
+    "category": "public.app-category.education",
+    "target": [
+      "dmg",
+      "zip"
+    ]
+  },
+  "linux": {
+    "icon": "src/assets/icons",
+    "category": "Education",
+    "target": [
+      "AppImage",
+      "deb",
+      "rpm"
+    ]
+  },
+  "asar": true,
+  "asarUnpack": []
 }

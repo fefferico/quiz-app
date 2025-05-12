@@ -1,0 +1,25 @@
+.progress-bar {
+  display: flex;
+  height: 0.5rem;
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(0,0,0,0.2);
+}
+
+.progress {
+  height: 100%;
+}
+
+.red {
+  background-color: #e74c3c;
+}
+
+.yellow {
+  background-color: #f1c40f;
+}
+
+.green {
+  background-color: #2ecc71;
+}

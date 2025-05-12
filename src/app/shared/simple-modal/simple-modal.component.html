@@ -1,0 +1,16 @@
+<div *ngIf="isOpen" class="modal-overlay-simple" (click)="closeModal()">
+  <div class="modal-content-simple" (click)="onContentClick($event)">
+    <div class="modal-header-simple">
+      <h4>{{ modalTitle }}</h4>
+      <button class="close-button-simple" (click)="closeModal()" aria-label="Chiudi">×</button>
+    </div>
+    <div class="modal-body-simple">
+      <!-- Content will be projected here -->
+      <ng-content></ng-content>
+    </div>
+    <div class="modal-footer-simple">
+      <!-- Optional: Project footer buttons here -->
+      <ng-content select="[modal-footer]"></ng-content>
+    </div>
+  </div>
+</div>

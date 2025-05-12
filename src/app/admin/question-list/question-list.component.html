@@ -1,0 +1,44 @@
+<div class="admin-questions-container">
+  <h2>Gestione Domande</h2>
+
+  <button (click)="onAddNewQuestion()" *ngIf="!showForm">Aggiungi Nuova Domanda</button>
+
+  <app-admin-question-form
+    *ngIf="showForm"
+    [questionToEdit]="selectedQuestion"
+    [availableTopics$]="availableTopics$"
+    (formSubmitted)="handleFormSubmission($event)"
+    (cancelForm)="handleCancelForm()">
+  </app-admin-question-form>
+
+  <div *ngIf="!showForm" class="questions-table-container">
+    <h3>Elenco Domande Esistenti</h3>
+    <table *ngIf="(questions$ | async) as questions; else loadingOrEmpty">
+      <thead>
+        <tr>
+          <th>Testo</th>
+          <th>Argomento</th>
+          <th>Opzioni</th>
+          <th>Corretta</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let q of questions">
+          <td>{{ q.text | slice:0:50 }}{{ q.text.length > 50 ? '...' : '' }}</td>
+          <td>{{ q.topic }}</td>
+          <td>{{ q.options.length }}</td>
+          <td>{{ q.options[q.correctAnswerIndex] | slice:0:20 }}{{ q.options[q.correctAnswerIndex].length > 20 ? '...' : '' }}</td>
+          <td>
+            <button (click)="onEditQuestion(q)">Modifica</button>
+            <button (click)="onDeleteQuestion(q.id)">Elimina</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #loadingOrEmpty>
+        <p *ngIf="!(questions$ | async) else noQuestions">Caricamento domande...</p>
+        <ng-template #noQuestions><p>Nessuna domanda trovata.</p></ng-template>
+    </ng-template>
+  </div>
+</div>
