@@ -279,7 +279,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.todayPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) return;
     const ctxToday = this.todayPerformanceChartRef.nativeElement.getContext('2d');
     if (!ctxToday) return;
-    const todayData = this.dailyPerformance.find(dp => dp.date === new Date().toISOString().split('T')[0]);
+
+    const dateFormatter = new DatePipe('it-IT');
+    const todayDate = dateFormatter.transform(new Date(), 'yyyy-MM-dd')
+    const todayData = this.dailyPerformance.find(dp => dp.date === todayDate);
 
     if (!todayData) {
       console.warn('No data for today found in daily performance data.');
