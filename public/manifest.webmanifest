@@ -1,12 +1,11 @@
- {
- "name": "QuizWiz App", 
-  "short_name": "QuizWiz",
-  "theme_color": "#3f51b5",
-  "background_color": "#f0f2f5", 
-  "display": "standalone", 
-  "scope": "/",
-  "start_url": "/", 
-  "description": "An awesome offline quiz application to test and improve your knowledge.",
+{
+  "name": "quiz-app",
+  "short_name": "quiz-app",
+  "theme_color": "#1976d2",
+  "background_color": "#fafafa",
+  "display": "standalone",
+  "scope": "./",
+  "start_url": "./",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
