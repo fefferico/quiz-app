@@ -9,7 +9,8 @@
     "test": "ng test",
     "serve:ssr:quiz-app": "node dist/quiz-app/server/server.mjs",
     "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder",
+    "build:tauri": "ng build --configuration production --base-href ./"
   },
   "private": true,
   "dependencies": {
@@ -44,6 +45,8 @@
     "@angular-devkit/build-angular": "^19.2.11",
     "@angular/cli": "^19.2.11",
     "@angular/compiler-cli": "^19.2.0",
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/cli": "^2.5.0",
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
