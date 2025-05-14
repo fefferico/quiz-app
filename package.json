@@ -10,7 +10,7 @@
     "serve:ssr:quiz-app": "node dist/quiz-app/server/server.mjs",
     "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
     "electron:build": "npm run build && electron-builder",
-    "deploy:gh": "ng build --configuration production --base-href \"fefferico\" && npx angular-cli-ghpages --dir=dist/quiz-app/browser"
+    "deploy:gh": "ng build --configuration production --base-href /quiz-app/ && npx angular-cli-ghpages --dir=dist/quiz-app/browser"
   },
   "private": true,
   "dependencies": {

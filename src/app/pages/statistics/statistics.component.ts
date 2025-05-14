@@ -11,7 +11,7 @@ import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
-import { QuestionFeedbackContentComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
+import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
 
 
@@ -59,7 +59,7 @@ interface TopicCoverageData {
   selector: 'app-statistics',
   standalone: true,
   imports: [CommonModule, RouterLink, DecimalPipe, PercentPipe, SimpleModalComponent, DatePipe,
-    QuestionFeedbackContentComponent],
+    SetupModalComponent],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.scss']
 })

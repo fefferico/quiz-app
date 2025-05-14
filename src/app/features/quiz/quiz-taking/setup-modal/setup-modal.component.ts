@@ -12,7 +12,7 @@ import { Router, RouterLink } from '@angular/router';
   templateUrl: './setup-modal.component.html', // New template name
   styleUrls: ['./setup-modal.component.scss'] // New style name
 })
-export class QuestionFeedbackContentComponent implements OnInit {
+export class SetupModalComponent implements OnInit {
   private router = inject(Router);
 
   @Input() topics: GenericData[] = []; // Placeholder for topic counts if needed
