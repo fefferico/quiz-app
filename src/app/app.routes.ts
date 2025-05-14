@@ -10,12 +10,9 @@ import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard'; // <-
 import { StudyFocusComponent } from './pages/study-focus/study-focus.component'; // <-- IMPORT
 import { FavoriteQuestionsComponent } from './pages/favorite-questions/favorite-questions.component'; // <-- IMPORT
 import { QuizStudyComponent } from './features/quiz/quiz-study/quiz-study.component'; // <-- IMPORT
-import { AuthGuard } from './guards/auth.guard'; // Adjust path
-import { LoginComponent } from './components/login/login.component';
-
 
 export const routes: Routes = [
-  { path: '**', redirectTo: '/home' },
+  { path: '**', redirectTo: 'home' },
   { path: 'home', component: HomeComponent, title: 'Quiz App - Home' },
   { path: 'quiz/setup', component: QuizSetupComponent, title: 'Quiz Setup' },
   { path: 'quiz/take', component: QuizTakingComponent, title: 'Take Quiz', canDeactivate: [unsavedChangesGuard] }, // <-- APPLY THE GUARD }, // We'll likely pass params here later
