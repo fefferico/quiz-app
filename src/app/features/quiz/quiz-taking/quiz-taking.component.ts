@@ -1,17 +1,18 @@
 // src/app/features/quiz/quiz-taking/quiz-taking.component.ts
-import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core'; // Added HostListener
-import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe
-import { ActivatedRoute, Router, RouterLink } from '@angular/router'; // Added RouterLink
-import { Subscription, timer, Observable } from 'rxjs'; // Added timer, Observable
-import { map, takeWhile, finalize } from 'rxjs/operators'; // Added map, takeWhile, finalize
+import { Component, OnInit, OnDestroy, inject, HostListener, Renderer2, ElementRef, ChangeDetectorRef, NgZone } from '@angular/core'; // Added NgZone
+import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription, timer, Observable, Subject } from 'rxjs';
+import { map, takeWhile, finalize, takeUntil, delay } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard'; // <-- IMPORT GUARD INTERFACE
-import { QuestionFeedbackComponent } from '../../../question-feedback/question-feedback.component'; // <-- IMPORT COMPONENT
+import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
+import { QuestionFeedbackComponent } from '../../../question-feedback/question-feedback.component';
 
 import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
-import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model'; // Ensure TopicCount if using typed quizSettings
-
+import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -20,228 +21,290 @@ enum AnswerState {
   INCORRECT = 'incorrect'
 }
 
+// Define available font families
+interface FontOption {
+  name: string; // User-friendly name
+  cssClass: string; // CSS class to apply
+  styleValue?: string; // For direct [ngStyle] if preferred for font-family
+}
+
 @Component({
   selector: 'app-quiz-taking',
   standalone: true,
-  imports: [CommonModule, RouterLink, QuestionFeedbackComponent], // <-- ADD COMPONENT HERE
+  imports: [CommonModule, RouterLink, QuestionFeedbackComponent, FontAwesomeModule],
   templateUrl: './quiz-taking.component.html',
   styleUrls: ['./quiz-taking.component.scss']
 })
-export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeactivate { // <-- IMPLEMENT INTERFACE
+export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeactivate {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dbService = inject(DatabaseService);
+  private renderer = inject(Renderer2);
+  private el = inject(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone); // Inject NgZone
+
   private routeSub!: Subscription;
+  private destroy$ = new Subject<void>();
+
+  // -- icons
+  segnala: IconDefinition = faCircleExclamation;
+  home: IconDefinition = faHome;
+  done: IconDefinition = faCircleCheck;
+  next: IconDefinition = faArrowRight;
+  back: IconDefinition = faArrowLeft;
+  pause: IconDefinition = faPause;
+
+  // --- Accessibility Font Settings ---
+  fontSizeStep: number = 1;
+  readonly minFontSizeStep = 0.8;
+  readonly maxFontSizeStep = 1.8;
+  readonly fontSizeIncrement = 0.1;
+
+  availableFonts: FontOption[] = [
+    { name: 'Predefinito', cssClass: 'font-default' },
+    { name: 'OpenDyslexic', cssClass: 'font-opendyslexic', styleValue: "'OpenDyslexic', sans-serif" },
+    { name: 'Verdana', cssClass: 'font-verdana', styleValue: "Verdana, sans-serif" },
+    { name: 'Arial', cssClass: 'font-arial', styleValue: "Arial, sans-serif" },
+  ];
+  currentFontIndex: number = 0;
+  currentFont: FontOption = this.availableFonts[0];
+  // --- End Accessibility Font Settings ---
 
   // Timer related properties
-  isTimerEnabled = false;        // <-- NEW
-  timerDuration = 0;             // <-- NEW (in seconds)
-  timeLeft$: Observable<number> | undefined; // <-- NEW (for display)
-  private timerSubscription: Subscription | undefined; // <-- NEW
-  protected _timeLeftSeconds = 0; // Internal tracking
+  isTimerEnabled = false;
+  isCronometerEnabled = false;
+  timerDuration = 0;
+  timeLeft$: Observable<number> | undefined;
+  timeElapsed$: Observable<number> | undefined;
+  private timerSubscription: Subscription | undefined;
+  private cronometerSubscription: Subscription | undefined;
+  protected _timeLeftSeconds = 0;
+  protected _timeElapsedSeconds = 0;
 
-  quizIsOverByTime = false; // Flag to indicate if quiz ended due to timer
+  quizIsOverByTime = false;
 
-  quizSettings!: QuizSettings & { keywords?: string[] }; // Modified QuizSettings to potentially hold keywords
+  quizSettings!: QuizSettings & { keywords?: string[] };
   questions: Question[] = [];
   currentQuestionIndex = 0;
-  quizTitle = 'Quiz'; // Default title, can be set based on quiz type
+  quizTitle = 'Quiz';
   currentQuestion: Question | undefined;
   userAnswers: AnsweredQuestion[] = [];
   unansweredQuestions: (AnsweredQuestion | undefined)[] = [];
 
   selectedAnswerIndex: number | null = null;
   isAnswerSubmitted = false;
-  answerStates: AnswerState[] = [AnswerState.UNANSWERED, AnswerState.UNANSWERED, AnswerState.UNANSWERED, AnswerState.UNANSWERED];
-  AnswerStateEnum = AnswerState; // Make enum available in template
+  answerStates: AnswerState[] = [];
+  AnswerStateEnum = AnswerState;
 
   quizStartTime!: Date;
-  quizCompleted = false; // NEW: Flag to track if quiz ended normally
+  quizCompleted = false;
 
   isLoading = true;
   errorLoading = '';
 
-  currentQuizAttemptId: string | null = null; // To store the ID of the current attempt
-  isResuming = false; // Flag to indicate if we are resuming a quiz
-  quizStatus: QuizStatus = 'in-progress'; // Current status
+  currentQuizAttemptId: string | null = null;
+  isResuming = false;
+  quizStatus: QuizStatus = 'in-progress';
 
-  private showUsefulData(): void {
-    console.log('Quiz status:', this.quizStatus);
-    console.log('isLoading:', this.isLoading);
-    console.log('Quiz completed:', this.quizCompleted);
-    console.log('Questions loaded:', this.questions.length);
-    console.log('errorLoading:', this.errorLoading);
-    console.log('RESULT:', !this.quizCompleted && this.questions?.length > 0 && !this.isLoading && !this.errorLoading && this.quizStatus === 'in-progress');
+  private autoAdvanceTimeout: any;
+  highlightedOptionIndex: number | null = null; // For keyboard navigation
+
+  // --- HostListeners for Keyboard Navigation ---
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (this.quizIsOverByTime || this.quizCompleted || !this.currentQuestion || this.isLoading) {
+      return; 
+    }
+
+    // Prevent default for keys we handle to avoid page scroll, etc.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', '1', '2', '3', '4', '5'].includes(event.key)) {
+      event.preventDefault();
+    }
+
+    // If an answer is already submitted for the current question, only allow navigation
+    if (this.isAnswerSubmitted) {
+      if (event.key === 'ArrowRight') this.nextQuestion();
+      if (event.key === 'ArrowLeft' && this.currentQuestionIndex > 0) this.previousQuestion();
+      return; // Other keys are ignored after submission
+    }
+
+    switch (event.key) {
+      case 'ArrowRight':
+        this.nextQuestion();
+        break;
+      case 'ArrowLeft':
+        if (this.currentQuestionIndex > 0) {
+          this.previousQuestion();
+        }
+        break;
+      case 'ArrowDown':
+        this.navigateOptions(1);
+        break;
+      case 'ArrowUp':
+        this.navigateOptions(-1);
+        break;
+      case ' ': // Space bar
+        if (this.highlightedOptionIndex !== null) {
+          this.selectAnswer(this.highlightedOptionIndex);
+          this.handleAutoAdvance();
+        }
+        break;
+      case 'Enter': // Often used for selection as well
+        if (this.highlightedOptionIndex !== null) {
+          this.selectAnswer(this.highlightedOptionIndex);
+          this.handleAutoAdvance();
+        }
+        break;
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+        const optionIndex = parseInt(event.key, 10) - 1;
+        if (this.currentQuestion && optionIndex >= 0 && optionIndex < this.currentQuestion.options.length) {
+          this.selectAnswer(optionIndex);
+          this.handleAutoAdvance();
+        }
+        break;
+    }
   }
+
+  private navigateOptions(direction: 1 | -1): void {
+    if (!this.currentQuestion || this.currentQuestion.options.length === 0) return;
+
+    const numOptions = this.currentQuestion.options.length;
+    if (this.highlightedOptionIndex === null) {
+      this.highlightedOptionIndex = direction === 1 ? 0 : numOptions - 1;
+    } else {
+      this.highlightedOptionIndex = (this.highlightedOptionIndex + direction + numOptions) % numOptions;
+    }
+    this.cdr.detectChanges(); // Ensure highlight updates
+  }
+
+
+  constructor() { }
 
   ngOnInit(): void {
-    this.quizStartTime = new Date(); // Set tentatively, might be overwritten by resumed quiz
-    this.routeSub = this.route.queryParams.subscribe(async params => { // Make async
-      const resumeAttemptId = params['resumeAttemptId']; // Check for resume ID
-      const fixedQuestionIds = params['fixedQuestionIds'] || [];
-      this.quizTitle = params['quizTitle'] || 'Quiz'; // Set quiz title from params
+    this.quizStartTime = new Date();
+    this.loadAccessibilityPreferences();
 
-      //this.showUsefulData();
-      if (resumeAttemptId) {
-        this.isResuming = true;
-        this.currentQuizAttemptId = resumeAttemptId;
-        await this.loadPausedQuiz(resumeAttemptId); // Load and set up the paused quiz
-      } else {
-        // Inizia un nuovo quiz
-        this.isResuming = false;
-        this.currentQuizAttemptId = uuidv4(); // Generate ID for new quiz
-        this.quizStatus = 'in-progress';
+    this.routeSub = this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async params => {
+        const resumeAttemptId = params['resumeAttemptId'];
+        const fixedQuestionIds = params['fixedQuestionIds'] ? params['fixedQuestionIds'].toString().split(',') : [];
+        this.quizTitle = params['quizTitle'] || 'Quiz';
 
-        // ... (parsing numQuestions, topics, keywords, topicDistribution) ...
-        const numQuestions = params['numQuestions'] ? +params['numQuestions'] : 10;
-        const topicsParam = params['topics'] || '';
-        const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
-        const keywordsParam = params['keywords'] || '';
-        const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
-        const topicDistributionParam = params['topicDistribution'] || '';
-        let selectedTopicDistribution: TopicCount[] | undefined = undefined;
-        if (topicDistributionParam) { try { selectedTopicDistribution = JSON.parse(topicDistributionParam); } catch (e) { console.error('Error parsing topicDistribution:', e); } }
+        if (resumeAttemptId) {
+          this.isResuming = true;
+          this.currentQuizAttemptId = resumeAttemptId;
+          await this.loadPausedQuiz(resumeAttemptId);
+        } else {
+          this.isResuming = false;
+          this.currentQuizAttemptId = uuidv4();
+          this.quizStatus = 'in-progress';
 
-        this.isTimerEnabled = params['enableTimer'] === 'true'; // Convert string to boolean
-        this.timerDuration = params['timerDuration'] ? +params['timerDuration'] : 0;
-        this._timeLeftSeconds = this.timerDuration; // Initialize internal timer
+          const numQuestions = params['numQuestions'] ? +params['numQuestions'] : 10;
+          const topicsParam = params['topics'] || '';
+          const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
+          const keywordsParam = params['keywords'] || '';
+          const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
+          const topicDistributionParam = params['topicDistribution'] || '';
+          let selectedTopicDistribution: TopicCount[] | undefined = undefined;
+          if (topicDistributionParam) { try { selectedTopicDistribution = JSON.parse(topicDistributionParam); } catch (e) { console.error('Error parsing topicDistribution:', e); } }
 
-        this.isTimerEnabled = params['enableTimer'] === 'true';
-        this.timerDuration = params['timerDuration'] ? +params['timerDuration'] : 0;
-        this._timeLeftSeconds = this.timerDuration;
+          this.isTimerEnabled = params['enableTimer'] === 'true';
+          this.isCronometerEnabled = params['enableCronometer'] === 'true';
+          this.timerDuration = params['timerDuration'] ? +params['timerDuration'] : 0;
+          this._timeLeftSeconds = this.timerDuration;
 
-
-        this.quizSettings = {
-          numQuestions,
-          selectedTopics,
-          keywords: selectedKeywords,
-          topicDistribution: selectedTopicDistribution,
-          enableTimer: this.isTimerEnabled,         // Store in quizSettings
-          timerDurationSeconds: this.timerDuration // Store in quizSettings
-        };
-
-        // Initial save of 'in-progress' state for a new quiz
-        // This allows CanDeactivate to potentially save if user exits early even on a new quiz
-        // Though for true "save on exit", CanDeactivate needs more work.
-        // For now, primarily for the explicit "Pause" button.
-        // Let's defer initial save until first action or pause, to keep ngOnInit cleaner.
-        // OR save immediately:
-        // const initialAttempt: QuizAttempt = {
-        //   id: this.currentQuizAttemptId,
-        //   timestampStart: this.quizStartTime,
-        //   settings: this.quizSettings,
-        //   totalQuestionsInQuiz: 0, // Will be updated after questions load
-        //   answeredQuestions: [],
-        //   status: 'in-progress',
-        //   currentQuestionIndex: 0,
-        // };
-        // try {
-        //    await this.dbService.saveQuizAttempt(initialAttempt);
-        //    console.log('Initial in-progress quiz state saved.');
-        // } catch (e) { console.error("Failed to save initial quiz state", e); }
-
-        await this.loadQuestions(false, fixedQuestionIds); // Load questions for the new quiz
-      }
-    });
+          this.quizSettings = {
+            numQuestions,
+            selectedTopics,
+            keywords: selectedKeywords,
+            topicDistribution: selectedTopicDistribution,
+            enableTimer: this.isTimerEnabled,
+            enableCronometer: this.isCronometerEnabled,
+            timerDurationSeconds: this.timerDuration
+          };
+          await this.loadQuestions(false, fixedQuestionIds);
+        }
+      });
+    this.applyFontSettingsToWrapper();
   }
 
-  // Modify loadQuestions to handle resume
   async loadQuestions(isResumeLoad: boolean = false, fixedQuestionIds: string[] = []): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
-      // ... (console.log settings)
-      if (!isResumeLoad) { // Only fetch new questions if not resuming (or if resume strategy is to re-fetch)
-
+      if (!isResumeLoad) {
         if (fixedQuestionIds.length > 0) {
-          console.log('Loading fixed questions:', fixedQuestionIds);
           this.questions = await this.dbService.getQuestionByIds(fixedQuestionIds);
         } else {
-          const fetchedQuestions = await this.dbService.getRandomQuestions(
+          this.questions = await this.dbService.getRandomQuestions(
             this.quizSettings.numQuestions,
             this.quizSettings.selectedTopics,
             this.quizSettings.keywords,
             this.quizSettings.topicDistribution
           );
-          // ... (handle fetchedQuestions, slicing, error if empty)
-          this.questions = fetchedQuestions; // Or your slice logic
         }
-
-        console.log('Fetched questions:', this.questions);
-
         if (this.quizSettings.topicDistribution && this.quizSettings.topicDistribution.length > 0) {
           this.quizSettings.numQuestions = this.questions.length;
         } else {
           this.questions = this.questions.slice(0, this.quizSettings.numQuestions);
         }
-      } else {
-        // On resume, `this.questions` should ideally be reconstructed from stored IDs
-        // For now, we assume `loadPausedQuiz` prepared enough and `this.questions` are set
-        // if we adopted a strategy of re-fetching them there.
-        // If not, this branch needs to populate `this.questions` for the resume.
-        // Let's assume `loadPausedQuiz` fetched and set `this.questions` if needed.
-        // For the current simpler re-fetch strategy in `loadPausedQuiz`:
-
-        let fetchedQuestionsOnResume = [];
-        if (fixedQuestionIds.length > 0) {
-          console.log('Loading fixed questions on RESUME:', fixedQuestionIds);
-          fetchedQuestionsOnResume = await this.dbService.getQuestionByIds(fixedQuestionIds);
-          this.isTimerEnabled = this.quizSettings.enableTimer || false;
-          this.timerDuration = this.quizSettings.timerDurationSeconds || 0;
-        } else {
-          fetchedQuestionsOnResume = await this.dbService.getRandomQuestions(
-            this.quizSettings.numQuestions,
-            this.quizSettings.selectedTopics,
-            this.quizSettings.keywords,
-            this.quizSettings.topicDistribution
-          );
-        }
-
-        this.questions = fetchedQuestionsOnResume; // This will get a new random set based on criteria
-        // This is a limitation: the user won't get the exact same non-answered questions.
-        // To fix this, `QuizAttempt` MUST store the `questionIds: string[]` for the *entire* quiz.
       }
 
-      if (this.questions.length === 0) { /* ... error handling ... */ return; }
+      if (this.questions.length === 0) {
+        this.errorLoading = "Nessuna domanda trovata per i criteri selezionati.";
+        this.isLoading = false;
+        return;
+      }
 
-      // Crucially, on resume, currentQuestionIndex is already set from pausedAttempt
-      // For a new quiz, it defaults to 0.
-      // this.currentQuestionIndex = isResumeLoad ? this.currentQuestionIndex : 0; // Already handled by loadPausedQuiz
-
-      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDuration > 0) {
+      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDuration > 0 && !this.timerSubscription && (!isResumeLoad || (isResumeLoad && this._timeLeftSeconds > 0) ) ) {
+         // Only start new timer if not resuming OR if resuming and there's time left
         this.startTimer();
       }
-      this.setCurrentQuestion(); // Sets currentQuestion based on currentQuestionIndex
-
-    } catch (error) { /* ... */ }
+      if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
+        this.startCronometer();
+      }
+      this.setCurrentQuestion();
+    } catch (error) {
+      console.error('Error loading questions:', error);
+      this.errorLoading = "Errore nel caricamento delle domande.";
+    }
     finally {
       this.isLoading = false;
-      //this.showUsefulData();
-
     }
   }
 
-  // PAUSE QUIZ METHOD
   async pauseQuiz(): Promise<void> {
     if (!this.currentQuizAttemptId || this.quizCompleted) return;
+    this.clearAutoAdvanceTimeout();
 
     if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe(); // Stop the timer
+      this.timerSubscription.unsubscribe();
       this.timerSubscription = undefined;
+    }
+    if (this.cronometerSubscription) {
+      this.cronometerSubscription.unsubscribe();
+      this.cronometerSubscription = undefined;
     }
 
     const isCurrentQuestionAnswered = this.userAnswers.some(ans => ans.questionId === this.currentQuestion?.id);
     if (!isCurrentQuestionAnswered && this.currentQuestion) {
       this.unansweredQuestions.push({
-        questionId: this.currentQuestion.id,
-        userAnswerIndex: -1, // No answer yet
+        questionId: this.questions[this.currentQuestionIndex].id, // Use ID from master list
+        userAnswerIndex: -1,
         isCorrect: false,
-        questionSnapshot: { // Take a snapshot of the question
-          text: this.currentQuestion.text,
-          topic: this.currentQuestion.topic,
-          options: [...this.currentQuestion.options],
-          correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
-          explanation: this.currentQuestion.explanation
+        questionSnapshot: {
+          text: this.questions[this.currentQuestionIndex].text,
+          topic: this.questions[this.currentQuestionIndex].topic,
+          options: [...this.questions[this.currentQuestionIndex].options], // Original options
+          correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
+          explanation: this.questions[this.currentQuestionIndex].explanation,
+          isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
         }
       });
     }
@@ -250,134 +313,157 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     const attemptToSave: QuizAttempt = {
       id: this.currentQuizAttemptId,
       timestampStart: this.quizStartTime,
-      // timestampEnd: undefined, // Not ended
       settings: this.quizSettings,
-      // score: undefined, // Not scored yet
-      totalQuestionsInQuiz: this.questions.length, // Or this.quizSettings.numQuestions
+      totalQuestionsInQuiz: this.questions.length,
       answeredQuestions: [...this.userAnswers],
-      unansweredQuestions: this.unansweredQuestions,
-      allQuestions: this.questions.map(q => ({
-        questionId: q.id,
-        userAnswerIndex: -1, // No answer yet
-        isCorrect: false,
-        questionSnapshot: { // Take a snapshot of the question
-          text: q.text,
-          topic: q.topic,
-          options: [...q.options],
-          correctAnswerIndex: q.correctAnswerIndex,
-          explanation: q.explanation,
-          isFavorite: q.isFavorite || 0 // Default to false if undefined
-        }
-      })),
+      unansweredQuestions: [...this.unansweredQuestions.filter(uq => uq !== undefined) as AnsweredQuestion[]],
+      allQuestions: this.questions.map(q => {
+        const userAnswer = this.userAnswers.find(ua => ua.questionId === q.id);
+        const originalQuestionData = this.questions.find(origQ => origQ.id === q.id) || q; // Fallback to q if not found
+        return {
+          questionId: q.id,
+          userAnswerIndex: userAnswer ? userAnswer.userAnswerIndex : -1,
+          isCorrect: userAnswer ? userAnswer.isCorrect : false,
+          questionSnapshot: {
+            text: originalQuestionData.text,
+            topic: originalQuestionData.topic,
+            options: [...originalQuestionData.options],
+            correctAnswerIndex: originalQuestionData.correctAnswerIndex,
+            explanation: originalQuestionData.explanation,
+            isFavorite: originalQuestionData.isFavorite || 0
+          }
+        };
+      }),
       status: 'paused',
       currentQuestionIndex: this.currentQuestionIndex,
-      timeLeftOnPauseSeconds: this.isTimerEnabled ? this._timeLeftSeconds : undefined
+      timeLeftOnPauseSeconds: this.isTimerEnabled ? this._timeLeftSeconds : undefined,
+      timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
     };
 
     try {
       await this.dbService.saveQuizAttempt(attemptToSave);
-      console.log('Quiz paused and saved:', this.currentQuizAttemptId);
       alert('Quiz sospeso. Puoi riprenderlo più tardi dalla schermata principale.');
-      this.quizCompleted = true; // To allow deactivation without confirm
+      this.quizCompleted = true;
       this.router.navigate(['/home']);
     } catch (error) {
-      console.error("E' stato riscontrato un errore finché mettevo in pausa il quiz:", error);
+      console.error("Errore nel mettere in pausa il quiz:", error);
       alert('Non sono riuscito a mettere in pausa il quiz. Riprova più tardi.');
     }
   }
 
   startTimer(): void {
-    if (!this.isTimerEnabled || this.timerDuration <= 0) {
-      console.warn('[QuizTaking] startTimer: Conditions not met or called unnecessarily.'); // <-- ADD LOG
+    if (!this.isTimerEnabled || this._timeLeftSeconds <= 0) {
+      if (this._timeLeftSeconds <=0 && this.isTimerEnabled) { // If timer was enabled but ran out before quiz start
+          this.quizIsOverByTime = true;
+          this.endQuiz(true);
+      }
       return;
     }
-    console.log(`[QuizTaking] startTimer: Starting timer for ${this.timerDuration} seconds.`); // <-- VERIFY THIS LOG
 
-    // Clear any existing timer subscription to prevent multiple timers
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-      console.log('[QuizTaking] startTimer: Unsubscribed from previous timer.');
-    }
+    if (this.timerSubscription) this.timerSubscription.unsubscribe();
 
-    this.quizIsOverByTime = false; // Reset this flag
-    this._timeLeftSeconds = this.timerDuration; // Ensure internal tracker is reset
+    this.quizIsOverByTime = false;
+    const durationForThisRun = this._timeLeftSeconds;
 
     this.timeLeft$ = timer(0, 1000).pipe(
-      map(i => {
-        const remaining = this.timerDuration - 1 - i;
-        // console.log(`[QuizTaking] Timer tick i=${i}, timerDuration=${this.timerDuration}, calculated remaining: ${remaining}`); // Original verbose log
-        return remaining;
-      }),
+      takeUntil(this.destroy$),
+      map(i => durationForThisRun - i), // Corrected: just subtract i
       takeWhile(timeLeft => timeLeft >= 0, true),
-      finalize(() => { /* ... */ })
+      finalize(() => {
+        if (this._timeLeftSeconds <= 0 && !this.quizCompleted) {
+          this.ngZone.run(() => { // Run state updates inside NgZone
+            this.quizIsOverByTime = true;
+            this.endQuiz(true);
+          });
+        }
+      })
     );
 
-    this.timerSubscription = this.timeLeft$.subscribe({
-      next: timeLeftSeconds => {
-        this._timeLeftSeconds = timeLeftSeconds;
-        // THIS IS THE MOST IMPORTANT LOG NOW:
-        console.log(`[QuizTaking] timeLeft$ emitted: ${timeLeftSeconds}. _timeLeftSeconds updated to: ${this._timeLeftSeconds}`);
-      },
-      error: err => console.error('[QuizTaking] Timer observable error:', err),
-      complete: () => console.log('[QuizTaking] Timer observable completed (takeWhile condition met).')
+    this.timerSubscription = this.timeLeft$.subscribe(timeLeftSeconds => {
+      this._timeLeftSeconds = timeLeftSeconds;
     });
-    console.log('[QuizTaking] startTimer: Subscribed to timeLeft$.');
   }
 
-  shuffleArray(questions: string[]): string[] {
-    for (let i = questions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-      [questions[i], questions[j]] = [questions[j], questions[i]];  // swap elements
+  startCronometer(): void {
+    if (!this.isCronometerEnabled) return;
+    if (this.cronometerSubscription) this.cronometerSubscription.unsubscribe();
+
+    const initialElapsed = this._timeElapsedSeconds;
+
+    this.timeElapsed$ = timer(0, 1000).pipe(
+      takeUntil(this.destroy$),
+      map(i => initialElapsed + i),
+    );
+    this.cronometerSubscription = this.timeElapsed$.subscribe(timeElapsedSeconds => {
+      this._timeElapsedSeconds = timeElapsedSeconds;
+    });
+  }
+
+  shuffleArray<T>(array: T[]): T[] {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
     }
-    return questions;
+    return newArray;
   }
 
   setCurrentQuestion(): void {
+    this.clearAutoAdvanceTimeout();
+    this.highlightedOptionIndex = null; // Reset highlight on new question
+
     if (this.questions.length > 0 && this.currentQuestionIndex < this.questions.length) {
-      this.currentQuestion = this.questions[this.currentQuestionIndex]; // Ensure this includes isFavorite
-      this.selectedAnswerIndex = this.userAnswers.find(ans => ans.questionId === this.currentQuestion!.id)?.userAnswerIndex || null;
-      this.isAnswerSubmitted = this.userAnswers.some(ans => ans.questionId === this.currentQuestion!.id);
-      const currentAnswer = this.userAnswers.find(ans => ans.questionId === this.currentQuestion!.id);
+      // Work with a shallow copy for display to allow shuffling options without altering the master `this.questions`
+      const masterQuestion = this.questions[this.currentQuestionIndex];
+      this.currentQuestion = { 
+        ...masterQuestion,
+        options: [...masterQuestion.options] // Ensure options array is also a copy
+      };
+      
+      const originalCorrectAnswerText = this.currentQuestion.options[this.currentQuestion.correctAnswerIndex];
+      this.currentQuestion.options = this.shuffleArray(this.currentQuestion.options);
+      this.currentQuestion.correctAnswerIndex = this.currentQuestion.options.findIndex(
+        option => option === originalCorrectAnswerText
+      );
 
-      // shuffle answers order but keep track of the correct answer index
-      const correctAnswerString = this.currentQuestion.options[this.currentQuestion.correctAnswerIndex];
+      const answered = this.userAnswers.find(ans => ans.questionId === masterQuestion.id);
+      if (answered) {
+        this.isAnswerSubmitted = true;
+        // Important: If options were shuffled when the answer was stored, `answered.userAnswerIndex`
+        // might not match the new shuffle. We need to find the selected option by its text if possible,
+        // or ensure snapshots store options as they were presented.
+        // For now, we find the selected text and then its new index.
+        const selectedOptionText = answered.questionSnapshot.options[answered.userAnswerIndex];
+        this.selectedAnswerIndex = this.currentQuestion.options.indexOf(selectedOptionText);
 
-      this.currentQuestion.options = this.shuffleArray([...this.currentQuestion.options])
 
-      this.currentQuestion.correctAnswerIndex = this.currentQuestion.options.findIndex(option => option === correctAnswerString);
+        this.answerStates = this.currentQuestion.options.map((optionText, index) => {
+          if (index === this.currentQuestion!.correctAnswerIndex) return AnswerState.CORRECT;
+          if (this.selectedAnswerIndex !== null && index === this.selectedAnswerIndex && !answered.isCorrect) return AnswerState.INCORRECT;
+          return AnswerState.UNANSWERED;
+        });
 
-      if (!currentAnswer) {
-        this.answerStates = Array(this.currentQuestion.options.length).fill(AnswerState.UNANSWERED)
       } else {
-        this.answerStates = this.currentQuestion.options.map((_, index) => {
-          if (index === this.currentQuestion!.correctAnswerIndex) {
-            return AnswerState.CORRECT;
-          }
-          if (index === currentAnswer.userAnswerIndex && !currentAnswer.isCorrect) {
-            return AnswerState.INCORRECT;
-          }
-          return AnswerState.UNANSWERED; // Or a 'disabled' state visually
-        }
-        )
+        this.selectedAnswerIndex = null;
+        this.isAnswerSubmitted = false;
+        this.answerStates = Array(this.currentQuestion.options.length).fill(AnswerState.UNANSWERED);
       }
-
-
-      console.log('Current question set:', this.currentQuestion);
-      console.log('Answer states:', this.answerStates[this.currentQuestionIndex]);
-      console.log('Selected answer index:', this.selectedAnswerIndex);
-      console.log('Is answer submitted:', this.isAnswerSubmitted);
+      this.cdr.detectChanges();
     } else {
-      this.currentQuestion = undefined; // Should not happen if logic is correct, leads to endQuiz
+      this.currentQuestion = undefined;
+      if (!this.isLoading && this.questions.length > 0 && !this.quizCompleted) { // If out of bounds but not loading/error
+        this.endQuiz();
+      }
     }
   }
 
   async toggleFavoriteCurrentQuestion(): Promise<void> {
     if (this.currentQuestion) {
-      const newFavStatus = await this.dbService.toggleFavoriteStatus(this.currentQuestion.id);
-      if (newFavStatus !== undefined && this.currentQuestion) {
-        this.currentQuestion.isFavorite = newFavStatus; // Update local copy for immediate UI feedback
-        // Also update the question in the main 'this.questions' array if it's referenced elsewhere
-        const qIndex = this.questions.findIndex(q => q.id === this.currentQuestion!.id);
+      const originalQuestionId = this.questions[this.currentQuestionIndex].id;
+      const newFavStatus = await this.dbService.toggleFavoriteStatus(originalQuestionId);
+      if (newFavStatus !== undefined) {
+        this.currentQuestion.isFavorite = newFavStatus;
+        const qIndex = this.questions.findIndex(q => q.id === originalQuestionId);
         if (qIndex > -1) {
           this.questions[qIndex].isFavorite = newFavStatus;
         }
@@ -386,39 +472,58 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   selectAnswer(optionIndex: number): void {
-    if (this.isAnswerSubmitted || !this.currentQuestion) return;
+    if (this.isAnswerSubmitted || !this.currentQuestion || optionIndex < 0 || optionIndex >= this.currentQuestion.options.length) return;
 
     this.selectedAnswerIndex = optionIndex;
     this.isAnswerSubmitted = true;
     const isCorrect = optionIndex === this.currentQuestion.correctAnswerIndex;
+    this.highlightedOptionIndex = null; // Clear highlight after selection
 
-    // Update answer states for visual feedback
     this.answerStates = this.currentQuestion.options.map((_, index) => {
-      if (index === this.currentQuestion!.correctAnswerIndex) {
-        return AnswerState.CORRECT;
-      }
-      if (index === optionIndex && !isCorrect) {
-        return AnswerState.INCORRECT;
-      }
-      return AnswerState.UNANSWERED; // Or a 'disabled' state visually
+      if (index === this.currentQuestion!.correctAnswerIndex) return AnswerState.CORRECT;
+      if (index === optionIndex && !isCorrect) return AnswerState.INCORRECT;
+      return AnswerState.UNANSWERED;
     });
+
+    const actualQuestionId = this.questions[this.currentQuestionIndex].id;
+    const originalQuestionData = this.questions[this.currentQuestionIndex];
 
     this.userAnswers.push({
-      questionId: this.currentQuestion.id,
-      userAnswerIndex: optionIndex,
+      questionId: actualQuestionId,
+      userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
       isCorrect: isCorrect,
-      questionSnapshot: { // Take a snapshot of the question
-        text: this.currentQuestion.text,
-        topic: this.currentQuestion.topic,
-        options: [...this.currentQuestion.options],
-        correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
-        explanation: this.currentQuestion.explanation
+      questionSnapshot: { 
+        text: originalQuestionData.text,
+        topic: originalQuestionData.topic,
+        options: [...originalQuestionData.options], // Snapshot original options
+        correctAnswerIndex: originalQuestionData.correctAnswerIndex, // Snapshot original correct index
+        explanation: originalQuestionData.explanation,
+        isFavorite: originalQuestionData.isFavorite || 0
       }
     });
 
-    if (this.currentQuestion) {
-      this.unansweredQuestions = this.unansweredQuestions
-        .filter((qst): qst is AnsweredQuestion => qst !== undefined && qst.questionId !== this.currentQuestion?.id);
+    this.unansweredQuestions = this.unansweredQuestions.filter(
+      (qst): qst is AnsweredQuestion => qst !== undefined && qst.questionId !== actualQuestionId
+    );
+    // Keyboard selection calls handleAutoAdvance itself. Click selections also need it.
+    // this.handleAutoAdvance(); // Moved to be called by the keyboard handler and click handler
+  }
+
+  public handleAutoAdvance(): void {
+    this.clearAutoAdvanceTimeout();
+    if (this.isAnswerSubmitted && this.currentQuestionIndex < this.questions.length - 1 && !this.quizIsOverByTime) {
+      this.autoAdvanceTimeout = setTimeout(() => {
+        this.ngZone.run(() => { // Ensure Angular knows about changes from setTimeout
+            this.nextQuestion();
+        });
+      }, 2000);
+    }
+  }
+
+  private clearAutoAdvanceTimeout(): void {
+    if (this.autoAdvanceTimeout) {
+      clearTimeout(this.autoAdvanceTimeout);
+      this.autoAdvanceTimeout = null;
     }
   }
 
@@ -433,22 +538,26 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   nextQuestion(): void {
+    this.clearAutoAdvanceTimeout();
+    if (this.quizIsOverByTime) return; // Don't advance if time is up
+
     if (this.currentQuestionIndex < this.questions.length - 1) {
-      if (!this.isAnswerSubmitted && !this.unansweredQuestions.some((qst): qst is AnsweredQuestion => qst !== undefined && qst.questionId === this.currentQuestion!.id)) {
-        if (this.currentQuestion) {
-          this.unansweredQuestions.push({
-            questionId: this.currentQuestion.id,
-            userAnswerIndex: -1, // No answer yet
-            isCorrect: false,
-            questionSnapshot: { // Take a snapshot of the question
-              text: this.currentQuestion.text,
-              topic: this.currentQuestion.topic,
-              options: [...this.currentQuestion.options],
-              correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
-              explanation: this.currentQuestion.explanation
-            }
-          });
-        }
+      if (!this.isAnswerSubmitted && this.currentQuestion &&
+          !this.unansweredQuestions.some(qst => qst?.questionId === this.questions[this.currentQuestionIndex].id) &&
+          !this.userAnswers.some(ans => ans.questionId === this.questions[this.currentQuestionIndex].id)) {
+        this.unansweredQuestions.push({
+          questionId: this.questions[this.currentQuestionIndex].id,
+          userAnswerIndex: -1,
+          isCorrect: false,
+          questionSnapshot: { 
+            text: this.questions[this.currentQuestionIndex].text,
+            topic: this.questions[this.currentQuestionIndex].topic,
+            options: [...this.questions[this.currentQuestionIndex].options],
+            correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
+            explanation: this.questions[this.currentQuestionIndex].explanation,
+            isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
+          }
+        });
       }
       this.currentQuestionIndex++;
       this.setCurrentQuestion();
@@ -458,6 +567,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   previousQuestion(): void {
+    this.clearAutoAdvanceTimeout();
     if (this.currentQuestionIndex > 0) {
       this.currentQuestionIndex--;
       this.setCurrentQuestion();
@@ -465,53 +575,66 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   goToFirstUnansweredQuestion(): void {
-    const firstUnansweredQuestionIndex: number = this.unansweredQuestions ? this.questions.findIndex((qst): qst is Question => qst !== undefined && this.unansweredQuestions && this.unansweredQuestions[0] !== undefined && qst.id === this.unansweredQuestions[0].questionId) : -1;
-    // retrieve the of the latest answered question
-    // if no unanswered question is found, go to the latest answered question
-    const latestAnsweredQuestionIndex: number = this.userAnswers ? this.questions.findIndex((qst): qst is Question => qst !== undefined && this.userAnswers && this.userAnswers[this.userAnswers.length - 1] !== undefined && qst.id === this.userAnswers[this.userAnswers.length - 1].questionId) : -1;
-    if (firstUnansweredQuestionIndex > -1) {
-      this.currentQuestionIndex = firstUnansweredQuestionIndex;
+    this.clearAutoAdvanceTimeout();
+    const firstUnansweredQIndex = this.questions.findIndex(
+        q => !this.userAnswers.some(ans => ans.questionId === q.id)
+    );
+    if (firstUnansweredQIndex > -1) {
+        this.currentQuestionIndex = firstUnansweredQIndex;
     } else {
-      if (latestAnsweredQuestionIndex > -1) {
-        this.currentQuestionIndex = latestAnsweredQuestionIndex;
-      } else {
-        this.currentQuestionIndex = this.questions.length - 1; // Go to last question if no unanswered found
-      }
+        this.currentQuestionIndex = Math.max(0, this.questions.length - 1);
     }
     this.setCurrentQuestion();
   }
 
   async endQuiz(isTimeUp: boolean = false): Promise<void> {
-    if (this.quizCompleted) return; // Prevent multiple submissions
+    this.clearAutoAdvanceTimeout();
+    if (this.quizCompleted && !isTimeUp) return; // If already completed (not by time), don't re-process
+    if (isTimeUp && this.quizCompleted) return; // If time up and already processed as completed, don't re-process
+
     this.quizCompleted = true;
 
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-      this.timerSubscription = undefined;
-    }
+    if (this.timerSubscription) this.timerSubscription.unsubscribe();
+    if (this.cronometerSubscription) this.cronometerSubscription.unsubscribe();
 
     if (!this.questions || this.questions.length === 0) {
-      // Avoid ending quiz if no questions were loaded (e.g., due to error)
-      // Redirect back or show error
       this.router.navigate(['/quiz/setup']);
       return;
     }
     const quizEndTime = new Date();
     const score = this.userAnswers.filter(ans => ans.isCorrect).length;
-    const finalQuizSettings = { ...this.quizSettings };
 
+    this.questions.forEach((q) => {
+      const isAnswered = this.userAnswers.some(ans => ans.questionId === q.id);
+      const isAlreadyInUnanswered = this.unansweredQuestions.some(unans => unans?.questionId === q.id);
+      if (!isAnswered && !isAlreadyInUnanswered) {
+        const originalQuestionData = this.questions.find(oq => oq.id === q.id) || q;
+        this.unansweredQuestions.push({
+          questionId: q.id,
+          userAnswerIndex: -1,
+          isCorrect: false,
+          questionSnapshot: { 
+            text: originalQuestionData.text,
+            topic: originalQuestionData.topic,
+            options: [...originalQuestionData.options],
+            correctAnswerIndex: originalQuestionData.correctAnswerIndex,
+            explanation: originalQuestionData.explanation,
+            isFavorite: originalQuestionData.isFavorite || 0
+          }
+        });
+      }
+    });
+
+    const finalQuizSettings = { ...this.quizSettings };
     if (this.isTimerEnabled) {
       finalQuizSettings.enableTimer = true;
-      finalQuizSettings.timerDurationSeconds = this.timerDuration;
+      finalQuizSettings.timerDurationSeconds = this.quizSettings.timerDurationSeconds; // Use original duration from settings
+    }
+    if (this.isCronometerEnabled) {
+      finalQuizSettings.enableCronometer = true;
     }
 
-    // Ensure currentQuizAttemptId is used
-    if (!this.currentQuizAttemptId) {
-      console.error("Cannot end quiz, currentQuizAttemptId is missing!");
-      // Potentially generate one if starting fresh and it was missed
-      this.currentQuizAttemptId = uuidv4();
-    }
-
+    if (!this.currentQuizAttemptId) this.currentQuizAttemptId = uuidv4();
 
     const quizAttempt: QuizAttempt = {
       id: this.currentQuizAttemptId!,
@@ -521,186 +644,209 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       score: score,
       totalQuestionsInQuiz: this.questions.length,
       answeredQuestions: [...this.userAnswers],
-      unansweredQuestions: this.unansweredQuestions,
-      allQuestions: this.questions.map(q => ({
-        questionId: q.id,
-        userAnswerIndex: -1, // No answer yet
-        isCorrect: false,
-        questionSnapshot: { // Take a snapshot of the question
-          text: q.text,
-          topic: q.topic,
-          options: [...q.options],
-          correctAnswerIndex: q.correctAnswerIndex,
-          explanation: q.explanation,
-          isFavorite: q.isFavorite || 0 // Default to false if undefined
-        }
-      })),
+      unansweredQuestions: [...this.unansweredQuestions.filter(uq => uq !== undefined) as AnsweredQuestion[]],
+      allQuestions: this.questions.map(q => {
+        const userAnswer = this.userAnswers.find(ua => ua.questionId === q.id);
+        const originalQuestionData = this.questions.find(oq => oq.id === q.id) || q;
+        return {
+          questionId: q.id,
+          userAnswerIndex: userAnswer ? userAnswer.userAnswerIndex : -1, // Relative to original options if snapshot stores original
+          isCorrect: userAnswer ? userAnswer.isCorrect : false,
+          questionSnapshot: {
+            text: originalQuestionData.text,
+            topic: originalQuestionData.topic,
+            options: [...originalQuestionData.options],
+            correctAnswerIndex: originalQuestionData.correctAnswerIndex,
+            explanation: originalQuestionData.explanation,
+            isFavorite: originalQuestionData.isFavorite || 0
+          }
+        };
+      }),
       status: isTimeUp ? 'timed-out' : 'completed',
-      currentQuestionIndex: this.currentQuestionIndex, // Store final index for context
+      currentQuestionIndex: this.currentQuestionIndex,
+      timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
+      // timeLeftOnPauseSeconds is not relevant here as quiz is ending
     };
 
-    this.quizCompleted = true; // <-- SET FLAG WHEN QUIZ ENDS
     try {
-      await this.dbService.saveQuizAttempt(quizAttempt); // Save the attempt first
-      console.log('Quiz attempt saved with ID:', quizAttempt.id);
-
-      // NOW, update individual question statistics
-      for (const answeredQ of this.userAnswers) { // Iterate over answers *from this quiz*
+      await this.dbService.saveQuizAttempt(quizAttempt);
+      for (const answeredQ of this.userAnswers) {
         await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);
       }
-      console.log('Individual question stats updated.');
-
       this.router.navigate(['/quiz/results', quizAttempt.id]);
     } catch (error) {
-      console.error('Error ending quiz or updating stats:', error);
-      // Handle error (e.g., show message to user)
-      this.router.navigate(['/home']); // Fallback navigation
+      console.error('Error ending quiz:', error);
+      this.router.navigate(['/home']);
     }
-
   }
 
-  // Make sure to unsubscribe from timer on component destroy
   ngOnDestroy(): void {
-    if (this.routeSub) {
-      this.routeSub.unsubscribe();
-    }
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-    }
+    this.clearAutoAdvanceTimeout();
+    this.destroy$.next();
+    this.destroy$.complete();
+    document.documentElement.style.removeProperty('--quiz-font-scale');
   }
 
   formatTimeLeft(seconds: number): string {
-    if (seconds < 0) seconds = 0; // Ensure no negative display
+    if (seconds < 0) seconds = 0;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     const pad = (n: number) => n < 10 ? '0' + n : n.toString();
     return `${pad(mins)}:${pad(secs)}`;
   }
 
-  // Modify canDeactivate for pause scenario
   canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+    this.clearAutoAdvanceTimeout();
     if (this.quizCompleted || this.quizStatus === 'paused' || this.questions.length === 0 || this.isLoading || this.errorLoading) {
-      return true; // Allow deactivation if quiz is done, paused, or not properly started
+      return true;
     }
-
-    const confirmation = confirm(
+    return confirm(
       "Si è sicuri di voler abbandonare il quiz? " +
       "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa. " +
       'Clicca "OK" per abbandonare senza salvare, o "Annulla" per rimanere e usare il pulsante "Metti in pausa il quiz". '
     );
-    // If user clicks OK, they abandon. If Cancel, they stay.
-    // The "Pause Quiz" button is the explicit way to save progress.
-    return confirmation;
   }
 
-  // Optional: Handle browser refresh/close attempts (more limited than router navigation)
   @HostListener('window:beforeunload', ['$event'])
   unloadNotification($event: any): void {
-    if (!this.quizCompleted && this.questions.length > 0 && !this.isLoading && !this.errorLoading) {
-      $event.returnValue = true; // Standard way to trigger browser's own confirmation
+    if (!this.quizCompleted && this.questions.length > 0 && !this.isLoading && !this.errorLoading && this.quizStatus !== 'paused') {
+      $event.returnValue = true;
     }
   }
 
   async loadPausedQuiz(attemptId: string): Promise<void> {
-    this.isLoading = false;
+    this.isLoading = true;
+    this.errorLoading = '';
     try {
       const pausedAttempt = await this.dbService.getQuizAttemptById(attemptId);
       if (pausedAttempt && pausedAttempt.status === 'paused') {
         this.quizSettings = pausedAttempt.settings;
-        this.questions = (pausedAttempt.unansweredQuestions as AnsweredQuestion[]).concat(pausedAttempt.answeredQuestions).map(q => ({
-          id: q.questionId,
-          text: q.questionSnapshot.text,
-          topic: q.questionSnapshot.topic,
-          options: q.questionSnapshot.options,
-          correctAnswerIndex: q.questionSnapshot.correctAnswerIndex,
-          explanation: q.questionSnapshot.explanation,
-          isFavorite: q.questionSnapshot.isFavorite || 0 // Default to false if undefined
+        
+        this.questions = pausedAttempt.allQuestions.map(snapshotItem => ({
+          id: snapshotItem.questionId,
+          text: snapshotItem.questionSnapshot.text,
+          topic: snapshotItem.questionSnapshot.topic,
+          options: [...snapshotItem.questionSnapshot.options],
+          correctAnswerIndex: snapshotItem.questionSnapshot.correctAnswerIndex,
+          explanation: snapshotItem.questionSnapshot.explanation,
+          isFavorite: snapshotItem.questionSnapshot.isFavorite || 0
         }));
 
-        const fixedQuestionIds: string[] = this.questions.map(q => q.id); // Store IDs for potential re-fetching
-
-        this.userAnswers = pausedAttempt.answeredQuestions;
+        this.userAnswers = pausedAttempt.answeredQuestions || [];
+        this.unansweredQuestions = pausedAttempt.unansweredQuestions || [];
         this.currentQuestionIndex = pausedAttempt.currentQuestionIndex || 0;
-        this.quizStartTime = new Date(pausedAttempt.timestampStart); // Restore start time
+        this.quizStartTime = new Date(pausedAttempt.timestampStart);
         this.currentQuizAttemptId = pausedAttempt.id;
-        this.quizStatus = 'in-progress'; // Change status back
-
-
-        // Re-fetch questions based on settings (or use snapshots if you stored full question data in QuizAttempt)
-        // For simplicity, re-fetching ensures consistency with current question bank.
-        // If questions were stored in snapshot, we'd need to populate this.questions from those.
-        // For now, assuming we just need the IDs and settings to re-fetch/re-filter.
-        // This also means the *exact same* random questions might not appear if re-shuffling.
-        // To get exact same questions, QuizAttempt would need to store the question IDs.
-        // Let's assume for now we'll re-fetch based on settings, and `answeredQuestions` has snapshots.
-        // OR, if your `QuizAttempt.answeredQuestions` store full `Question` snapshots,
-        // and you also stored ALL questions for the quiz in QuizAttempt, you could reconstruct.
-        //
-        // Simpler approach for now: re-fetch questions according to settings,
-        // but the user's progress (answeredQuestions, currentQuestionIndex) is restored.
-        // This means the specific non-answered questions might change if `getRandomQuestions` is truly random.
-        //
-        // A better approach for "exact resume":
-        // 1. When a quiz starts, fetch all `Question` objects and store their IDs in `QuizAttempt`.
-        // 2. On resume, fetch these specific questions by ID.
-        // For now, we'll stick to re-fetching based on settings which is simpler but less "exact".
-
-        // const allQuestionsForQuiz = await this.dbService.getRandomQuestions(
-        //   this.quizSettings.numQuestions,
-        //   this.quizSettings.selectedTopics,
-        //   this.quizSettings.keywords,
-        //   this.quizSettings.topicDistribution
-        // );
-        // We need to ensure the `this.questions` array is populated in a way that respects the original quiz structure.
-        // This part is tricky if `getRandomQuestions` is purely random.
-        // A robust resume needs the original list of question IDs for the attempt.
-        //
-        // Let's simplify: Assume `QuizAttempt.totalQuestionsInQuiz` was set correctly.
-        // We will just re-run loadQuestions and then set current index.
-        // This means `this.questions` will be repopulated.
+        this.quizStatus = 'in-progress';
 
         this.isTimerEnabled = this.quizSettings.enableTimer || false;
-        if (this.isTimerEnabled) {
-          this.timerDuration = pausedAttempt.timeLeftOnPauseSeconds || this.quizSettings.timerDurationSeconds || 0;
-          this._timeLeftSeconds = this.timerDuration; // Set for display and timer start
-          this.startTimer(); // Start the timer with the remaining time
-        } else {
-          pausedAttempt.timeLeftOnPauseSeconds = undefined;
+        this.isCronometerEnabled = this.quizSettings.enableCronometer || false;
+
+        if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds > 0) {
+          this._timeLeftSeconds = pausedAttempt.timeLeftOnPauseSeconds;
+          this.timerDuration = this._timeLeftSeconds; // Important for startTimer logic
+          // Timer will be started in loadQuestions if conditions met
+        } else if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds <= 0) {
+            this.quizIsOverByTime = true; // Quiz had already timed out
         }
 
-        // Update status in DB to 'in-progress'
-        pausedAttempt.status = 'in-progress';
+        if (this.isCronometerEnabled && pausedAttempt.timeElapsedOnPauseSeconds !== undefined) {
+          this._timeElapsedSeconds = pausedAttempt.timeElapsedOnPauseSeconds;
+          // Cronometer will be started in loadQuestions
+        }
+        
+        pausedAttempt.status = 'in-progress'; // Mark as in-progress now
         await this.dbService.saveQuizAttempt(pausedAttempt);
 
-        console.log('Resuming quiz. Settings:', this.quizSettings);
-        this.questions = pausedAttempt.allQuestions.map(q => ({
-          id: q.questionId,
-          text: q.questionSnapshot.text,
-          topic: q.questionSnapshot.topic,
-          options: q.questionSnapshot.options,
-          correctAnswerIndex: q.questionSnapshot.correctAnswerIndex,
-          explanation: q.questionSnapshot.explanation,
-          isFavorite: q.questionSnapshot.isFavorite || 0 // Default to false if undefined
-        }));
-        this.currentQuestionIndex = pausedAttempt.currentQuestionIndex || 0;
-        this.userAnswers = pausedAttempt.answeredQuestions;
-        this.unansweredQuestions = pausedAttempt.unansweredQuestions;
-        this.goToFirstUnansweredQuestion(); // Optional: Navigate to first unanswered question
-        console.log('Paused quiz loaded:', pausedAttempt);
+        // Call loadQuestions with isResumeLoad = true, which will then call setCurrentQuestion
+        // and start timers if applicable and not already over.
+        await this.loadQuestions(true); 
+
+        if(this.quizIsOverByTime) { // If quiz was already timed out when paused
+            this.endQuiz(true);
+            return;
+        }
+
 
       } else {
-        console.error('Paused quiz not found or status is not paused. Starting new quiz.');
-        this.isResuming = false;
-        this.currentQuizAttemptId = uuidv4(); // New ID
-        // Fallback to load new quiz based on original params (might be lost if direct navigation)
-        // Ideally redirect to setup or home.
-        this.router.navigate(['/quiz/setup'], { queryParamsHandling: 'preserve' });
+        this.errorLoading = 'Impossibile riprendere il quiz. Quiz non trovato o già completato.';
+        this.isLoading = false;
+        this.router.navigate(['/quiz/setup']);
       }
     } catch (error) {
       console.error('Error loading paused quiz:', error);
-      this.errorLoading = "Failed to resume quiz.";
-    } finally {
-      // isLoading will be set to false by loadQuestions
+      this.errorLoading = "Errore nel riprendere il quiz.";
+      this.isLoading = false;
     }
+  }
+
+  // --- Accessibility Methods ---
+  private loadAccessibilityPreferences(): void {
+    const savedFontSizeStep = localStorage.getItem('quizFontSizeStep');
+    if (savedFontSizeStep) this.fontSizeStep = parseFloat(savedFontSizeStep);
+
+    const savedFontIndex = localStorage.getItem('quizFontIndex');
+    if (savedFontIndex) {
+      const index = parseInt(savedFontIndex, 10);
+      if (index >= 0 && index < this.availableFonts.length) {
+        this.currentFontIndex = index;
+        this.currentFont = this.availableFonts[index];
+      }
+    }
+  }
+
+  private saveAccessibilityPreferences(): void {
+    localStorage.setItem('quizFontSizeStep', this.fontSizeStep.toString());
+    localStorage.setItem('quizFontIndex', this.currentFontIndex.toString());
+  }
+
+  increaseFontSize(): void {
+    if (this.fontSizeStep < this.maxFontSizeStep) {
+      this.fontSizeStep = parseFloat((this.fontSizeStep + this.fontSizeIncrement).toFixed(2));
+      this.updateRootFontSize();
+      this.saveAccessibilityPreferences();
+    }
+  }
+
+  decreaseFontSize(): void {
+    if (this.fontSizeStep > this.minFontSizeStep) {
+      this.fontSizeStep = parseFloat((this.fontSizeStep - this.fontSizeIncrement).toFixed(2));
+      this.updateRootFontSize();
+      this.saveAccessibilityPreferences();
+    }
+  }
+
+  resetFontSize(): void {
+    this.fontSizeStep = 1;
+    this.updateRootFontSize();
+    this.saveAccessibilityPreferences();
+  }
+
+  private updateRootFontSize(): void {
+    document.documentElement.style.setProperty('--quiz-font-scale', this.fontSizeStep.toString());
+  }
+
+  cycleFontFamily(): void {
+    this.currentFontIndex = (this.currentFontIndex + 1) % this.availableFonts.length;
+    this.currentFont = this.availableFonts[this.currentFontIndex];
+    this.updateFontFamilyClass();
+    this.saveAccessibilityPreferences();
+  }
+
+  private updateFontFamilyClass(): void {
+    const quizWrapper = this.el.nativeElement.querySelector('.quiz-content-wrapper');
+    if (quizWrapper) {
+      this.availableFonts.forEach(font => {
+        if (quizWrapper.classList) this.renderer.removeClass(quizWrapper, font.cssClass);
+      });
+      if (this.currentFont.cssClass !== 'font-default' && quizWrapper.classList) {
+        this.renderer.addClass(quizWrapper, this.currentFont.cssClass);
+      }
+    }
+  }
+
+  private applyFontSettingsToWrapper(): void {
+    this.updateRootFontSize();
+    this.updateFontFamilyClass();
   }
 }

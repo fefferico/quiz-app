@@ -24,6 +24,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
 
   // Timer Settings
   enableTimerInput = false; // <-- NEW
+  enableCronometerInput = false; // <-- NEW
   timerHoursInput = 0;     // <-- NEW
   timerMinutesInput = 10;  // <-- NEW (default to 10 minutes)
   timerSecondsInput = 0;   // <-- NEW
@@ -34,7 +35,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
   // For topic distribution
   topicCounts: TopicCount[] = []; // Holds { topic: string, count: number } for selected topics
 
-  numQuestionsOptions = [5, 10, 15, 20, 25, 30, 40, 50];
+  numQuestionsOptions = [5, 10, 20, 30, 50, 75, 100, 200];
   // selectedNumQuestions now primarily driven by topicCounts sum or "All Topics" mode
   selectedNumQuestions: number = 10; // Default, will be overridden
 
@@ -233,9 +234,10 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
       if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
         quizSettings = {
           numQuestions: this.topicCounts.reduce((sum, tc) => sum + tc.count, 0),
-          selectedTopics: [],
+          selectedTopics: this.selectAllTopics ? [] : [...this.selectedTopicsForDisplay],
           topicDistribution: [...this.topicCounts],
           enableTimer: this.enableTimerInput,
+          enableCronometer: this.enableCronometerInput,
           timerDurationSeconds: timerDurationSeconds
         };
       } else {
@@ -243,6 +245,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
           numQuestions: this.selectedNumQuestions,
           selectedTopics: [], // Empty means all if selectAllTopics is true
           enableTimer: this.enableTimerInput,
+          enableCronometer: this.enableCronometerInput,
           timerDurationSeconds: timerDurationSeconds
         };
       }
@@ -259,6 +262,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
         // For quiz mode, pass other relevant params
         topicDistribution: !this.isStudyMode && quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
         enableTimer: !this.isStudyMode && quizSettings.enableTimer || false,
+        enableCronometer: !this.isStudyMode && quizSettings.enableCronometer || false,
         timerDuration: !this.isStudyMode && quizSettings.timerDurationSeconds || 0
         // No need to pass 'isStudyMode' as the route itself determines it.
       }

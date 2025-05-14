@@ -1,38 +1,65 @@
-<button (click)="openFeedbackModal()" class="feedback-trigger-button" aria-label="Segnala un problema con questa domanda">
-  <!-- Icon (e.g., flag) or text -->
+<button (click)="openFeedbackModal()"
+  class="feedback-trigger-button text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 py-1 px-2 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-700 dark:hover:bg-opacity-30"
+  aria-label="Segnala un problema con questa domanda">
+  <fa-icon class="ml-2 fa-lg" [icon]="segnala"></fa-icon>
   Segnala
 </button>
 
-<div *ngIf="isModalOpen" class="feedback-modal-overlay">
-  <div class="feedback-modal-content">
-    <h4>Segnala un Problema <span class="close-modal-button" (click)="closeFeedbackModal()">X</span></h4>
+<div *ngIf="isModalOpen"
+  class="feedback-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div
+    class="feedback-modal-content bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md dark:text-gray-200">
+    <div class="flex justify-between items-center mb-4">
+      <h4 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Segnala un Problema</h4>
+      <button class="close-modal-button text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        (click)="closeFeedbackModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
     <form [formGroup]="feedbackForm" (ngSubmit)="onSubmitFeedback()">
-      <div class="form-group">
-        <input type="checkbox" id="mark-incorrect-{{questionId}}" formControlName="isMarkedIncorrect">
-        <label for="mark-incorrect-{{questionId}}">Domanda errata o problematica</label>
+      <div class="form-group mb-4">
+        <div class="flex items-center">
+          <input type="checkbox" id="mark-incorrect-{{questionId}}" formControlName="isMarkedIncorrect"
+            class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
+          <label for="mark-incorrect-{{questionId}}" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Domanda
+            errata o problematica</label>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="reason-{{questionId}}">Motivazione (opzionale):</label>
-        <textarea id="reason-{{questionId}}" formControlName="reasonText" rows="3" placeholder="Descrivi il problema..."></textarea>
+      <div class="form-group mb-4">
+        <label for="reason-{{questionId}}"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motivazione (opzionale):</label>
+        <textarea id="reason-{{questionId}}" formControlName="reasonText" rows="3" placeholder="Descrivi il problema..."
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 text-sm"></textarea>
       </div>
 
-      <div class="form-group">
-        <label for="suggestion-{{questionId}}">Suggerimento (opzionale):</label>
-        <textarea id="suggestion-{{questionId}}" formControlName="suggestedCorrectionText" rows="3" placeholder="Qual è la risposta/spiegazione corretta?"></textarea>
+      <div class="form-group mb-6">
+        <label for="suggestion-{{questionId}}"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Suggerimento (opzionale):</label>
+        <textarea id="suggestion-{{questionId}}" formControlName="suggestedCorrectionText" rows="3"
+          placeholder="Qual è la risposta/spiegazione corretta?"
+          class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 text-sm"></textarea>
       </div>
 
-      <div class="form-actions">
-        <button type="submit" [disabled]="isLoading">
+      <div class="form-actions flex flex-col sm:flex-row justify-end gap-3">
+        <button type="button" (click)="closeFeedbackModal()" [disabled]="isLoading"
+          class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50">
+          Annulla
+        </button>
+        <button type="submit" [disabled]="isLoading || feedbackForm.invalid"
+          class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed">
           {{ isLoading ? 'Invio in corso...' : 'Invia Segnalazione' }}
         </button>
-        <button type="button" (click)="closeFeedbackModal()" [disabled]="isLoading">Annulla</button>
       </div>
 
-      <div *ngIf="submitError" class="error-message">
+      <div *ngIf="submitError"
+        class="mt-4 text-sm text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 rounded-md">
         {{ submitError }}
       </div>
-      <div *ngIf="submitSuccess" class="success-message">
+      <div *ngIf="submitSuccess"
+        class="mt-4 text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900 dark:bg-opacity-30 rounded-md">
         {{ submitSuccess }}
       </div>
     </form>

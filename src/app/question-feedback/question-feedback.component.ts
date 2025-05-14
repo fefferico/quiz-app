@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faCircleExclamation } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 
 // ** No need to import FeedbackService or HttpClientModule here if we are mocking the call **
 // import { HttpClientModule } from '@angular/common/http';
@@ -21,6 +23,7 @@ interface FeedbackPayload {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FontAwesomeModule
     // HttpClientModule // Only if FeedbackService is used AND it's also standalone & needs it
   ],
   templateUrl: './question-feedback.component.html',
@@ -29,6 +32,7 @@ interface FeedbackPayload {
 export class QuestionFeedbackComponent {
   @Input() questionId!: string;
   @Output() feedbackSubmitted = new EventEmitter<void>();
+  segnala: IconDefinition = faCircleExclamation;
 
   isModalOpen = false;
   feedbackForm: FormGroup;
@@ -108,13 +112,13 @@ export class QuestionFeedbackComponent {
     this.isLoading = false;
     const success = Math.random() > 0.2; // 80% chance of success for demo
     if (success) {
-        this.submitSuccess = 'Segnalazione inviata con successo! Grazie.';
-        setTimeout(() => {
-            this.closeFeedbackModal();
-            this.feedbackSubmitted.emit();
-        }, 2000);
+      this.submitSuccess = 'Segnalazione inviata con successo! Grazie.';
+      setTimeout(() => {
+        this.closeFeedbackModal();
+        this.feedbackSubmitted.emit();
+      }, 2000);
     } else {
-        this.submitError = 'Errore simulato nell\'invio della segnalazione. Riprova.';
+      this.submitError = 'Errore simulato nell\'invio della segnalazione. Riprova.';
     }
     // --- End Mock API call ---
   }

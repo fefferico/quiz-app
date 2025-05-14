@@ -47,6 +47,7 @@ export interface QuizAttempt {
   status: QuizStatus; // <-- NEW
   currentQuestionIndex?: number; // <-- NEW: For resuming
   timeLeftOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
+  timeElapsedOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
 }
 
 export interface QuizSettings {
@@ -56,6 +57,7 @@ export interface QuizSettings {
   keywords?: string[];
   topicDistribution?: TopicCount[];
   enableTimer?: boolean;      // <-- NEW
+  enableCronometer?: boolean;      // <-- NEW
   timerDurationSeconds?: number; // <-- NEW (total duration in seconds)
 }
 

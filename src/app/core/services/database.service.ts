@@ -6,6 +6,7 @@ import { QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust p
 import e from 'express';
 import { BehaviorSubject, catchError, tap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 // 1. Define a class that extends Dexie
 export class AppDB extends Dexie {
@@ -34,7 +35,7 @@ export class AppDB extends Dexie {
   }
 
   public loadInitialQuestions(): void {
-    this.http.get<Question[]>(this.jsonPath).pipe(
+  this.http.get<Question[]>(this.jsonPath).pipe(
       tap(questions => {
         this.allQuestionsSubject.next(questions);
         const uniqueTopics = [...new Set(questions.map(q => q.topic))];
@@ -107545,9 +107546,17 @@ export class AppDB extends Dexie {
 export class DatabaseService {
   private db: AppDB;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private authService: AuthService) {
     console.log('DatabaseService constructor called.'); // <-- ADD THIS
     this.db = new AppDB(http);
+
+    //if (!this.authService.isAuthenticated()) { // <<< CHECK AUTHENTICATION
+    //  console.log("User not authenticated. Questions not loaded.");
+    //  // You might want to listen for login events to then fetch questions
+    //  return;
+    //}
+
+
     this.db.open().then(async () => {
       console.log('Database opened successfully.');
       //this.db.loadInitialQuestions(); // Call populate here
@@ -107577,6 +107586,12 @@ export class DatabaseService {
   getOnlyQuestionCorrectlyAnswered(): Promise<Question[]> {
     return this.db.questions
       .filter(question => question !== undefined && ((question?.timesCorrect ?? 0) > 0 && (question?.timesIncorrect ?? 0) === 0))
+      .toArray();
+  }
+
+  getQuestionsByCorrectnessRange(min: number, max: number) : Promise<Question[]> {
+    return this.db.questions
+      .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question)>=min && this.rateofCorrectlyAnswered(question)>=min)
       .toArray();
   }
 
@@ -107823,5 +107838,38 @@ export class DatabaseService {
 
   getFavoriteQuestions(): Promise<Question[]> {
     return this.db.questions.where('isFavorite').equals(1).toArray(); // Fixed boolean indexing
+  }
+
+  // Call this method after successful login
+  public async onUserLoggedIn(): Promise<void> {
+      await this.db.populateInitialDataIfNeeded(); // Call populate here
+  }
+
+   async getAllQuestionsNew(): Promise<Question[]> {
+    // Implement logic to fetch every single question from your database
+    // Example using Dexie:
+    // return this.db.questions.toArray();
+    // This is highly dependent on your actual database implementation.
+    // For now, a placeholder:
+    console.warn("DatabaseService.getAllQuestions() needs to be implemented fully.");
+    const allAttempts = await this.getAllQuizAttempts();
+    const questionMap = new Map<string, Question>();
+    allAttempts.forEach(attempt => {
+        attempt.allQuestions.forEach(qInfo => {
+            if (!questionMap.has(qInfo.questionId)) {
+                questionMap.set(qInfo.questionId, {
+                    id: qInfo.questionId,
+                    text: qInfo.questionSnapshot.text,
+                    options: qInfo.questionSnapshot.options,
+                    correctAnswerIndex: qInfo.questionSnapshot.correctAnswerIndex,
+                    topic: qInfo.questionSnapshot.topic,
+                    explanation: qInfo.questionSnapshot.explanation,
+                    // isFavorite might not be in snapshot or needs to be fetched separately
+                });
+            }
+        });
+    });
+     return Array.from(questionMap.values());
+    // return Promise.resolve([]); // Replace with actual implementation
   }
 }

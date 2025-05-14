@@ -1,0 +1,14 @@
+<div class="col-12 col-md-12 text-center" >
+  <h2>Quiz App Login</h2>
+  <form (ngSubmit)="onLogin()">
+    <div>
+      <label for="password">Password:</label>
+      <input type="password" id="password" [(ngModel)]="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+    <p *ngIf="errorMessage" style="color: red;">{{ errorMessage }}</p>
+  </form>
+  <p style="font-size: 0.8em; color: grey;">
+    Note: This is a basic client-side password check for simple access control.
+  </p>
+</div>

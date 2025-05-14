@@ -1,33 +1,33 @@
 <!-- src/app/pages/study-focus/study-focus.component.html -->
-<div class="max-w-4xl mx-auto p-4 sm:p-6">
+<div class="max-w-4xl mx-auto p-4 sm:p-6 dark:text-gray-200">
     <header class="mb-8 text-center">
-        <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Aree da approfondire</h1>
-        <p class="text-gray-600 mt-1">Identifica le domande in base alla tua performance.</p>
+        <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700 dark:text-indigo-400">Aree da approfondire</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Identifica le domande in base alla tua performance.</p>
     </header>
 
     <div *ngIf="isLoading" class="text-center py-10">
-        <p class="text-xl text-indigo-600">Analizzando la tua performance...</p>
+        <p class="text-xl text-indigo-600 dark:text-indigo-400">Analizzando la tua performance...</p>
     </div>
 
     <div *ngIf="!isLoading && questionGroups.length === 0 && allQuestionsWithStats.length > 0"
-        class="text-center py-10 bg-blue-50 p-6 rounded-lg shadow">
-        <p class="text-lg text-gray-700">
+        class="text-center py-10 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 p-4 sm:p-6 rounded-lg shadow">
+        <p class="text-lg text-gray-700 dark:text-gray-300">
             Non hai tentato abbastanza domande (almeno {{ MIN_ATTEMPTS_FOR_CATEGORY }} volte ciascuna) per poterle
             categorizzare. Continua a esercitarti!
         </p>
     </div>
 
     <div *ngIf="!isLoading && allQuestionsWithStats.length === 0 && questionGroups.length === 0"
-        class="text-center py-10 bg-gray-50 p-6 rounded-lg shadow">
-        <h2 class="mt-4 text-xl font-semibold text-gray-700">Nessuna statistica sulle domande trovata</h2>
-        <p class="mt-1 text-gray-500">Completa alcuni quiz per accumulare dati sulle tue performance.</p>
-        <div class="mt-6">
+        class="text-center py-10 bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow">
+        <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessuna statistica sulle domande trovata</h2>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Completa alcuni quiz per accumulare dati sulle tue performance.</p>
+        <div class="mt-6 flex flex-col sm:flex-row sm:justify-center gap-3">
             <a routerLink="/quiz/setup"
-                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm col-12">
+                class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-2 px-4 rounded-md shadow-sm">
                 Fai un quiz
             </a>
             <a routerLink="/statistics"
-                class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150 col-12">
+                class="w-full sm:w-auto inline-block bg-yellow-500 hover:bg-yellow-700 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-bold py-2 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
                 Torna alle Statistiche complete
             </a>
         </div>
@@ -36,32 +36,39 @@
 
     <div *ngIf="!isLoading && questionGroups.length > 0" class="space-y-8">
         <div *ngFor="let group of questionGroups"
-            class="p-6 rounded-lg shadow-lg border-t-4 {{ group.cssClass || 'border-gray-300 bg-gray-50' }}">
-            <h2 class="text-2xl font-bold mb-2"
-                [ngClass]="{'text-red-700': group.cssClass?.includes('red'), 'text-yellow-700': group.cssClass?.includes('yellow'), 'text-blue-700': group.cssClass?.includes('blue'), 'text-green-700': group.cssClass?.includes('green')}">
+            class="p-4 sm:p-6 rounded-lg shadow-lg border-t-4 {{ group.cssClass || 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800' }}">
+            <!-- Note: group.cssClass might need dark variants too if it sets specific light colors -->
+            <h2 class="text-xl sm:text-2xl font-bold mb-2"
+                [ngClass]="{'text-red-700 dark:text-red-400': group.cssClass?.includes('red'), 'text-yellow-700 dark:text-yellow-400': group.cssClass?.includes('yellow'), 'text-blue-700 dark:text-blue-400': group.cssClass?.includes('blue'), 'text-green-700 dark:text-green-400': group.cssClass?.includes('green')}">
                 {{ group.categoryName }}
             </h2>
-            <p class="text-sm text-gray-600 mb-4">{{ group.description }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ group.description }}</p>
 
             <div *ngIf="group.questions.length > 0" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                <div *ngFor="let q of group.questions" class="p-3 bg-white border border-gray-200 rounded-md shadow-sm">
-                    <p class="text-sm font-medium text-gray-800 truncate" title="{{q.text}}">{{ q.text }}</p>
-                    <p class="text-xs text-gray-500">
+                <div *ngFor="let q of group.questions" class="p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm">
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate" title="{{q.text}}">{{ q.text }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
                         Argomento: {{ q.topic }} | Errate: {{ q.failureRate | percent:'1.0-0' }}
                         ({{q.timesIncorrect}}/{{q.totalAttempts}})
                     </p>
                 </div>
             </div>
-            <div *ngIf="group.questions.length === 0" class="text-gray-500">
+            <div *ngIf="group.questions.length === 0" class="text-gray-500 dark:text-gray-400">
                 Nessuna domanda in questa categoria al momento.
             </div>
 
-            <div *ngIf="group.questions.length > 0 && group.ctaLabel" class="mt-6 text-right">
+            <div *ngIf="group.questions.length > 0 && group.ctaLabel" class="mt-6 text-center sm:text-right">
                 <button (click)="startPracticeQuiz(group.questions)"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md text-sm shadow">
+                    class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-semibold py-2 px-4 rounded-md text-sm shadow">
                     {{ group.ctaLabel }} ({{ group.questions.length }})
                 </button>
             </div>
         </div>
+    </div>
+    <div class="mt-8 text-center" *ngIf="!isLoading">
+        <a routerLink="/home"
+        class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+        Torna alla pagina principale
+        </a>
     </div>
 </div>

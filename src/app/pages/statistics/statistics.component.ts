@@ -1,83 +1,87 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, inject } from '@angular/core';
-import { CommonModule, DecimalPipe, PercentPipe, DatePipe } from '@angular/common'; // Added DatePipe
+// src/app/pages/statistics/statistics.component.ts
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, DecimalPipe, PercentPipe, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Chart, registerables, ChartConfiguration, ChartOptions } from 'chart.js/auto';
-import 'chartjs-adapter-date-fns'; // Import the date adapter
+import 'chartjs-adapter-date-fns';
 
 import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion, TopicCount } from '../../models/quiz.model';
+import { QuizAttempt, AnsweredQuestion, TopicCount, QuizSettings } from '../../models/quiz.model'; // Added QuizSettings
+import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable'; // Method 1: Augments jsPDF prototype
+import 'jspdf-autotable';
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { QuestionFeedbackContentComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
-// OR
-// import autoTable from 'jspdf-autotable';
 
-Chart.register(...registerables); // Register all Chart.js components
+
+Chart.register(...registerables);
 
 interface TopicPerformanceData {
   topic: string;
   correct: number;
   total: number;
   accuracy: number;
-  questionIds: string[]; // IDs of questions in this topic
+  questionIds: string[];
 }
 
-
-
-// NEW: For daily trend
 interface DailyPerformanceData {
-  date: string; // YYYY-MM-DD for easy grouping and chart labeling
+  date: string;
   quizzesTaken: number;
   totalCorrect: number;
   totalAttemptedInDay: number;
-  averageAccuracy: number; // Daily average accuracy
+  averageAccuracy: number;
 }
 
-// NEW: For wrong answer breakdown
 interface TopicWrongAnswerData {
   topic: string;
   wrongAnswers: number;
-  totalAnswersInTopic: number; // Total answers (correct + incorrect) for this topic across all quizzes
-  percentageOfGlobalWrong: number; // What % of *all wrong answers* came from this topic
-  topicSpecificFailureRate: number; // Within this topic, what % were wrong
+  totalAnswersInTopic: number;
+  percentageOfGlobalWrong: number;
+  topicSpecificFailureRate: number;
 }
 
 interface DailyPerformanceDataDetailed {
-  date: string; // YYYY-MM-DD for easy grouping and chart labeling
+  date: string;
   quizzesTaken: number;
-  wrongAnswersIds: string[]; // IDs of questions answered incorrectly
+  wrongAnswersIds: string[];
+}
+
+interface TopicCoverageData {
+  topic: string;
+  totalQuestionsInTopicBank: number;
+  questionsEncountered: number;
+  coveragePercentage: number;
 }
 
 
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [CommonModule, RouterLink, DecimalPipe, PercentPipe, SimpleModalComponent, // Import the simple modal
-    QuestionFeedbackContentComponent], // Add DecimalPipe, PercentPipe
+  imports: [CommonModule, RouterLink, DecimalPipe, PercentPipe, SimpleModalComponent, DatePipe,
+    QuestionFeedbackContentComponent],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.scss']
 })
 export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private dbService = inject(DatabaseService);
-  private router = inject(Router); // For navigation
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   quizAttempts: QuizAttempt[] = [];
+  allQuestionsFromDb: Question[] = []; // Store all questions from the DB bank
+
   isLoading = true;
   errorLoading = '';
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
 
-
-  // Overall Stats
   totalQuizzesTaken = 0;
   totalQuestionsAttempted = 0;
   totalCorrectAnswers = 0;
   overallAccuracy = 0;
   averageScorePercentage = 0;
 
-  // Topic Performance
   topicPerformance: TopicPerformanceData[] = [];
   tipologiaDomande: TopicPerformanceData[] = [];
   tipologiaSelected: TopicPerformanceData = { topic: '', correct: 0, total: 0, accuracy: 0, questionIds: [] };
@@ -85,9 +89,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('topicPerformanceChart') topicPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   topicChart: Chart | undefined;
 
-  // More stats can be added: e.g., performance over time
-
-  // NEW: Daily Performance
   dailyPerformance: DailyPerformanceData[] = [];
   dailyPerformanceDetailed: DailyPerformanceDataDetailed[] = [];
   @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
@@ -95,161 +96,214 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
 
-  // NEW: Wrong Answer Breakdown
   wrongAnswerBreakdown: TopicWrongAnswerData[] = [];
-  totalWrongAnswersOverall = 0; // To calculate percentageOfGlobalWrong
+  totalWrongAnswersOverall = 0;
+
+  topicCoverage: TopicCoverageData[] = [];
+
 
   ngOnInit(): void {
     this.loadAndProcessStatistics();
   }
 
   ngAfterViewInit(): void {
-    // Chart initialization will be called after data is processed
-    // if (this.topicPerformance.length > 0) {
-    //   this.createTopicPerformanceChart();
-    // }
+    // Schedule chart creation using a microtask to ensure view is updated
+    Promise.resolve().then(() => this.createChartsIfReady());
+  }
+
+  private createChartsIfReady(): void {
+    if (this.isLoading || this.errorLoading) return;
+
+    if (this.topicPerformanceChartRef?.nativeElement && this.topicPerformance.length > 0) {
+      this.createTopicPerformanceChart();
+    } else if (this.topicChart) {
+      this.topicChart.destroy(); this.topicChart = undefined;
+    }
+
+    if (this.dailyPerformanceChartRef?.nativeElement && this.dailyPerformance.length > 0) {
+      this.createDailyPerformanceChart();
+    } else if (this.dailyChart) {
+      this.dailyChart.destroy(); this.dailyChart = undefined;
+    }
+    
+    if (this.todayPerformanceChartRef?.nativeElement) {
+        const dateFormatter = new DatePipe('it-IT'); // Use it-IT for consistency if dates are formatted this way elsewhere
+        const todayDateStr = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
+        const todayData = this.dailyPerformance.find(dp => dp.date === todayDateStr);
+        const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateStr);
+
+        if (todayData || (todayDetailed && todayDetailed.wrongAnswersIds.length > 0)) {
+            this.createTodayPerformanceChart();
+        } else if (this.todayChart) {
+            this.todayChart.destroy(); this.todayChart = undefined;
+            // Optionally clear canvas or show "no data"
+            const canvas = this.todayPerformanceChartRef.nativeElement;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.textAlign = 'center';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568'; // Basic dark/light text
+                ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
+            }
+        }
+    } else if (this.todayChart) {
+        this.todayChart.destroy(); this.todayChart = undefined;
+    }
   }
 
   async loadAndProcessStatistics(): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
-      this.quizAttempts = await this.dbService.getAllQuizAttempts(); // Assumes sorted by date descending
+      // Fetch all necessary data concurrently
+      const [quizAttempts, allQuestionsFromDb] = await Promise.all([
+        this.dbService.getAllQuizAttempts(),
+        this.dbService.getAllQuestions() // This should fetch ALL questions from your DB
+      ]);
+
+      this.quizAttempts = quizAttempts;
+      this.allQuestionsFromDb = allQuestionsFromDb; // Store all questions from the "bank"
+
       if (this.quizAttempts.length > 0) {
         this.calculateOverallStats();
-        this.calculateDailyPerformanceWithDetails();
-        this.calculateTopicPerformance(); // For overall accuracy by topic
-        this.calculateDailyPerformance(); // <-- NEW
-        this.calculateWrongAnswerBreakdown(); // <-- NEW
-        this.getGenericData();
-
-        // Chart creation needs to happen after view is initialized and data is ready
-        this.scheduleChartCreation();
+        this.calculateTopicPerformance();
+        this.calculateDailyPerformance();
+        await this.calculateDailyPerformanceWithDetails();
+        this.calculateWrongAnswerBreakdown();
+        this.calculateTopicCoverage(); // Uses this.allQuestionsFromDb and this.quizAttempts
+        await this.getGenericData();
+      } else {
+        this.resetAllStatsToZero();
       }
-    } catch (error) { /* ... */ }
-    finally { this.isLoading = false; }
+    } catch (error) {
+      console.error('Error loading statistics:', error);
+      this.errorLoading = 'Failed to load statistics.';
+      this.resetAllStatsToZero();
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges(); // Ensure view updates after all calculations
+      // Charts will be created in ngAfterViewInit or after data is ready
+      Promise.resolve().then(() => this.createChartsIfReady());
+    }
+  }
+
+  private resetAllStatsToZero(): void {
+    this.totalQuizzesTaken = 0;
+    this.totalQuestionsAttempted = 0;
+    this.totalCorrectAnswers = 0;
+    this.overallAccuracy = 0;
+    this.averageScorePercentage = 0;
+    this.topicPerformance = [];
+    this.dailyPerformance = [];
+    this.dailyPerformanceDetailed = [];
+    this.wrongAnswerBreakdown = [];
+    this.topicCoverage = [];
+    this.tipologiaDomande = [];
+    if (this.topicChart) { this.topicChart.destroy(); this.topicChart = undefined; }
+    if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; }
+    if (this.todayChart) { this.todayChart.destroy(); this.todayChart = undefined; }
   }
 
   calculateOverallStats(): void {
     this.totalQuizzesTaken = this.quizAttempts.length;
     this.totalQuestionsAttempted = 0;
     this.totalCorrectAnswers = 0;
-    let totalScoreSum = 0;
+    let totalWeightedScoreSum = 0;
+    let totalPossibleScoreSum = 0;
 
     this.quizAttempts.forEach(attempt => {
-      const currentScore = attempt.score ? attempt.score : 0; // Assuming score is the number of correct answers
+      const currentScore = attempt.score || 0;
       this.totalQuestionsAttempted += attempt.totalQuestionsInQuiz;
-      this.totalCorrectAnswers += currentScore; // Assuming score is the number of correct answers
-      totalScoreSum += (currentScore / attempt.totalQuestionsInQuiz);
+      this.totalCorrectAnswers += currentScore;
+      totalWeightedScoreSum += currentScore;
+      totalPossibleScoreSum += attempt.totalQuestionsInQuiz;
     });
 
     this.overallAccuracy = this.totalQuestionsAttempted > 0
       ? (this.totalCorrectAnswers / this.totalQuestionsAttempted)
       : 0;
-
-    this.averageScorePercentage = this.totalQuizzesTaken > 0
-      ? (totalScoreSum / this.totalQuizzesTaken)
+    this.averageScorePercentage = totalPossibleScoreSum > 0
+      ? (totalWeightedScoreSum / totalPossibleScoreSum)
       : 0;
   }
 
   async calculateDailyPerformanceWithDetails(): Promise<void> {
-    const dailyMap = new Map<string, DailyPerformanceDataDetailed>();
-    const dateFormatter = new DatePipe('it-IT');
-
-    const todayAttempts = await this.dbService.getAllTodayQuizAttempts(); // Assuming this returns today's attempts
-
-    const sortedAttempts = [...todayAttempts].sort((a, b) =>
-      new Date(a.timestampEnd || 0).getTime() - new Date(b.timestampEnd || 0).getTime()
-    );
-
-    this.dailyPerformanceDetailed = Array.from(sortedAttempts.values())
-      .map((data) => ({
-        date: dateFormatter.transform(data.timestampEnd || new Date(), 'yyyy-MM-dd')!,
-        quizzesTaken: sortedAttempts.length,
-        wrongAnswersIds: sortedAttempts.reduce((acc, attempt) => {
-          const wrongIds = attempt.answeredQuestions
-            .filter((answeredQ: AnsweredQuestion) => !answeredQ.isCorrect)
-            .map((answeredQ: AnsweredQuestion) => answeredQ.questionId);
-          return acc.concat(wrongIds);
-        }, [] as string[])
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date ascending
-      .slice(-30); // Show last 30 days or so for trend
-
-    console.log('Daily performance detailed:', this.dailyPerformanceDetailed);
+    const todayAttempts = await this.dbService.getAllTodayQuizAttempts();
+    if (todayAttempts.length > 0) {
+      const todayDateStr = new DatePipe('it-IT').transform(new Date(), 'yyyy-MM-dd')!;
+      const wrongIdsSet = new Set<string>();
+      todayAttempts.forEach(attempt => {
+        attempt.answeredQuestions.forEach(aq => {
+          if (!aq.isCorrect) wrongIdsSet.add(aq.questionId);
+        });
+      });
+      this.dailyPerformanceDetailed = [{
+        date: todayDateStr,
+        quizzesTaken: todayAttempts.length,
+        wrongAnswersIds: Array.from(wrongIdsSet)
+      }];
+    } else {
+      this.dailyPerformanceDetailed = [];
+    }
   }
 
   calculateTopicPerformance(): void {
-    const performanceMap = new Map<string, { correct: number, total: number }>();
-
+    const performanceMap = new Map<string, { correct: number, total: number, questionIds: Set<string> }>();
     this.quizAttempts.forEach(attempt => {
-      attempt.answeredQuestions.forEach(answeredQ => {
-        const topic = answeredQ.questionSnapshot.topic || 'Uncategorized';
-        const data = performanceMap.get(topic) || { correct: 0, total: 0 };
-        data.total++;
-        if (answeredQ.isCorrect) {
-          data.correct++;
+      attempt.allQuestions.forEach(qSnapshotInfo => { // Use allQuestions to capture exposure
+        const topic = qSnapshotInfo.questionSnapshot.topic || 'Uncategorized';
+        const data = performanceMap.get(topic) || { correct: 0, total: 0, questionIds: new Set() };
+        data.questionIds.add(qSnapshotInfo.questionId);
+
+        const answeredVersion = attempt.answeredQuestions.find(aq => aq.questionId === qSnapshotInfo.questionId);
+        if (answeredVersion) {
+          data.total++; // Increment total *answered* in this topic
+          if (answeredVersion.isCorrect) {
+            data.correct++;
+          }
         }
         performanceMap.set(topic, data);
       });
     });
-
     this.topicPerformance = Array.from(performanceMap.entries()).map(([topic, data]) => ({
       topic,
-      ...data,
+      correct: data.correct,
+      total: data.total,
       accuracy: data.total > 0 ? (data.correct / data.total) : 0,
-      questionIds: []
-    })).sort((a, b) => b.accuracy - a.accuracy); // Sort by accuracy descending
+      questionIds: Array.from(data.questionIds)
+    })).sort((a, b) => b.accuracy - a.accuracy);
   }
-
-  scheduleChartCreation(): void {
-    // Use setTimeout to ensure DOM elements are available
-    setTimeout(() => {
-      if (this.topicPerformanceChartRef?.nativeElement && this.topicPerformance.length > 0) {
-        this.createTopicPerformanceChart();
-      }
-      if (this.dailyPerformanceChartRef?.nativeElement && this.dailyPerformance.length > 0) {
-        this.createDailyPerformanceChart(); // <-- NEW
-      }
-    }, 0);
-  }
-
 
   calculateDailyPerformance(): void {
     const dailyMap = new Map<string, { quizzes: number, correct: number, attempted: number }>();
     const dateFormatter = new DatePipe('en-US');
-
-    // Iterate oldest to newest for chronological chart
     const sortedAttempts = [...this.quizAttempts].sort((a, b) =>
-      new Date(a.timestampEnd || 0).getTime() - new Date(b.timestampEnd || 0).getTime()
+      new Date(a.timestampEnd || a.timestampStart || 0).getTime() - new Date(b.timestampEnd || b.timestampStart || 0).getTime()
     );
-
     sortedAttempts.forEach(attempt => {
-      if (!attempt.timestampEnd) return;
-      const dateKey = dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd')!; // Non-null assertion if sure
-
+      const timestamp = attempt.timestampEnd || attempt.timestampStart;
+      if (!timestamp) return;
+      const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
       const dayData = dailyMap.get(dateKey) || { quizzes: 0, correct: 0, attempted: 0 };
       dayData.quizzes++;
       dayData.correct += attempt.score || 0;
       dayData.attempted += attempt.totalQuestionsInQuiz;
       dailyMap.set(dateKey, dayData);
     });
-
     this.dailyPerformance = Array.from(dailyMap.entries())
-      // .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime()) // Already sorted by processing sortedAttempts
       .map(([date, data]) => ({
         date: date,
         quizzesTaken: data.quizzes,
         totalCorrect: data.correct,
         totalAttemptedInDay: data.attempted,
         averageAccuracy: data.attempted > 0 ? (data.correct / data.attempted) : 0
-      })).slice(-30); // Show last 30 days or so for trend
+      })).slice(-30);
   }
 
   calculateWrongAnswerBreakdown(): void {
     const wrongMap = new Map<string, { wrong: number, totalInTopic: number }>();
     this.totalWrongAnswersOverall = 0;
-
     this.quizAttempts.forEach(attempt => {
       attempt.answeredQuestions.forEach(ansQ => {
         const topic = ansQ.questionSnapshot.topic || 'Uncategorized';
@@ -262,7 +316,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         wrongMap.set(topic, data);
       });
     });
-
     this.wrongAnswerBreakdown = Array.from(wrongMap.entries()).map(([topic, data]) => ({
       topic,
       wrongAnswers: data.wrong,
@@ -270,94 +323,127 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       percentageOfGlobalWrong: this.totalWrongAnswersOverall > 0 ? (data.wrong / this.totalWrongAnswersOverall) : 0,
       topicSpecificFailureRate: data.totalInTopic > 0 ? (data.wrong / data.totalInTopic) : 0
     }))
-      .filter(item => item.wrongAnswers > 0) // Only show topics with wrong answers
-      .sort((a, b) => b.percentageOfGlobalWrong - a.percentageOfGlobalWrong); // Sort by highest contribution to wrong answers
+      .filter(item => item.wrongAnswers > 0)
+      .sort((a, b) => b.topicSpecificFailureRate - a.topicSpecificFailureRate);
   }
 
+  // --- CALCULATE TOPIC COVERAGE ---
+  calculateTopicCoverage(): void { // Removed async as allQuestionsFromDb is now a property
+    if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
+        this.topicCoverage = [];
+        return;
+    }
+
+    const questionsByTopicDb = new Map<string, Question[]>();
+    this.allQuestionsFromDb.forEach(q => {
+      const topic = q.topic || 'Uncategorized';
+      if (!questionsByTopicDb.has(topic)) {
+        questionsByTopicDb.set(topic, []);
+      }
+      questionsByTopicDb.get(topic)!.push(q);
+    });
+
+    const encounteredQuestionIdsByTopic = new Map<string, Set<string>>();
+    this.quizAttempts.forEach(attempt => {
+      attempt.allQuestions.forEach(qSnapshotInfo => {
+        const topic = qSnapshotInfo.questionSnapshot.topic || 'Uncategorized';
+        if (!encounteredQuestionIdsByTopic.has(topic)) {
+          encounteredQuestionIdsByTopic.set(topic, new Set());
+        }
+        encounteredQuestionIdsByTopic.get(topic)!.add(qSnapshotInfo.questionId);
+      });
+    });
+
+    this.topicCoverage = [];
+    questionsByTopicDb.forEach((questionsInBankForTopic, topic) => {
+      const totalInBank = questionsInBankForTopic.length;
+      const encounteredSet = encounteredQuestionIdsByTopic.get(topic) || new Set();
+      const encounteredCount = encounteredSet.size;
+      
+      this.topicCoverage.push({
+        topic: topic,
+        totalQuestionsInTopicBank: totalInBank,
+        questionsEncountered: encounteredCount,
+        coveragePercentage: totalInBank > 0 ? (encounteredCount / totalInBank) : 0
+      });
+    });
+
+    this.topicCoverage.sort((a, b) => a.topic.localeCompare(b.topic));
+  }
+  // --- END CALCULATE TOPIC COVERAGE ---
 
   createTodayPerformanceChart(): void {
-    if (!this.todayPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) return;
+    if (this.todayChart) this.todayChart.destroy();
+    if (!this.todayPerformanceChartRef?.nativeElement) return;
+
+    const dateFormatter = new DatePipe('en-US');
+    const todayDateKey = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
+    const todayOverallPerf = this.dailyPerformance.find(dp => dp.date === todayDateKey);
+    const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateKey);
+
+    // Ensure there's some data to plot for today
+    if (!todayOverallPerf && !(todayDetailed && todayDetailed.wrongAnswersIds.length >= 0)) {
+        const canvas = this.todayPerformanceChartRef.nativeElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
+            ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
+        }
+        return;
+    }
+
     const ctxToday = this.todayPerformanceChartRef.nativeElement.getContext('2d');
     if (!ctxToday) return;
 
-    const dateFormatter = new DatePipe('it-IT');
-    const todayDate = dateFormatter.transform(new Date(), 'yyyy-MM-dd')
-    const todayData = this.dailyPerformance.find(dp => dp.date === todayDate);
-
-    if (!todayData) {
-      console.warn('No data for today found in daily performance data.');
-      return;
-    }
-    console.log('Today data:', todayData);
-    const todayLabels = todayData.date;
-    const todayAccuracyData = todayData.averageAccuracy * 100;
-    const todayQuizzesTakenData = todayData.quizzesTaken;
+    const labels = [todayOverallPerf?.date || todayDetailed?.date || 'Oggi'];
+    const dataForChart = {
+        accuracy: todayOverallPerf ? [todayOverallPerf.averageAccuracy * 100] : [0],
+        quizzesTaken: todayOverallPerf ? [todayOverallPerf.quizzesTaken] : [0],
+        wrongAnswers: todayDetailed ? [todayDetailed.wrongAnswersIds.length] : [0]
+    };
 
     const chartTodayConfig: ChartConfiguration = {
-      type: 'line',
+      type: 'bar',
       data: {
-        labels: [todayLabels],
+        labels: labels,
         datasets: [
           {
-            label: 'Precisione odierna (%)',
-            data: [todayAccuracyData],
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1,
-            yAxisID: 'yAccuracy',
-            fill: true,
+            label: 'Precisione (%)', data: dataForChart.accuracy,
+            backgroundColor: 'rgba(75, 192, 192, 0.5)', borderColor: 'rgb(75, 192, 192)',
+            yAxisID: 'yAccuracy', order: 1
           },
           {
-            label: 'Quiz svolti',
-            data: [todayQuizzesTakenData],
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            type: 'bar', // Can mix chart types
-            yAxisID: 'yQuizzes',
+            label: 'Quiz Svolti', data: dataForChart.quizzesTaken,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgb(54, 162, 235)',
+            yAxisID: 'yQuizzes', order: 3
+          },
+          {
+            label: 'Errori Oggi', data: dataForChart.wrongAnswers,
+            backgroundColor: 'rgba(255, 99, 132, 0.5)', borderColor: 'rgb(255, 99, 132)',
+            yAxisID: 'yQuizzes', order: 2
           }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
+        responsive: true, maintainAspectRatio: false,
         scales: {
-          x: {
-            type: 'time',
-            time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' } },
-            title: { display: true, text: 'Date' }
-          },
-          yAccuracy: {
-            type: 'linear',
-            position: 'left',
-            min: 0,
-            max: 100,
-            title: { display: true, text: 'Precisione (%)' },
-            ticks: { callback: value => value + '%' }
-          },
-          yQuizzes: {
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            max: Math.max(1, todayQuizzesTakenData + 1), // Ensure at least 1 for visibility
-            title: { display: true, text: 'Quiz svolti' },
-            grid: { drawOnChartArea: false }, // Only show grid for primary axis
-            ticks: { stepSize: 1 }
-          }
+          x: { title: { display: true, text: 'Data' } },
+          yAccuracy: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Precisione (%)' }, ticks: { callback: value => value + '%' } },
+          yQuizzes: { type: 'linear', position: 'right', min: 0, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 }, grid: { drawOnChartArea: false } }
         },
-        plugins: { /* ... tooltips as before ... */ }
-      } as ChartOptions // Cast to ChartOptions to satisfy stricter typing for scales
+        plugins: { tooltip: { mode: 'index', intersect: false }, title: { display: true, text: 'Performance Odierna Dettagliata' } }
+      } as ChartOptions
     };
-
     this.todayChart = new Chart(ctxToday, chartTodayConfig);
   }
 
   createDailyPerformanceChart(): void {
     if (this.dailyChart) this.dailyChart.destroy();
     if (!this.dailyPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) return;
-
     const ctx = this.dailyPerformanceChartRef.nativeElement.getContext('2d');
-
     if (!ctx) return;
 
     const labels = this.dailyPerformance.map(dp => dp.date);
@@ -369,257 +455,172 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       data: {
         labels: labels,
         datasets: [
-          {
-            label: 'Precisione media giornaliera (%)',
-            data: accuracyData,
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1,
-            yAxisID: 'yAccuracy',
-            fill: true,
-          },
-          {
-            label: 'Quiz svolti',
-            data: quizzesTakenData,
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            type: 'bar', // Can mix chart types
-            yAxisID: 'yQuizzes',
-          }
+          { label: 'Precisione media giornaliera (%)', data: accuracyData, borderColor: 'rgb(75, 192, 192)', backgroundColor: 'rgba(75, 192, 192, 0.2)', tension: 0.1, yAxisID: 'yAccuracy', fill: true },
+          { label: 'Quiz svolti', data: quizzesTakenData, borderColor: 'rgb(255, 99, 132)', backgroundColor: 'rgba(255, 99, 132, 0.2)', type: 'bar', yAxisID: 'yQuizzes' }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         interaction: { intersect: false, mode: 'index' },
         scales: {
-          x: {
-            type: 'time',
-            time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' } },
-            title: { display: true, text: 'Date' }
-          },
-          yAccuracy: {
-            type: 'linear',
-            position: 'left',
-            min: 0,
-            max: 100,
-            title: { display: true, text: 'Precisione (%)' },
-            ticks: { callback: value => value + '%' }
-          },
-          yQuizzes: {
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            title: { display: true, text: 'Quiz svolti' },
-            grid: { drawOnChartArea: false }, // Only show grid for primary axis
-            ticks: { stepSize: 1 }
-          }
+          x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' } }, title: { display: true, text: 'Data' } },
+          yAccuracy: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Precisione (%)' }, ticks: { callback: value => value + '%' } },
+          yQuizzes: { type: 'linear', position: 'right', min: 0, title: { display: true, text: 'Quiz svolti' }, grid: { drawOnChartArea: false }, ticks: { stepSize: 1 } }
         },
-        plugins: { /* ... tooltips as before ... */ }
-      } as ChartOptions // Cast to ChartOptions to satisfy stricter typing for scales
+        plugins: { tooltip: { mode: 'index', intersect: false }, title: { display: true, text: 'Andamento Performance Giornaliera' } }
+      } as ChartOptions
     };
     this.dailyChart = new Chart(ctx, chartDailyConfig);
-
-    this.createTodayPerformanceChart(); // <-- NEW
-
   }
 
   createTopicPerformanceChart(): void {
-    if (this.topicChart) {
-      this.topicChart.destroy(); // Destroy existing chart instance before creating a new one
-    }
-    if (!this.topicPerformanceChartRef?.nativeElement || this.topicPerformance.length === 0) {
-      console.warn('Chart canvas not available or no data for topic performance chart.');
-      return;
-    }
-
+    if (this.topicChart) this.topicChart.destroy();
+    if (!this.topicPerformanceChartRef?.nativeElement || this.topicPerformance.length === 0) return;
     const ctx = this.topicPerformanceChartRef.nativeElement.getContext('2d');
-    if (!ctx) {
-      console.error('Failed to get 2D context for chart');
-      return;
-    }
+    if (!ctx) return;
 
-    const labels = this.topicPerformance.map(tp => tp.topic);
-    const data = this.topicPerformance.map(tp => tp.accuracy * 100); // Show as percentage
+    const labels = this.topicPerformance.map(tp => tp.topic.length > 25 ? tp.topic.substring(0,22) + '...' : tp.topic); // Truncate long labels
+    const data = this.topicPerformance.map(tp => tp.accuracy * 100);
+    const backgroundColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length,1))}, 70%, 60%, 0.6)`);
+    const borderColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length,1))}, 70%, 50%, 1)`);
 
     this.topicChart = new Chart(ctx, {
-      type: 'bar', // or 'doughnut', 'pie'
+      type: 'bar',
       data: {
         labels: labels,
-        datasets: [{
-          label: 'Precisione per argomento (%)',
-          data: data,
-          backgroundColor: [ // Add more colors if you have more topics
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)'
-          ],
-          borderColor: [
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 99, 132, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)'
-          ],
-          borderWidth: 1
-        }]
+        datasets: [{ label: 'Precisione per argomento (%)', data: data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false, // Allows better control with container size
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         scales: {
-          y: {
-            beginAtZero: true,
-            max: 100, // Since it's percentage
-            ticks: {
-              callback: function (value) {
-                return value + '%';
-              }
-            }
-          }
+          x: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } },
+          y: { ticks: { autoSkip: false } }
         },
         plugins: {
-          legend: {
-            display: true, // Or false if only one dataset
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(1) + '%';
-                }
-                return label;
-              }
-            }
-          }
+          legend: { display: false },
+          tooltip: { callbacks: { label: context => `${this.topicPerformance[context.dataIndex].topic}: ${context.parsed.x.toFixed(1)}%` } }, // Show full topic name in tooltip
+          title: { display: true, text: 'Precisione per Argomento' }
         }
       }
     });
-    console.log('Topic performance chart created/updated.');
   }
 
   async resetStatistics(): Promise<void> {
     if (confirm('Sei sicuro di voler cancellare tutte le tue statistiche? Questo cancellerà tutto lo storico dei tuoi quiz.')) {
       try {
-        await this.dbService.resetDatabase(); // Assuming this clears questions and attempts, and re-populates questions
-        // Or more specifically:
-        // await this.dbService.clearAllQuizAttempts();
-        this.quizAttempts = [];
-        this.calculateOverallStats(); // Recalculate, will be zeros
-        this.calculateTopicPerformance(); // Recalculate, will be empty
-        if (this.topicChart) {
-          this.topicChart.destroy();
-          this.topicChart = undefined;
-        }
-
-        if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; } // <-- NEW
-        // Optionally, re-create an empty chart or hide the canvas
-        console.log('Statistics reset successfully.');
-        this.dailyPerformance = [];
-        this.wrongAnswerBreakdown = [];
+        await this.dbService.resetDatabase();
+        await this.loadAndProcessStatistics(); // Reload to show empty state and re-initialize
+        alert('Statistiche resettate con successo.');
       } catch (error) {
         console.error('Error resetting statistics:', error);
-        alert("E' stato riscontrato un errore durante il reset delle statistiche.");
+        alert("Errore durante il reset delle statistiche.");
       }
     }
   }
 
   startPracticeQuizForTopic(topic: string): void {
-    console.log(`Placeholder: Start practice quiz for topic: ${topic}`);
-    // Implementation similar to StudyFocusComponent or FavoriteQuestionsComponent:
-    // 1. Get all question IDs for this topic (or a subset of them, e.g., only incorrectly answered ones from this topic).
-    //    - To get incorrectly answered ones, you'd need to iterate quizAttempts.
-    //    - Simpler: Get N random questions from this topic.
-    // 2. Navigate to /quiz/take with queryParams:
-    //    - `topics: topic` (if QuizTakingComponent can take single topic string)
-    //    - `numQuestions: 10` (or some default)
-    //    - OR `question_ids: ...` if you fetch specific question IDs.
+    const practiceQuestionIds = new Set<string>();
+    this.quizAttempts.forEach(attempt => {
+      attempt.allQuestions.forEach(qInfo => {
+        if (qInfo.questionSnapshot.topic === topic) {
+          const answeredVersion = attempt.answeredQuestions.find(aq => aq.questionId === qInfo.questionId);
+          if (!answeredVersion || !answeredVersion.isCorrect) {
+            practiceQuestionIds.add(qInfo.questionId);
+          }
+        }
+      });
+    });
+
+    if (practiceQuestionIds.size === 0) {
+      // If no wrong/unanswered, offer to practice all questions from the topic
+      const allTopicQuestions = this.allQuestionsFromDb.filter(q => (q.topic || 'Uncategorized') === topic);
+      if (allTopicQuestions.length > 0) {
+          if(confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}". Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
+              allTopicQuestions.forEach(q => practiceQuestionIds.add(q.id));
+          } else {
+              return;
+          }
+      } else {
+        alert(`Nessuna domanda disponibile per l'argomento: ${topic}.`);
+        return;
+      }
+    }
+    
+    const finalQuestionIds = Array.from(practiceQuestionIds);
     this.router.navigate(['/quiz/take'], {
       queryParams: {
-        topics: topic,
-        numQuestions: 10 // Example: start a quick 10-question quiz for this topic
+        quizTitle: `Pratica: ${topic}`,
+        question_ids: finalQuestionIds.join(','),
+        numQuestions: finalQuestionIds.length,
       }
     });
   }
 
   startPracticeQuizForTodayWrong(): void {
-    console.log(`Placeholder: Start practice quiz for today performance: ${this.dailyPerformanceDetailed[0]}`);
-    const questionIds = this.dailyPerformanceDetailed[0].wrongAnswersIds;
-    console.log('Starting quiz with wrong answer IDs:', questionIds);
-    this.router.navigate(['/quiz/take'], {
-      queryParams: {
-        quizTitle: 'Rivedi le domande sbagliate di oggi',
-        numQuestions: this.dailyPerformanceDetailed[0].wrongAnswersIds.length,
-        question_ids: questionIds // Pass the wrong answer IDs
-      }
-    });
+    const todayDetailedEntry = this.dailyPerformanceDetailed.find(dpd => dpd.date === new DatePipe('it-IT').transform(new Date(), 'yyyy-MM-dd'));
+    if (todayDetailedEntry && todayDetailedEntry.wrongAnswersIds.length > 0) {
+      const questionIds = todayDetailedEntry.wrongAnswersIds;
+      this.router.navigate(['/quiz/take'], {
+        queryParams: { quizTitle: 'Rivedi Errori di Oggi', question_ids: questionIds.join(','), numQuestions: questionIds.length }
+      });
+    } else {
+      alert("Nessun errore registrato oggi o nessun dato disponibile!");
+    }
   }
 
-  startPracticeQuizForGeneralData(index: number): void {
-    console.log(this.tipologiaDomande);
-    console.log(index)
-    console.log(`Placeholder: Start practice quiz for general data: ${this.tipologiaDomande[index].topic}`);
-    this.quizSetupModalTitle = this.tipologiaDomande[index].topic;
-    const questionIds = this.tipologiaDomande[index].questionIds;
-    console.log('Starting quiz with wrong answer IDs:', questionIds);
-
-
-    // extract unique topics from questionIds
-    this.topics = [];
-    this.dbService.getQuestionByIds(questionIds).then((questions) => {
-      for (const question of questions) {
-        if (this.topics && !this.topics.some(t => t.topic === question.topic)) {
-          const topicQsts = questions.filter(q => q.topic === question.topic);
-          this.topics.push({ topic: question.topic, count: topicQsts.length, questionIds: topicQsts.map(q => q.id) });
-        }
-        this.openQuizSetupModal();
-      }
+  async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
+    const selectedData = this.tipologiaDomande[index];
+    if (!selectedData || !selectedData.questionIds || selectedData.questionIds.length === 0) {
+      alert(`Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
+      return;
     }
-    );
+    this.quizSetupModalTitle = selectedData.topic;
+    this.topics = [];
 
-    //this.router.navigate(['/quiz/take'], {
-    //  queryParams: {
-    //    quizTitle: 'Rivedi le domande sbagliate di oggi',
-    //    numQuestions: this.dailyPerformanceDetailed[0].wrongAnswersIds.length,
-    //    question_ids: questionIds // Pass the wrong answer IDs
-    //  }
-    //});
+    try {
+        const questionsForModal = await this.dbService.getQuestionByIds(selectedData.questionIds);
+        const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
+        questionsForModal.forEach(q => {
+            const topic = q.topic || 'Uncategorized';
+            if (!topicsMap.has(topic)) {
+                topicsMap.set(topic, { count: 0, questionIds: [] });
+            }
+            const topicData = topicsMap.get(topic)!;
+            topicData.count++;
+            topicData.questionIds.push(q.id);
+        });
+        this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+            topic: topicName,
+            count: data.count,
+            questionIds: data.questionIds
+        }));
+        this.openQuizSetupModal();
+    } catch (error) {
+        console.error("Error fetching questions for modal setup:", error);
+        alert("Errore nel preparare il quiz di pratica.");
+    }
   }
 
   ngOnDestroy(): void {
-    if (this.topicChart) {
-      this.topicChart.destroy();
-    }
-    if (this.dailyChart) this.dailyChart.destroy(); // <-- NEW
+    if (this.topicChart) this.topicChart.destroy();
+    if (this.dailyChart) this.dailyChart.destroy();
+    if (this.todayChart) this.todayChart.destroy();
   }
 
-
   async exportStatisticsToPDF(): Promise<void> {
-    if (this.quizAttempts.length === 0) {
+    if (this.quizAttempts.length === 0 && this.allQuestionsFromDb.length === 0) { // Check if any data exists
       alert("Non ci sono statistiche da esportare.");
       return;
     }
 
-    const doc = new jsPDF({
-      orientation: 'p', // portrait
-      unit: 'mm',
-      format: 'a4'
-    });
-
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let yPos = 20;
-    const lineHeight = 7;
-    const margin = 15;
+    let yPos = 15; // Start a bit lower
+    const lineHeight = 6; // Smaller line height for denser info
+    const margin = 10; // Smaller margin
     const contentWidth = pageWidth - margin * 2;
+    const sectionSpacing = lineHeight * 2;
 
     const checkYPos = (neededHeight: number = lineHeight * 2) => {
       if (yPos + neededHeight > pageHeight - margin) {
@@ -627,189 +628,172 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         yPos = margin;
       }
     };
+    
+    const addPageNumbers = () => {
+        const pageCount = (doc.internal as any).getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, { align: 'right' });
+        }
+    };
 
-    // --- Title ---
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Quiz Statistics Report', pageWidth / 2, yPos, { align: 'center' });
-    yPos += lineHeight * 2;
 
-    // --- Overall Performance ---
-    checkYPos(lineHeight * 5);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Overall Performance', margin, yPos);
-    yPos += lineHeight * 1.5;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.text('Report Statistiche Quiz', pageWidth / 2, yPos, { align: 'center' });
+    yPos += lineHeight * 3;
 
-    const overallStats = [
-      `Quiz svolti: ${this.totalQuizzesTaken}`,
-      `Totale domande affrontate: ${this.totalQuestionsAttempted}`,
-      `Totale domande corrette: ${this.totalCorrectAnswers}`,
-      `Precisione generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
-      `Punteggio medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
-    ];
-    overallStats.forEach(stat => {
-      checkYPos();
-      doc.text(stat, margin + 5, yPos);
-      yPos += lineHeight;
-    });
-    yPos += lineHeight; // Extra space
+    if (this.quizAttempts.length > 0) {
+        doc.setFontSize(14); doc.text('Performance Generale', margin, yPos); yPos += lineHeight * 1.5;
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        [
+          `Quiz Svolti: ${this.totalQuizzesTaken}`,
+          `Domande Affrontate: ${this.totalQuestionsAttempted}`,
+          `Risposte Corrette: ${this.totalCorrectAnswers}`,
+          `Precisione Generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
+          `Punteggio Medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
+        ].forEach(stat => { checkYPos(lineHeight); doc.text(stat, margin + 2, yPos); yPos += lineHeight; });
+        yPos += sectionSpacing;
+    }
 
-    // --- Topic Performance Chart ---
+
+    if (this.topicCoverage.length > 0) {
+        checkYPos(lineHeight * 3);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('Copertura Argomenti', margin, yPos); yPos += lineHeight * 1.5;
+        (doc as any).autoTable({
+            startY: yPos,
+            head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
+            body: this.topicCoverage.map(tc => [
+                tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
+                new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
+            ]),
+            theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+            headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
+            columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } }, // Topic name left aligned
+            margin: { left: margin, right: margin },
+            didDrawPage: (data: any) => { yPos = data.cursor.y; if(yPos > pageHeight - margin - 10) yPos = margin}
+        });
+        yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
+    }
+
+
     if (this.topicChart && this.topicPerformance.length > 0) {
-      checkYPos(80); // Approximate height for chart + title
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Precisione per argomento', margin, yPos);
-      yPos += lineHeight * 1.5;
-      try {
-        const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
-        // Calculate aspect ratio to fit width
-        const imgProps = this.topicChart.canvas.getBoundingClientRect(); // Or use fixed aspect ratio
-        const aspectRatio = imgProps.width / imgProps.height;
-        const imgWidth = contentWidth * 0.8; // Use 80% of content width
-        const imgHeight = imgWidth / aspectRatio;
-
-        checkYPos(imgHeight + lineHeight); // Check if chart fits
-        doc.addImage(chartImage, 'PNG', margin + (contentWidth * 0.1), yPos, imgWidth, imgHeight);
-        yPos += imgHeight + lineHeight;
-      } catch (e) {
-        console.error("Error adding topic chart to PDF:", e);
-        checkYPos();
-        doc.setTextColor(150);
-        doc.text('Non sono stato in grado di disegnare il grafico.', margin + 5, yPos);
-        doc.setTextColor(0);
-        yPos += lineHeight;
-      }
+        checkYPos(80); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('Precisione per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+        try {
+            const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
+            const imgProps = this.topicChart.canvas;
+            const aspectRatio = imgProps.width / imgProps.height;
+            const imgWidth = Math.min(contentWidth, 160); // Slightly smaller
+            const imgHeight = imgWidth / aspectRatio;
+            checkYPos(imgHeight + lineHeight);
+            doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+            yPos += imgHeight + lineHeight;
+        } catch (e) { console.error("Error PDF Topic Chart:", e); yPos += lineHeight; }
+        yPos += sectionSpacing / 2;
     }
-    yPos += lineHeight;
 
-    // --- Daily Performance Trend Chart ---
     if (this.dailyChart && this.dailyPerformance.length > 0) {
-      checkYPos(100); // Approximate height for chart + title
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Andamento giornaliero', margin, yPos);
-      yPos += lineHeight * 1.5;
-      try {
-        const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
-        const imgProps = this.dailyChart.canvas.getBoundingClientRect();
-        const aspectRatio = imgProps.width / imgProps.height;
-        const imgWidth = contentWidth * 0.9; // Use 90% of content width for line chart
-        const imgHeight = imgWidth / aspectRatio;
-
-        checkYPos(imgHeight + lineHeight);
-        doc.addImage(chartImage, 'PNG', margin + (contentWidth * 0.05), yPos, imgWidth, imgHeight);
-        yPos += imgHeight + lineHeight;
-      } catch (e) {
-        console.error("Error adding daily chart to PDF:", e);
-        checkYPos();
-        doc.setTextColor(150);
-        doc.text('Non sono stato in grado di disegnare il grafico.', margin + 5, yPos);
-        doc.setTextColor(0);
-        yPos += lineHeight;
-      }
+        checkYPos(100); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('Andamento Giornaliero', margin, yPos); yPos += lineHeight * 1.5;
+        try {
+            const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
+            const imgProps = this.dailyChart.canvas;
+            const aspectRatio = imgProps.width / imgProps.height;
+            const imgWidth = Math.min(contentWidth, 170);
+            const imgHeight = imgWidth / aspectRatio;
+            checkYPos(imgHeight + lineHeight);
+            doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+            yPos += imgHeight + lineHeight;
+        } catch (e) { console.error("Error PDF Daily Chart:", e); yPos += lineHeight; }
+        yPos += sectionSpacing / 2;
     }
-    yPos += lineHeight;
-
-    // --- Wrong Answer Breakdown Table (using jspdf-autotable if installed, or simple text) ---
+    
     if (this.wrongAnswerBreakdown.length > 0) {
-      checkYPos(lineHeight * 3);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Focus Areas: Wrong Answers by Topic', margin, yPos);
-      yPos += lineHeight * 1.5;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-
-      // For a proper table, jspdf-autotable plugin is recommended: https://github.com/simonbengtsson/jsPDF-AutoTable
-      // npm install jspdf-autotable
-      // import 'jspdf-autotable'; (or import autoTable from 'jspdf-autotable'; and call doc.autoTable(...))
-      // (doc as any).autoTable({ // Cast to any or extend jsPDF interface
-      //   startY: yPos,
-      //   head: [['Topic', 'Wrong Answers', 'Contribution', 'Topic Failure Rate']],
-      //   body: this.wrongAnswerBreakdown.map(wa => [
-      //     wa.topic,
-      //     wa.wrongAnswers.toString(),
-      //     new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
-      //     new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
-      //   ]),
-      //   theme: 'striped', // 'grid', 'plain'
-      //   styles: { fontSize: 8, cellPadding: 2 },
-      //   headStyles: { fillColor: [22, 160, 133], fontSize: 9, fontStyle: 'bold' },
-      //   margin: { left: margin, right: margin },
-      // });
-      // yPos = (doc as any).lastAutoTable.finalY + lineHeight; // Update yPos after table
-
-      // Simple text version if jspdf-autotable is not used:
-      this.wrongAnswerBreakdown.forEach(wa => {
-        checkYPos(lineHeight * 2);
-        const line1 = `Topic: ${wa.topic} - Wrong: ${wa.wrongAnswers}`;
-        const line2 = `  Contribution: ${new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1')}, Topic Failure Rate: ${new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')}`;
-        doc.text(line1, margin + 5, yPos);
-        yPos += lineHeight;
-        checkYPos();
-        doc.text(line2, margin + 5, yPos);
-        yPos += lineHeight;
-      });
-      yPos += lineHeight;
+        checkYPos(lineHeight * 3);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('Focus Errori per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+        (doc as any).autoTable({
+            startY: yPos,
+            head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
+            body: this.wrongAnswerBreakdown.map(wa => [
+                wa.topic, wa.wrongAnswers.toString(),
+                new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
+                new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
+            ]),
+            theme: 'grid', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+            headStyles: { fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // red-like
+            columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } },
+            margin: { left: margin, right: margin },
+            didDrawPage: (data: any) => { yPos = data.cursor.y; if(yPos > pageHeight - margin - 10) yPos = margin}
+        });
+         yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
     }
-
-    // --- Page Numbers ---
-    const pageCount = (doc.internal as any).getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin - 10, pageHeight - 10);
-    }
-
-    doc.save(`quiz-statistics-report-${new DatePipe('en-US').transform(new Date(), 'yyyyMMdd')}.pdf`);
+    
+    addPageNumbers(); // Add page numbers at the end
+    doc.save(`report-statistiche-quiz-${new DatePipe('en-US').transform(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
   }
 
 
   async getGenericData(): Promise<void> {
-    const totalQuestions = await this.dbService.getAllQuestions();
-    const totalQuizAttempts = await this.dbService.getAllQuizAttempts();
-    const totalQuizAttemptsToday = await this.dbService.getAllTodayQuizAttempts();
-    const totalUniqueCorrectAtLeastOneAnswers = await this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce();
-    const totalUniqueWrongAnswers = await this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce();
-    const totalUniqueNeverAnswered = await this.dbService.getAllQuestionNeverAnswered();
-    const totalUniqueAtLeastOnceAnswered = await this.dbService.getAllQuestionAnsweredAtLeastOnce();
-    const totalUniqueCorrectAnswers = await this.dbService.getOnlyQuestionCorrectlyAnswered();
+    const [
+        // allQuestions // Already fetched in this.allQuestionsFromDb
+        uniqueCorrectOnce, 
+        uniqueWrongOnce, 
+        uniqueNeverAnswered, 
+        uniqueAnsweredOnce, 
+        onlyCorrectlyAnswered,
+        domandeDaRafforzare,
+        domandeInCuiVaiMalino,
+        domandeInCuiVaiMoltoMale,
+        domandeDisastro
+    ] = await Promise.all([
+        this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(),
+        this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(),
+        this.dbService.getAllQuestionNeverAnswered(),
+        this.dbService.getAllQuestionAnsweredAtLeastOnce(),
+        this.dbService.getOnlyQuestionCorrectlyAnswered(),
+        this.dbService.getQuestionsByCorrectnessRange(0.75, 0.9999), // up to (but not including) 100%
+        this.dbService.getQuestionsByCorrectnessRange(0.50, 0.7499),
+        this.dbService.getQuestionsByCorrectnessRange(0.25, 0.4999),
+        this.dbService.getQuestionsByCorrectnessRange(0.00, 0.2499)
+    ]);
 
-    const domandeDaRafforzare = await this.dbService.getAllQuestionWhichYouAreQuiteGoodAt(75);
-    const domandeInCuiVaiMalino = await this.dbService.getAllQuestionWhichYouAreQuiteGoodAt(50,75);
-    const domandeInCuiVaiMoltoMale = await this.dbService.getAllQuestionWhichYouAreQuiteGoodAt(25,50);
-    const domandeDisastro = await this.dbService.getAllQuestionWhichYouAreQuiteGoodAt(0,25);
-    this.tipologiaDomande[0] = { topic: 'Domande totali', correct: 0, total: totalQuestions.length, accuracy: 0, questionIds: totalQuestions.map(q => q.id) };
-    this.tipologiaDomande[1] = { topic: 'Domande mai affrontate', correct: 0, total: totalUniqueNeverAnswered.length, accuracy: 0, questionIds: totalUniqueNeverAnswered.map(q => q.id) };
-    this.tipologiaDomande[2] = { topic: 'Domande affrontate', correct: 0, total: totalUniqueAtLeastOnceAnswered.length, accuracy: 0, questionIds: totalUniqueAtLeastOnceAnswered.map(q => q.id) };
-    this.tipologiaDomande[3] = { topic: 'Domande sbagliate almeno una volta', correct: 0, total: totalUniqueWrongAnswers.length, accuracy: 0, questionIds: totalUniqueWrongAnswers.map(q => q.id) };
-    this.tipologiaDomande[4] = { topic: 'Domande risposte correttamente almeno una volta', correct: 0, total: totalUniqueCorrectAtLeastOneAnswers.length, accuracy: 0, questionIds: totalUniqueCorrectAnswers.map(q => q.id) };
-
-    this.tipologiaDomande[5] = { topic: 'Domande che sai perfettamente', correct: 0, total: totalUniqueCorrectAnswers.length, accuracy: 0, questionIds: totalUniqueCorrectAnswers.map(q => q.id) };
-    this.tipologiaDomande[6] = { topic: 'Domande da rafforzare', correct: 0, total: domandeDaRafforzare.length, accuracy: 0, questionIds: domandeDaRafforzare.map(q => q.id) };
-    this.tipologiaDomande[7] = { topic: 'Domande in cui vai malino', correct: 0, total: domandeInCuiVaiMalino.length, accuracy: 0, questionIds: domandeInCuiVaiMalino.map(q => q.id) };
-    this.tipologiaDomande[8] = { topic: 'Domande in cui vai molto male', correct:0, total: domandeInCuiVaiMoltoMale.length, accuracy: 0, questionIds: domandeInCuiVaiMoltoMale.map(q => q.id) };
-    this.tipologiaDomande[9] = { topic: 'Domande disastro', correct:0, total: domandeDisastro.length, accuracy: 0, questionIds: domandeDisastro.map(q => q.id) };
-
+    this.tipologiaDomande = [
+      { topic: 'Domande totali nel DB', total: this.allQuestionsFromDb.length, questionIds: this.allQuestionsFromDb.map(q => q.id), correct:0, accuracy:0},
+      { topic: 'Domande mai affrontate', total: uniqueNeverAnswered.length, questionIds: uniqueNeverAnswered.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande affrontate almeno una volta', total: uniqueAnsweredOnce.length, questionIds: uniqueAnsweredOnce.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande sbagliate almeno una volta', total: uniqueWrongOnce.length, questionIds: uniqueWrongOnce.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande risposte correttamente almeno una volta', total: uniqueCorrectOnce.length, questionIds: uniqueCorrectOnce.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande di cui sai tutto (100% corrette)', total: onlyCorrectlyAnswered.length, questionIds: onlyCorrectlyAnswered.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande da rafforzare (75-99% corrette)', total: domandeDaRafforzare.length, questionIds: domandeDaRafforzare.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande in cui vai malino (50-74% corrette)', total: domandeInCuiVaiMalino.length, questionIds: domandeInCuiVaiMalino.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande in cui vai molto male (25-49% corrette)', total: domandeInCuiVaiMoltoMale.length, questionIds: domandeInCuiVaiMoltoMale.map(q => q.id), correct:0, accuracy:0 },
+      { topic: 'Domande "disastro" (0-24% corrette)', total: domandeDisastro.length, questionIds: domandeDisastro.map(q => q.id), correct:0, accuracy:0 }
+    ];
   }
 
-  // --- Methods for the lightweight modal ---
-  openQuizSetupModal(): void {
-    this.isQuizSetupModalOpen = true;
-  }
+  openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }
+  closeQuizSetupModal(): void { this.isQuizSetupModalOpen = false; }
 
-  closeQuizSetupModal(): void {
-    this.isQuizSetupModalOpen = false;
-  }
+  handleQuizSetupSubmitted(quizConfig: Partial<QuizSettings> & { fixedQuestionIds?: string[] }): void { // Added fixedQuestionIds
+    this.closeQuizSetupModal();
+    
+    const queryParams: any = {
+        quizTitle: this.quizSetupModalTitle || 'Quiz di Pratica',
+        numQuestions: quizConfig.numQuestions,
+        topics: quizConfig.selectedTopics?.join(','),
+        topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
+        // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
+        fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
+        enableTimer: quizConfig.enableTimer || false, // Default to false for practice
+        timerDuration: quizConfig.timerDurationSeconds || 0
+    };
 
-  handleQuizSetupSubmitted(feedbackData: any): void {
-    console.log("Quiz setup received in parent:", feedbackData);
-    // Here you would typically call your QuizService to persist this feedback
-    // this.quizService.submitQuestionFeedback(feedbackData).subscribe(...);
-    this.closeQuizSetupModal(); // Close modal on successful submission from content
+    // Clean up undefined queryParams
+    Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
+
+    this.router.navigate(['/quiz/take'], { queryParams });
   }
 }

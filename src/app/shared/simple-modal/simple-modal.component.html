@@ -1,7 +1,7 @@
 <div *ngIf="isOpen" class="modal-overlay-simple" (click)="closeModal()">
   <div class="modal-content-simple" (click)="onContentClick($event)">
     <div class="modal-header-simple">
-      <h4>{{ modalTitle }}</h4>
+      <h4 class="bg-white dark:text-gray-400">{{ modalTitle }}</h4>
       <button class="close-button-simple" (click)="closeModal()" aria-label="Chiudi">×</button>
     </div>
     <div class="modal-body-simple">

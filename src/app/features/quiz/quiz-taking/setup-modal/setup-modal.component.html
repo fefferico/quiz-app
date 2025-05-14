@@ -1,5 +1,5 @@
 <!-- This is now the content that goes INSIDE app-simple-modal -->
- <h5>Tipologia: <strong>{{modalTitle}}</strong></h5>
+ <h5 class="bg-white dark:text-gray-600">Tipologia: <strong>{{modalTitle}}</strong></h5>
 <div *ngIf="topics.length > 0" class="space-y-3 border-t pt-4 mt-4">
     <h4 class="text-md font-medium text-gray-600 mb-2">Imposta il numero di domande per argomento:</h4>
     <div *ngFor="let topic of clonedTopics; let i = index" class="p-3 border rounded-md bg-gray-50">
@@ -13,7 +13,7 @@
                     <input #inputValue type="number" min="1" max="{{getMaxCountOfTopic(topic)}}" id="count-{{topic.topic}}"
                         name="count-{{topic.topic}}-{{i}}" [value]="topic.count"
                         (change)="calculateTotalQuestionsFromTopicCounts($event, topic)"
-                        class="block w-full p-1.5 text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        class="block w-full p-1.5 text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-gray-600">
                 </div>
                 <div class="text-center">
                     <span *ngIf="topic.isMaxReached" class="text-red-500 text-sm">

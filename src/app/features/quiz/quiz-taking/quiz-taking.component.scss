@@ -5,7 +5,7 @@
   background-color: #ddd;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 0 4px rgba(0,0,0,0.2);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .progress {
@@ -22,4 +22,48 @@
 
 .green {
   background-color: #2ecc71;
+}
+
+.quiz-content-wrapper {
+  // The main wrapper for quiz content inside quiz-taking.component.html
+  // Base font size will be inherited or set by Tailwind's text-sm, text-base etc.
+  // We use the CSS variable to scale it.
+  font-size: calc(1em * var(--quiz-font-scale, 1)); // Default to 1 if variable not set
+
+  &.font-opendyslexic {
+    font-family: 'OpenDyslexic', sans-serif;
+  }
+
+  &.font-verdana {
+    font-family: Verdana, sans-serif;
+  }
+
+  &.font-arial {
+    font-family: Arial, sans-serif;
+  }
+
+  // &.font-default will just use the inherited font
+}
+
+// You might want to ensure specific elements within the quiz also scale appropriately.
+// For example, if some elements have fixed font sizes in `px`, they won't scale with `em`.
+// It's best if most text elements use relative units (em, rem) or Tailwind's text utilities
+// which are rem-based.
+
+// Styling for the accessibility controls panel (add this to the SCSS)
+.accessibility-controls {
+  @apply flex flex-col sm:flex-row items-center gap-2 p-2 mb-4 border-b border-gray-300 dark:border-gray-600;
+
+  .control-group {
+    @apply flex items-center gap-1;
+  }
+
+  button {
+    @apply px-2 py-1 text-xs sm:text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded;
+    min-width: 2rem; // Ensure buttons have a decent tap target
+  }
+
+  .font-name {
+    @apply text-xs sm:text-sm px-2 py-1 min-w-[80px] text-center; // For displaying current font name
+  }
 }

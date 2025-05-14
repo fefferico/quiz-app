@@ -4,13 +4,13 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --configuration production --base-href ./",
+    "build": "ng build --configuration production --base-href /quiz-app/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:quiz-app": "node dist/quiz-app/server/server.mjs",
     "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
     "electron:build": "npm run build && electron-builder",
-    "build:tauri": "ng build --configuration production --base-href ./"
+    "deploy:gh": "ng build --configuration production --base-href \"fefferico\" && npx angular-cli-ghpages --dir=dist/quiz-app/browser"
   },
   "private": true,
   "dependencies": {
@@ -42,6 +42,7 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "^19.0.1",
     "@angular-devkit/build-angular": "^19.2.11",
     "@angular/cli": "^19.2.11",
     "@angular/compiler-cli": "^19.2.0",
@@ -51,6 +52,7 @@
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
     "@types/uuid": "^10.0.0",
+    "angular-cli-ghpages": "^2.0.3",
     "concurrently": "^9.1.2",
     "electron": "^36.2.0",
     "electron-builder": "^26.0.12",

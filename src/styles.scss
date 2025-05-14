@@ -1,94 +1,86 @@
-/* You can add global styles to this file, and also import other style files */
 /* src/styles.scss */
+
+// 1. Tailwind Directives (Essential)
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* You can add global custom styles below these Tailwind directives */
+// 2. Global Base Styles (Light Mode Defaults)
 body {
-  @apply bg-gray-100 text-gray-800; /* Example base styling */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* A nice default font */
+  @apply bg-gray-100 text-gray-800; // Light mode default body background and text
+  // In your app.component.html <main> or <body> tag, you'd add dark:bg-gray-900 dark:text-gray-200
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Example of custom component style using @apply */
+html, body { height: 100%; } // Keep this
+body { margin: 0; }          // Keep this
+
+
+// 3. Custom Component Styles (Example .btn-primary - keep if used)
 .btn-primary {
   @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+  // If this button needs dark mode variants different from default Tailwind button behavior:
+  // &.dark { @apply bg-blue-700 hover:bg-blue-800; }
+  // OR, prefer adding dark:bg-blue-700 etc. directly in the HTML where .btn-primary is used.
 }
 
-.feedback-button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  cursor: pointer;
-  font-size: 0.9em;
+
+// 4. Feedback Modal Styles (with dark mode considerations)
+//    It's often better to apply Tailwind dark: classes directly in the component's HTML.
+//    But if you prefer global styles for it:
+.feedback-trigger-button { // Assuming this is for the button that OPENS the modal
+  // Styled primarily with Tailwind in question-feedback.component.html
+  // Add any non-Tailwind base styles here if absolutely needed.
 }
 
-.feedback-modal {
-  position: fixed; /* Or absolute relative to question-container */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border: 1px solid #aaa;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  z-index: 1000; /* Ensure it's on top */
-  width: 80%;
-  max-width: 400px;
+.feedback-modal-overlay {
+  // Styled primarily with Tailwind in question-feedback.component.html
 }
 
-.feedback-modal h4 {
-  margin-top: 0;
+.feedback-modal-content {
+  // Styled primarily with Tailwind in question-feedback.component.html
+  // If you need global overrides:
+  // background-color: white;
+  // border: 1px solid #ccc;
 }
 
-.feedback-form div {
-  margin-bottom: 10px;
+// html.dark .feedback-modal-content {
+//   background-color: #2d3748; // Example: gray-800
+//   border-color: #4a5568;    // Example: gray-600
+//   color: #e2e8f0;           // Example: gray-200
+// }
+
+// html.dark .feedback-modal-content h4 {
+//   color: #f7fafc; // Example: gray-100
+// }
+
+// html.dark .feedback-modal-content label {
+//   color: #a0aec0; // Example: gray-400
+// }
+
+// html.dark .feedback-modal-content textarea {
+//   background-color: #1a202c; // Example: gray-900
+//   border-color: #4a5568;    // Example: gray-600
+//   color: #e2e8f0;           // Example: gray-200
+// }
+// Consider using Tailwind's dark: prefixes directly in question-feedback.component.html instead for these.
+
+
+// 5. Sepia Mode Filter (This is correct)
+html.sepia-mode body {
+  filter: sepia(70%) brightness(90%) contrast(95%) hue-rotate(-10deg);
+  transition: filter 0.3s ease-in-out;
+  // min-height: 100vh; // Ensures body takes up viewport height if content is short
 }
 
-.feedback-form label {
-  display: block;
-  margin-bottom: 5px;
-}
+// 6. REMOVE this - It's not needed for Tailwind's `darkMode: 'class'` strategy
+// @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-.feedback-form textarea {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
+// 7. REMOVE CSS Variable Theming - Rely on Tailwind `dark:` variants
+// :root { ... }
+// .dark-theme { ... }
+// body { background-color: var(--bg-color); color: var(--text-color); }
 
-.feedback-form button {
-  margin-right: 10px;
-}
-
-/* Define the light theme (default) */
-:root {
-  --bg-color: white; /* Background color */
-  --text-color: black; /* Text color */
-}
-/* Define the dark theme */
-.dark-theme {
-  --bg-color: rgb(117, 116, 116); /* Background color */
-  --text-color: white; /* Text color */
-}
-/* Apply the theme colors to the body element */
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-/* Style the toggle button */
-#toggle {
-  position: relative; /* Fix the position of the button */
-  right: 10px; /* Set the right position to 10 pixels */
-  padding: 10px; /* Add some space around the button */
-  border: none; /* Remove the border */
-  border-radius: 5px; /* Add some rounded corners */
-  cursor: pointer; /* Change the cursor to a pointer */
-}
-/* Change the button color on hover */
-#toggle:hover {
-  background-color: gray;
-}
-
+// 8. REMOVE or Refactor #toggle styles - Prefer Tailwind classes in app.component.html
+// #toggle { ... }
+// #toggle:hover { ... }

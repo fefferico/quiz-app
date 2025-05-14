@@ -1,73 +1,59 @@
 // src/app/app.component.ts
-import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router'; // Import RouterLink
-import { DatabaseService } from './core/services/database.service';
+import { Component, computed, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faMoon, faSun, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { RouterOutlet, RouterLink } from '@angular/router';
+import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
+import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { ThemeService, Theme } from './services/theme.service'; // Import Theme type
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule, FontAwesomeModule], // Add RouterLink
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    RouterLink,
+    FontAwesomeModule
+  ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  currentYear = new Date().getFullYear();
-  faMoon = faMoon;
-  faSun = faSun;
-  icon: IconDefinition = faMoon;
-  modeString: string = 'Attiva Mode scura';
+export class AppComponent {
+  currentYear: number = new Date().getFullYear();
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  faAdd: IconDefinition = faAdd;
+  faHistory: IconDefinition = faHistory;
+  faBarChart: IconDefinition = faBarChart;
+  
+  public themeService: ThemeService = inject(ThemeService);
 
-
-  constructor(private dbService: DatabaseService) {
-    this.icon = faMoon;
-    console.log('AppComponent constructor: DatabaseService injected.');
-  }
-
-  ngOnInit(): void {
-    console.log('AppComponent ngOnInit: DatabaseService is available.');
-    this.dbService.getAllQuestions().then(questions => {
-      console.log('AppComponent: Initial questions count from DB:', questions.length);
-    }).catch(err => {
-      console.error('AppComponent: Error fetching initial questions:', err);
-    });
-
-    const root = document.documentElement;
-    // Get the toggle button
-    const toggle = document.getElementById("toggle");
-    const toggleIcon = document.getElementById("modeIcon");
-    // Get the user's preference from localStorage
-    const darkMode = localStorage.getItem("dark-mode");
-    // Check if the user has already chosen a theme
-    if (darkMode) {
-      // If yes, apply it to the root element
-      root.classList.add("dark-theme");
-      if (toggle) {
-        this.modeString = "Attiva modalità chiara";
-        this.icon = faSun;
-      }
+  // Use computed signals for icon and modeString based on the themeService's currentTheme signal
+  public icon: Signal<IconDefinition> = computed(() => {
+    const theme = this.themeService.currentTheme(); // Read the current theme signal
+    if (theme === 'dark') {
+      return faMoon;
+    } else if (theme === 'sepia') {
+      return faAdjust; // Or faTint, faPalette, etc., as you prefer for sepia
     }
+    return faSun; // Default to light mode icon
+  });
+
+  public modeString: Signal<string> = computed(() => {
+    const theme = this.themeService.currentTheme(); // Read the current theme signal
+    if (theme === 'dark') {
+      return 'Dark Mode';
+    } else if (theme === 'sepia') {
+      return 'Sepia Mode';
+    }
+    return 'Light Mode'; // Default to light mode string
+  });
+
+  constructor(library: FaIconLibrary) {
+    // Add all icons to the library that might be used by the theme toggle
+    library.addIcons(faSun, faMoon, faAdjust, faHome); // Added faAdjust, faHome was already there
   }
 
   listenForModeToggleClick(): void {
-    const root = document.documentElement;
-    const toggle = document.getElementById("toggle");
-    const toggleIcon = document.getElementById("modeIcon");
-    root.classList.toggle("dark-theme");
-    if (root.classList.contains("dark-theme")) {
-      localStorage.setItem("dark-mode", "true");
-      if (toggle) {
-        this.modeString = "Attiva modalità chiara";
-      }
-      this.icon = faSun;
-    } else {
-      if (toggle) {
-        this.modeString = "Attiva modalità scura";
-      }
-      localStorage.removeItem("dark-mode");
-      this.icon = faMoon;
-    }
+    this.themeService.toggleTheme(); // Call the updated toggle function
   }
 }

@@ -1,81 +1,149 @@
 <!-- src/app/pages/quiz-history/quiz-history.component.html -->
-<div class="max-w-4xl mx-auto p-4 sm:p-6">
+<div class="max-w-4xl mx-auto p-4 sm:p-6 dark:text-gray-200">
   <header class="mb-8 text-center">
-    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700">Storico Quiz</h1>
-    <p class="text-gray-600 mt-1">Rivedi le tue prestazioni passate.</p>
+    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700 dark:text-indigo-400">Storico Quiz</h1>
+    <p class="text-gray-600 dark:text-gray-400 mt-1">Rivedi le tue prestazioni passate.</p>
   </header>
 
+  <!-- Filter Section -->
+  <section class="mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Filtra Risultati</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Date Start -->
+      <div>
+        <label for="filterDateStart" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Da Data:</label>
+        <input type="date" id="filterDateStart" name="filterDateStart"
+               [(ngModel)]="filterDateStart" (ngModelChange)="applyFilters()"
+               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+      <!-- Date End -->
+      <div>
+        <label for="filterDateEnd" class="block text-sm font-medium text-gray-700 dark:text-gray-300">A Data:</label>
+        <input type="date" id="filterDateEnd" name="filterDateEnd"
+               [(ngModel)]="filterDateEnd" (ngModelChange)="applyFilters()"
+               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+      <!-- Topic -->
+      <div>
+        <label for="filterTopic" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Argomento:</label>
+        <select id="filterTopic" name="filterTopic"
+                [(ngModel)]="filterSelectedTopic" (ngModelChange)="applyFilters()"
+                class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          <option value="">Tutti gli Argomenti</option>
+          <option *ngFor="let topic of availableTopics" [value]="topic">{{ topic }}</option>
+        </select>
+      </div>
+      <!-- Min Percentage -->
+      <div>
+        <label for="filterMinPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio Min (%):</label>
+        <input type="number" id="filterMinPercentage" name="filterMinPercentage" min="0" max="100"
+               [(ngModel)]="filterMinPercentage" (ngModelChange)="applyFilters()"
+               placeholder="0-100"
+               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+      <!-- Max Percentage -->
+      <div>
+        <label for="filterMaxPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio Max (%):</label>
+        <input type="number" id="filterMaxPercentage" name="filterMaxPercentage" min="0" max="100"
+               [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()"
+               placeholder="0-100"
+               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+      <!-- Reset Button -->
+      <div class="sm:col-span-1 lg:col-span-1 flex items-end">
+        <button (click)="resetFilters()"
+                class="w-full mt-1 sm:mt-0 bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-md shadow-sm text-sm">
+          Resetta Filtri
+        </button>
+      </div>
+    </div>
+  </section>
+  <!-- End Filter Section -->
+
+
   <div *ngIf="isLoading" class="text-center py-10">
-    <p class="text-xl text-indigo-600">Caricamento dello storico...</p>
+    <p class="text-xl text-indigo-600 dark:text-indigo-400">Caricamento dello storico...</p>
   </div>
 
-  <div *ngIf="errorLoading && !isLoading" class="text-center py-10 bg-red-50 p-6 rounded-lg shadow">
-    <p class="text-2xl text-red-700 font-semibold">Errore!</p>
-    <p class="text-gray-700 mt-2">{{ errorLoading }}</p>
+  <div *ngIf="errorLoading && !isLoading" class="text-center py-10 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 p-6 rounded-lg shadow">
+    <p class="text-2xl text-red-700 dark:text-red-400 font-semibold">Errore!</p>
+    <p class="text-gray-700 dark:text-gray-300 mt-2">{{ errorLoading }}</p>
   </div>
 
   <div *ngIf="!isLoading && !errorLoading">
-    <div *ngIf="quizAttempts.length > 0; else noHistory" class="space-y-4">
-      <div class="text-right mb-4" *ngIf="quizAttempts.length > 1">
+    <div *ngIf="allQuizAttempts.length > 0"> <!-- Check allQuizAttempts for showing "Clear All" -->
+      <div class="text-center sm:text-right mb-4" *ngIf="allQuizAttempts.length > 1">
         <button (click)="clearAllHistory()"
-          class="bg-red-500 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+          class="w-full sm:w-auto bg-red-500 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-500 text-sm font-medium py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400">
           Cancella tutto lo storico quiz
         </button>
       </div>
-      <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)"
-        class="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 cursor-pointer border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      
+      <div *ngIf="quizAttempts.length > 0; else noResultsAfterFilter" class="space-y-4">
+        <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)"
+          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg dark:hover:shadow-xl-dark transition-shadow duration-150 cursor-pointer border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center">
 
-        <div class="flex-grow mb-3 sm:mb-0">
-          <p class="text-sm text-indigo-600 font-semibold">
-            {{ attempt.timestampEnd | date:'d/MM/yyyy':'it-IT' }} alle {{ attempt.timestampEnd | date:'H:mm' }}
-          </p>
-          <p class="text-lg font-bold text-gray-800 mt-1">
-            Punteggio: {{ attempt.score }} / {{ attempt.totalQuestionsInQuiz }}
-            <span class="text-gray-600 font-normal">
-              ({{ ((attempt?.score ?? 1) / (attempt?.totalQuestionsInQuiz ?? 1) * 100) | number:'1.0-0' }}%)
-            </span>
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} |
-            {{ attempt.settings.numQuestions }} Domande
-          </p>
-        </div>
+          <div class="flex-grow mb-3 sm:mb-0 w-full sm:w-auto">
+            <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
+              {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{ (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
+            </p>
+            <p class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1">
+              Punteggio: {{ attempt.score }} / {{ attempt.totalQuestionsInQuiz }}
+              <span class="text-gray-600 dark:text-gray-400 font-normal">
+                ({{ ((attempt?.score ?? 0) / (attempt?.totalQuestionsInQuiz ?? 1) * 100) | number:'1.0-0' }}%)
+              </span>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} |
+              {{ attempt.settings.numQuestions }} Domande
+            </p>
+          </div>
 
-        <div class="flex-shrink-0">
-          <button (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
-            class="text-red-500 hover:text-red-700 focus:outline-none p-2 rounded-full hover:bg-red-100 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clip-rule="evenodd" />
-            </svg>
-          </button>
+          <div class="flex-shrink-0 mt-2 sm:mt-0">
+            <button (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
+              class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-700 dark:hover:bg-opacity-30 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
+      <ng-template #noResultsAfterFilter>
+        <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessun risultato per i filtri applicati</h2>
+            <p class="mt-1 text-gray-500 dark:text-gray-400">Prova a modificare o resettare i filtri.</p>
+        </div>
+      </ng-template>
     </div>
 
-    <ng-template #noHistory>
-      <div class="text-center py-12 bg-gray-50 rounded-lg shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24"
+    <div *ngIf="allQuizAttempts.length === 0 && !isLoading"> <!-- Show "No History" only if allQuizAttempts is empty -->
+      <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
           stroke="currentColor" stroke-width="1">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h2 class="mt-4 text-xl font-semibold text-gray-700">Nessuno storico quiz trovato</h2>
-        <p class="mt-1 text-gray-500">Sembra che tu non abbia completato alcun quiz.</p>
+        <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessuno storico quiz trovato</h2>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Sembra che tu non abbia completato alcun quiz.</p>
         <div class="mt-6">
           <a routerLink="/quiz/setup"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-sm">
+            class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-2 px-4 rounded-md shadow-sm">
             Fai il tuo primo quiz!
           </a>
         </div>
       </div>
-    </ng-template>
+    </div>
   </div>
 
   <div class="mt-8 text-center" *ngIf="!isLoading && !errorLoading">
     <a routerLink="/home"
-      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150 mr-4">
+      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
       Torna alla pagina principale
     </a>
   </div>

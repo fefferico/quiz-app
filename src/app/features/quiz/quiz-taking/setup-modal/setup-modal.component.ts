@@ -70,7 +70,7 @@ export class QuestionFeedbackContentComponent implements OnInit {
 
     console.log(`Starting quiz with settings:`, quizSettings);
 
-    const fixedQuestionIds: string[] = this.clonedTopics.filter(_topic => _topic.count > 0) ? this.clonedTopics.filter(_topic => _topic.count > 0)[0].questionIds : [];
+    const fixedQuestionIds: string[] = this.clonedTopics.filter(_topic => _topic.count > 0) ? this.clonedTopics.filter(_topic => _topic.count > 0).map(q => q.questionIds).flat() : [];
 
     this.router.navigate([navigateToPath], { // Use dynamic path
       queryParams: {
@@ -94,40 +94,26 @@ export class QuestionFeedbackContentComponent implements OnInit {
   // Call this when individual topic counts change or when mode changes
   calculateTotalQuestionsFromTopicCounts($event: any, topic: GenericData): void {
     if (this.useDetailedTopicCounts && this.clonedTopics.length > 0) {
-      let newCount = 0;
-      if ($event?.target?.value) {
-        newCount = Number($event.target.value);
-      } else {
-        newCount = topic.count;
-      }
+      const newCount = $event?.target?.value ? Number($event.target.value) : topic.count;
       const currentTopic = this.clonedTopics.find(tc => tc.topic === topic.topic);
-      const currentOriginalTopic = this.topics.find(tc => tc.topic === topic.topic);
+      const originalTopic = this.topics.find(tc => tc.topic === topic.topic);
 
-      if (currentTopic && currentOriginalTopic) {
-        currentTopic.isMaxReached = newCount >= currentOriginalTopic.count; // Set the flag if max reached
-        // set new count considering the one just changed
-        if (currentTopic.isMaxReached) {
-          newCount = currentOriginalTopic.count;
-          currentTopic.count = newCount;
+      if (currentTopic && originalTopic) {
+        if (newCount > originalTopic.count) {
           console.error('Cannot increase count beyond original topic count');
-          // Update the count for the current topic
-          this.clonedTopics
-          .filter(tc => tc.topic === topic.topic)
-          .forEach(tc => {
-            tc.count = newCount; // Ensure no negative counts
-          });
+          currentTopic.count = originalTopic.count;
+          currentTopic.isMaxReached = true;
+        } else {
+          currentTopic.count = Math.max(0, newCount); // Ensure no negative counts
+          currentTopic.isMaxReached = false;
         }
-        
 
-        // Calculate the total number of questions based on the updated topic counts
-        this.selectedNumQuestions = this.clonedTopics.filter(_topic => _topic.topic !== topic.topic).reduce((sum, tc) => sum + Number(tc.count || 0), 0) + newCount;
+        // Recalculate the total number of questions
+        this.selectedNumQuestions = this.clonedTopics.reduce((sum, tc) => sum + Number(tc.count || 0), 0);
       }
     } else if (this.selectAllTopics) {
-      // Keep the last selectedNumQuestions or a default if "All Topics" is re-selected
-      // For simplicity, let's reset to a default or retain.
-      // If you want to retain, you'd need to store the "global" selectedNumQuestions separately.
-      // For now, let's assume the numQuestionsOptions dropdown is the master for "All Topics" mode.
-      // This means this.selectedNumQuestions is already set from that dropdown.
+      // Reset or retain the total number of questions for "All Topics" mode
+      this.selectedNumQuestions = this.topics.reduce((sum, tc) => sum + Number(tc.count || 0), 0);
     }
   }
 

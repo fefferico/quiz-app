@@ -10,6 +10,8 @@ import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard'; // <-
 import { StudyFocusComponent } from './pages/study-focus/study-focus.component'; // <-- IMPORT
 import { FavoriteQuestionsComponent } from './pages/favorite-questions/favorite-questions.component'; // <-- IMPORT
 import { QuizStudyComponent } from './features/quiz/quiz-study/quiz-study.component'; // <-- IMPORT
+import { AuthGuard } from './guards/auth.guard'; // Adjust path
+import { LoginComponent } from './components/login/login.component';
 
 
 export const routes: Routes = [
@@ -24,5 +26,5 @@ export const routes: Routes = [
   { path: 'favorites', component: FavoriteQuestionsComponent, title: 'Favorite Questions' }, // <-- ADD ROUTE
   { path: 'quiz/study', component: QuizStudyComponent, title: 'Study Questions' }, // <-- ADD ROUTE
   // Add a catch-all for undefined routes, redirecting to home or a NotFoundComponent later
-  { path: '**', redirectTo: '/home' } // Or a dedicated NotFoundComponent,
+  //{ path: '**', redirectTo: '/home' } // Or a dedicated NotFoundComponent,
 ];

@@ -7,7 +7,10 @@ import jsPDF from 'jspdf'; // <-- IMPORT jsPDF
 // import html2canvas from 'html2canvas'; // Import if using html2canvas approach
 
 import { DatabaseService } from '../../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model';
+import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { Question } from '../../../models/question.model';
 
 interface GroupedQuestion {
   topic: string;
@@ -17,7 +20,7 @@ interface GroupedQuestion {
 @Component({
   selector: 'app-quiz-results',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe, PercentPipe], // Added DecimalPipe, PercentPipe
+  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe, PercentPipe, FontAwesomeModule], // Added DecimalPipe, PercentPipe
   templateUrl: './quiz-results.component.html',
   styleUrls: ['./quiz-results.component.scss']
 })
@@ -27,6 +30,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   private dbService = inject(DatabaseService);
   private routeSub!: Subscription;
 
+  segnala: IconDefinition = faExclamation; // This was already here, seems unused in the template you showed previously
+  repeatIcon: IconDefinition = faRepeat; // This was already here, seems unused in the template you showed previously
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
   groupedQuestions: GroupedQuestion[] = [];
@@ -67,12 +72,17 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     }
   }
 
+  //for (const answeredQ of this.quizAttempt.allQuestions) {
+  //    const topic = answeredQ && answeredQ.userAnswerIndex != undefined ? answeredQ.questionSnapshot.topic || 'Uncategorized' : 'Uncategorized'; // Fallback topic
+
+
   groupQuestionsByTopic(): void {
     if (!this.quizAttempt) return;
 
     const groups: { [key: string]: AnsweredQuestion[] } = {};
-    for (const answeredQ of this.quizAttempt.answeredQuestions) {
+    for (const answeredQ of this.quizAttempt.allQuestions.filter(qst => !this.quizAttempt?.answeredQuestions.map(q => q.questionId).includes(qst.questionId)).concat(this.quizAttempt?.answeredQuestions)) {
       const topic = answeredQ.questionSnapshot.topic || 'Uncategorized'; // Fallback topic
+      answeredQ.isCorrect = this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === answeredQ.questionId && qst.userAnswerIndex === answeredQ.questionSnapshot.correctAnswerIndex) >= 0 ? true : false;
       if (!groups[topic]) {
         groups[topic] = [];
       }
@@ -92,7 +102,11 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     const correctAnswerIndex = questionSnapshot.correctAnswerIndex;
 
     if (optionIndex === correctAnswerIndex) {
-      return 'bg-green-100 border-green-500 text-green-700 font-semibold'; // Correct option
+      if (question.userAnswerIndex === -1){
+        return 'bg-yellow-100 border-yellow-500 text-yellow-700 font-semibold  line-through'; // Correct option
+      } else {
+        return 'bg-green-100 border-green-500 text-green-700 font-semibold'; // Correct option
+      }
     }
     if (optionIndex === userAnswerIndex && optionIndex !== correctAnswerIndex) {
       return 'bg-red-100 border-red-500 text-red-700 line-through'; // User's incorrect option
@@ -124,6 +138,20 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  checkIfThereAtLeastAnAnswer(q: AnsweredQuestion): boolean {
+    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.length > 0) || false;
+  }
+
+  checkIfAnswerIsCorrect(q: AnsweredQuestion): boolean {
+    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === q.questionId && qst.userAnswerIndex === q.questionSnapshot.correctAnswerIndex) >= 0) || false;
+  }
+
+  checkIfQuestionIsTheSame(q: AnsweredQuestion): boolean {
+    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === q.questionId) >= 0) || false;
+  }
+
+
 
   exportResultsToPDF(): void {
     if (!this.quizAttempt) return;
@@ -245,4 +273,64 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   //   }
   //   pdf.save(`quiz-results-${this.quizAttempt?.id.substring(0,8)}.pdf`);
   // }
+
+  calcDurataQuiz(quizAttempt: QuizAttempt): string {
+    if (quizAttempt && quizAttempt?.timestampEnd && quizAttempt?.timestampStart) {
+      return this.msToTime(quizAttempt.timestampEnd.getTime() - quizAttempt.timestampStart.getTime());
+    }
+    return "";
+  }
+
+  private msToTime(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    // Pad with leading zeros
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+
+  repeatQuiz(): void {
+    if (!this.quizAttempt) {
+      return;
+    }
+    this.dbService.getQuestionByIds(this.quizAttempt.allQuestions.map(q => q.questionId)).then((questions) => {
+      this.onInternalSubmit(this.quizAttempt);
+    });
+  }
+
+  repeatWrongQuiz(): void {
+    if (!this.quizAttempt) {
+      return;
+    }
+    this.dbService.getQuestionByIds(this.quizAttempt.allQuestions.filter(q=>q.userAnswerIndex === -1 || q.isCorrect === false).map(q => q.questionId)).then((questions) => {
+      this.onInternalSubmit(this.quizAttempt, questions);
+    });
+  }
+
+  onInternalSubmit(quizAttempt: QuizAttempt | undefined, questions?: Question[]): void {
+    let quizSettings: Partial<QuizSettings> | undefined = quizAttempt?.settings;
+
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`REPEATING quiz with settings:`, quizSettings);
+    const fixedQuestionIds: string[] | undefined = questions ? questions.map(q => q.id) : quizAttempt?.allQuestions.map(q => q.questionId);
+    const shuffledQuestionIds = fixedQuestionIds?.sort(() => 0.5 - Math.random());
+
+    this.router.navigate([navigateToPath], { // Use dynamic path
+      queryParams: {
+        numQuestions: quizSettings?.numQuestions, // Could be very large for "all" in study mode
+        topics: quizSettings?.selectedTopics?.join(','),
+        keywords: quizSettings?.keywords?.join(','),
+        // For quiz mode, pass other relevant params
+        topicDistribution: quizSettings?.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
+        enableTimer: false,
+        timerDuration: 0,
+        // get specific question id
+        fixedQuestionIds: shuffledQuestionIds
+      }
+    });
+  }
 }

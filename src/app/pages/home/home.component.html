@@ -1,35 +1,41 @@
 <!-- src/app/pages/home/home.component.html -->
-<div class="text-center p-10">
-  <h1 class="text-4xl font-bold mb-6">Benvenuti su QuizWiz!</h1>
-  <p class="text-lg mb-8">Testa le tue conoscenze e traccia i progressi.</p>
+<div class="text-center p-4 sm:p-6 md:p-10 dark:text-gray-200">
+  <!-- Applied to parent of grid for text-center to work -->
+  <h1 class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Benvenuti su QuizWiz!</h1>
+  <p class="text-lg mb-8 text-gray-600 dark:text-gray-300">Testa le tue conoscenze e traccia i progressi.</p>
 
-  <!-- Resume Paused Quiz Button -->
   <div *ngIf="pausedQuiz" class="mb-6">
     <button (click)="resumePausedQuiz()"
-      class="w-full sm:w-auto inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
+      class="w-full sm:w-auto inline-block bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
       Riprendi il quiz precedente ({{ pausedQuiz.settings.selectedTopics.join(', ') || 'All Topics' }})
     </button>
   </div>
 
-  <div class="space-y-4 sm:space-y-0 sm:space-x-4 mt-4">
-    <a routerLink="/quiz/setup"
-      class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">
-      Inizia un nuovo quiz
-    </a>
-    <a routerLink="/quiz/history"
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">
-      Storico quiz
-    </a>
-    <a routerLink="/statistics"
-      class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">
-      Statistiche
-    </a>
-  </div>
-  <div class="space-y-4 sm:space-y-0 sm:space-x-4 mt-4">
-    <a routerLink="/study-focus"
-      class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">
-      Aree da approfondire</a>
-    <a routerLink="/favorites"
-      class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">Quiz preferiti</a>
+  <div class="mt-4 inline-grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+    <button
+      class="w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [routerLink]="'/quiz/setup'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="faAdd"></fa-icon>
+      Nuovo Quiz</button>
+    <button
+      class="w-full inline-block bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [routerLink]="'/quiz/history'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="faHistory"></fa-icon>
+      Storico Quiz</button>
+    <button
+      class="w-full inline-block bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [routerLink]="'/statistics'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="faBarChart"></fa-icon>
+      Statistiche</button>
+    <button
+      class="w-full inline-block bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [routerLink]="'/study-focus'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="faMagnifyingGlass"></fa-icon>
+      Aree da approfondire</button>
+    <button
+      class="w-full inline-block bg-purple-500 hover:bg-purple-600 text-white dark:bg-purple-600 dark:hover:bg-purple-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [routerLink]="'/favorites'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="faStar"></fa-icon>
+      Quiz preferiti</button>
   </div>
 </div>
