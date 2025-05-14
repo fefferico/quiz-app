@@ -335,9 +335,13 @@
 
   <div class="mt-8 text-center" *ngIf="!isLoading && !errorLoading">
     <div class="flex flex-col sm:flex-row sm:justify-center items-center gap-4">
-      <a routerLink="/study-focus"
-        class="w-full sm:w-auto inline-block bg-orange-500 hover:bg-orange-700 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150">
-        Aree da approfondire</a>
+      <button
+        class="w-full sm:w-auto inline-block bg-orange-500 hover:bg-orange-700 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150"
+        [routerLink]="'/study-focus'" routerLinkActive="active">
+        <fa-icon class="mr-2" [icon]="study"></fa-icon>
+        Aree da Approfondire
+      </button>
+
       <button
         class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
         [routerLink]="'/home'" routerLinkActive="active">

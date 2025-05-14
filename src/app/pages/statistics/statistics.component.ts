@@ -15,7 +15,7 @@ import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal
 import { GenericData } from '../../models/statistics.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 
 Chart.register(...registerables);
@@ -74,6 +74,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  study: IconDefinition = faMagnifyingGlass; // This was already here, seems unused in the template you showed previously
 
   quizAttempts: QuizAttempt[] = [];
   allQuestionsFromDb: Question[] = []; // Store all questions from the DB bank

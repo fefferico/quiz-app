@@ -79,7 +79,7 @@
         </button>
       </div>
 
-      <div *ngIf="quizAttempts.length > 0; else noResultsAfterFilter" class="space-y-4">
+      <div *ngIf="quizAttempts.length > 0; else noResultsAfterFilter" class="space-y-4 cursor-pointer"  aria-label="Clicca per visualizzare i dettagli di questo tentativo" title="Clicca per visualizzare i dettagli di questo tentativo">
         <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)"
             [ngClass]="getResultClass(attempt)">
 

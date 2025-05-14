@@ -45,12 +45,12 @@
     </header>
 
     <!-- Questions grouped by topic with accordion -->
-    <div *ngFor="let group of groupedQuestions" class="mb-6 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div *ngFor="let group of groupedQuestions" [ngClass]="getResultClass(group)">
       <button 
         (click)="toggleAccordion(group.topic)"
-        class="w-full flex justify-between items-center p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-150">
+        class="w-full rounded flex justify-between items-center p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-150">
         <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
-          Argomento: {{ group.topic }}
+          Argomento: <strong>{{ group.topic }}</strong> {{ getTotalStringByGroup(group)}}
         </h2>
         <fa-icon [icon]="accordionState.get(group.topic) ? faChevronUp : faChevronDown" class="text-gray-600 dark:text-gray-400"></fa-icon>
       </button>

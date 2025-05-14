@@ -792,7 +792,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     const customBtns: AlertButton[] = [{
       text: 'Annulla',
       role: 'cancel',
-      cssClass: 'bg-gray-500 hover:bg-gray-600' // Example custom class
+      cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
     } as AlertButton,
     {
       text: 'ESCI',

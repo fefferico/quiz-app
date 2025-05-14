@@ -106,7 +106,7 @@ export class AlertService {
         {
           text: 'Non fare nulla',
           role: 'cancel',
-          cssClass: 'bg-gray-500 hover:bg-gray-600' // Example custom class
+          cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
         } as AlertButton,
         {
           text: 'Fai Qualcosa',
@@ -147,7 +147,7 @@ export class AlertService {
         {
           text: 'Annulla',
           role: 'cancel',
-          cssClass: 'bg-gray-500 hover:bg-gray-600' // Example custom class
+          cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
         } as AlertButton,
         {
           text: 'OK',

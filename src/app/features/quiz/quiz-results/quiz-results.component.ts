@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import { DatabaseService } from '../../../core/services/database.service';
 import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
+import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faThumbsUp, faThumbsDown, faFaceSmileBeam } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
 import { Question } from '../../../models/question.model';
 
 interface GroupedQuestionDisplay { // Renamed for clarity
@@ -35,6 +35,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   homeIcon: IconDefinition = faHome;
   faChevronDown: IconDefinition = faChevronDown; // For accordion closed
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
+  faGood: IconDefinition = faFaceSmileBeam;     // For accordion open
 
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
@@ -391,5 +392,55 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         fixedQuestionIds: shuffledQuestionIds.join(',') // Pass the specific IDs
       }
     });
+  }
+
+  getTotalStringByGroup(group: GroupedQuestionDisplay): string{
+    if (group && group.questions){
+      return ' - Corrette ' + (this.getCorrectnessByGroup(group)*100) + '% ('+this.getCorrectByGroup(group).toString().concat('/',this.getGroupLength(group).toString(),')');
+    } 
+    return '';
+  }
+
+  getCorrectnessByGroup(group: GroupedQuestionDisplay): number{
+    if (group && group.questions){
+      return group.questions.filter(qst=> qst.isCorrect).length/this.getGroupLength(group);
+    } 
+    return 1;
+  }
+
+  getCorrectByGroup(group: GroupedQuestionDisplay): number{
+    if (group && group.questions){
+      return group.questions.filter(qst=> qst.isCorrect).length;
+    } 
+    return 1;
+  }
+
+  getGroupLength(group: GroupedQuestionDisplay): number{
+    if (group && group.questions){
+      return group.questions.length;
+    } 
+    return 1;
+  }
+
+  getResultClass(group: GroupedQuestionDisplay): string {
+    // bg-green-200 border-green-500 border-t-4 dark:bg-green-800 dark:border-green-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6
+
+    let classes = 'mb-6 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg border border-gray-500 dark:border-gray-700';
+
+    // bg-green-100 border-green-500 border-t-4 p-4 rounded-lg shadow-lg sm:p-6 mb-4
+
+    const totQuestions = group.questions.length || 1;
+    const resultsPercentage = group.questions.reduce((sum, tc) => sum + Number((tc.isCorrect ? 1 : 0) || 0), 0)/totQuestions*100;
+
+    if (resultsPercentage >= 75){
+      classes = 'bg-green-200 border-green-500 border-t-4 dark:bg-green-800 dark:border-green-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';
+    } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
+      classes = 'bg-yellow-200 border-yellow-500 border-t-4 dark:bg-yellow-800 dark:border-yellow-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';
+    } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
+      classes = 'bg-orange-200 border-orange-500 border-t-4 dark:bg-orange-800 dark:border-orange-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';
+    } else {
+      classes = 'bg-red-200 border-red-500 border-t-4 dark:bg-red-800 dark:border-red-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';
+    }
+    return classes;
   }
 }
