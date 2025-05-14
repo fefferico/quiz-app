@@ -12,16 +12,14 @@ import { FavoriteQuestionsComponent } from './pages/favorite-questions/favorite-
 import { QuizStudyComponent } from './features/quiz/quiz-study/quiz-study.component'; // <-- IMPORT
 
 export const routes: Routes = [
-  { path: '**', redirectTo: 'home' },
   { path: 'home', component: HomeComponent, title: 'Quiz App - Home' },
-  { path: 'quiz/setup', component: QuizSetupComponent, title: 'Quiz Setup' },
-  { path: 'quiz/take', component: QuizTakingComponent, title: 'Take Quiz', canDeactivate: [unsavedChangesGuard] }, // <-- APPLY THE GUARD }, // We'll likely pass params here later
-  { path: 'quiz/results/:id', component: QuizResultsComponent, title: 'Quiz Results' }, // ':id' for specific quiz result
-  { path: 'quiz/history', component: QuizHistoryComponent, title: 'Quiz History' }, // <-- ADD ROUTE
-  { path: 'statistics', component: StatisticsComponent, title: 'Quiz Statistics' }, // <-- ADD ROUTE
-  { path: 'study-focus', component: StudyFocusComponent, title: 'Study Focus' }, // <-- ADD ROUTE
-  { path: 'favorites', component: FavoriteQuestionsComponent, title: 'Favorite Questions' }, // <-- ADD ROUTE
-  { path: 'quiz/study', component: QuizStudyComponent, title: 'Study Questions' }, // <-- ADD ROUTE
-  // Add a catch-all for undefined routes, redirecting to home or a NotFoundComponent later
-  //{ path: '**', redirectTo: '/home' } // Or a dedicated NotFoundComponent,
+  { path: 'quiz/setup', component: QuizSetupComponent, title: 'Impostazione Quiz' },
+  { path: 'quiz/take', component: QuizTakingComponent, title: 'Esegui Quiz', canDeactivate: [unsavedChangesGuard] },
+  { path: 'quiz/results/:id', component: QuizResultsComponent, title: 'Risultati Quiz' },
+  { path: 'quiz/history', component: QuizHistoryComponent, title: 'Cronologia Quiz' },
+  { path: 'statistics', component: StatisticsComponent, title: 'Statistiche Quiz' },
+  { path: 'study-focus', component: StudyFocusComponent, title: 'Focus di Studio' },
+  { path: 'favorites', component: FavoriteQuestionsComponent, title: 'Domande Preferite' },
+  { path: 'quiz/study', component: QuizStudyComponent, title: 'Modalità studio' },
+  { path: '**', redirectTo: 'home' },
 ];

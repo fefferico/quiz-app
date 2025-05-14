@@ -3,8 +3,12 @@ import { Component, computed, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
-import { ThemeService, Theme } from './services/theme.service'; // Import Theme type
+import {
+  faSun, faMoon, faAdjust, faHome, IconDefinition,
+  faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar,
+  faBars, faTimes // Import hamburger and close icons
+} from '@fortawesome/free-solid-svg-icons';
+import { ThemeService, Theme } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -20,40 +24,55 @@ import { ThemeService, Theme } from './services/theme.service'; // Import Theme 
 })
 export class AppComponent {
   currentYear: number = new Date().getFullYear();
-  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  homeIcon: IconDefinition = faHome;
   faAdd: IconDefinition = faAdd;
   faHistory: IconDefinition = faHistory;
   faBarChart: IconDefinition = faBarChart;
-  
+  faBars: IconDefinition = faBars; // Hamburger icon
+  faTimes: IconDefinition = faTimes; // Close (X) icon for menu
+  faMagnifyingGlass: IconDefinition = faMagnifyingGlass; 
+  faStar: IconDefinition = faStar; 
+
+  public isMenuOpen: boolean = false; // State for hamburger menu
+
   public themeService: ThemeService = inject(ThemeService);
 
-  // Use computed signals for icon and modeString based on the themeService's currentTheme signal
   public icon: Signal<IconDefinition> = computed(() => {
-    const theme = this.themeService.currentTheme(); // Read the current theme signal
+    const theme = this.themeService.currentTheme();
     if (theme === 'dark') {
       return faMoon;
     } else if (theme === 'sepia') {
-      return faAdjust; // Or faTint, faPalette, etc., as you prefer for sepia
+      return faAdjust;
     }
-    return faSun; // Default to light mode icon
+    return faSun;
   });
 
   public modeString: Signal<string> = computed(() => {
-    const theme = this.themeService.currentTheme(); // Read the current theme signal
+    const theme = this.themeService.currentTheme();
     if (theme === 'dark') {
       return 'Dark Mode';
     } else if (theme === 'sepia') {
       return 'Sepia Mode';
     }
-    return 'Light Mode'; // Default to light mode string
+    return 'Light Mode';
   });
 
   constructor(library: FaIconLibrary) {
-    // Add all icons to the library that might be used by the theme toggle
-    library.addIcons(faSun, faMoon, faAdjust, faHome); // Added faAdjust, faHome was already there
+    library.addIcons(faSun, faMoon, faAdjust, faHome, faAdd, faHistory, faBarChart, faBars, faTimes); // Add new icons
   }
 
   listenForModeToggleClick(): void {
-    this.themeService.toggleTheme(); // Call the updated toggle function
+    this.themeService.toggleTheme();
+  }
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  // Optional: Close menu when a link is clicked in mobile view
+  closeMenu(): void {
+    if (this.isMenuOpen) {
+      this.isMenuOpen = false;
+    }
   }
 }
