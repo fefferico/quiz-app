@@ -42,18 +42,21 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       const topicsParam = params['topics'] || '';
       const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
       const keywordsParam = params['keywords'] || '';
+      const fixedQuestionIds = params['fixedQuestionIds'] || '';
       const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
+      const selectedQuestions = fixedQuestionIds ? fixedQuestionIds.split(',').filter((kw: any) => kw) : [];
 
       this.studySettings = {
         numQuestions: numQuestionsParam,
         selectedTopics,
-        keywords: selectedKeywords
+        keywords: selectedKeywords,
+        questionIDs: selectedQuestions
       };
-      this.loadStudyQuestions();
+      this.loadStudyQuestions(this.studySettings);
     });
   }
 
-  async loadStudyQuestions(): Promise<void> {
+  async loadStudyQuestions(quizSettings: Partial<QuizSettings>): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
@@ -61,9 +64,10 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       // Use getRandomQuestions, but 'count' might be very high to fetch all matching
       // Or create a new DB method: getFilteredQuestions(topics, keywords) that returns all matches
       let fetchedQuestions = await this.dbService.getRandomQuestions(
-        this.studySettings.numQuestions!, // Non-null assertion as we set a default
-        this.studySettings.selectedTopics,
-        this.studySettings.keywords
+        quizSettings.numQuestions!, // Non-null assertion as we set a default
+        quizSettings.selectedTopics,
+        quizSettings.keywords,
+        quizSettings.questionIDs,
         // No topicDistribution for simple study mode for now
       );
 
@@ -75,7 +79,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       this.questions = fetchedQuestions;
 
       if (this.questions.length === 0) {
-        this.errorLoading = 'No questions found for the selected study criteria.';
+        this.errorLoading = "Nessuna domanda trovata per i criteri selezionati.";
         this.isLoading = false;
         return;
       }

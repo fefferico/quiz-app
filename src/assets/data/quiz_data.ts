@@ -41307,25 +41307,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "2",
-    "text": "",
-    "topic": "MATEMATICA",
-    "options": [
-      "13 dm",
-      "36 dm",
-      "44 dm",
-      "9 dm",
-      "19 dm"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "2",
+  //   "text": "",
+  //   "topic": "MATEMATICA",
+  //   "options": [
+  //     "13 dm",
+  //     "36 dm",
+  //     "44 dm",
+  //     "9 dm",
+  //     "19 dm"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "2180",
     "text": "Una piramide quadrangolare regolare ha lo spigolo di base di 12,5 cm e l'apotema di 14 cm, calcolare l'area della superficie laterale.",
@@ -45886,25 +45886,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "2",
-    "text": "",
-    "topic": "MATEMATICA",
-    "options": [
-      "15 cm",
-      "23 cm",
-      "17 cm",
-      "25 cm",
-      "30 cm"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "2",
+  //   "text": "",
+  //   "topic": "MATEMATICA",
+  //   "options": [
+  //     "15 cm",
+  //     "23 cm",
+  //     "17 cm",
+  //     "25 cm",
+  //     "30 cm"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "2421",
     "text": "Quale tra i seguenti è il risultato della seguente addizione frazionaria: (+7/5) + (-2/5)",
@@ -46285,25 +46285,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "2",
-    "text": "",
-    "topic": "MATEMATICA",
-    "options": [
-      "d,a,c,e,b",
-      "b,a,c,e,d",
-      "e,c,b,a,d",
-      "d,e,a,c,b",
-      "a,c,e,b,d"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "2",
+  //   "text": "",
+  //   "topic": "MATEMATICA",
+  //   "options": [
+  //     "d,a,c,e,b",
+  //     "b,a,c,e,d",
+  //     "e,c,b,a,d",
+  //     "d,e,a,c,b",
+  //     "a,c,e,b,d"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "2442",
     "text": "Quale sarà la misura dell'area della superficie di un esaedro regolare sapendo che la somma dei suoi spigoli misura 108 dm?",
@@ -47938,25 +47938,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "5",
-    "text": "",
-    "topic": "MATEMATICA",
-    "options": [
-      "250",
-      "-130",
-      "22",
-      "-25",
-      "30"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "5",
+  //   "text": "",
+  //   "topic": "MATEMATICA",
+  //   "options": [
+  //     "250",
+  //     "-130",
+  //     "22",
+  //     "-25",
+  //     "30"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "2529",
     "text": "Un cerchio di raggio 3 cm, avrà una circonferenza di:",
@@ -79061,8 +79061,8 @@ export const initialQuestions = [
     "questionVersion": 8
   },
   {
-    "id": "2016",
-    "text": "",
+    "id": "4184",
+    "text": "Tra le opzioni di risposta, indicare quella che contiene l'estensione assegnata ad un foglio elettronico Microsoft Excel 2016",
     "topic": "INFORMATICA",
     "options": [
       ".xlsx",
@@ -83107,63 +83107,63 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "5",
-    "text": "Se nella cella A4 si pone la formula \"=SOMMA(A1:A3)\", quale valore si ottiene?",
-    "topic": "INFORMATICA",
-    "options": [
-      "12",
-      "8",
-      "7",
-      "6",
-      "2"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
-  {
-    "id": "2",
-    "text": "Se nella cella A4 si pone la formula =A1+A2, cosa appare?",
-    "topic": "INFORMATICA",
-    "options": [
-      "5",
-      "3",
-      "7",
-      "12",
-      "45"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
-  {
-    "id": "2",
-    "text": "Se nella cella A4 si pone la formula =A1+A2, cosa appare?",
-    "topic": "INFORMATICA",
-    "options": [
-      "10",
-      "5",
-      "9",
-      "11",
-      "6"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "5",
+  //   "text": "Se nella cella A4 si pone la formula \"=SOMMA(A1:A3)\", quale valore si ottiene?",
+  //   "topic": "INFORMATICA",
+  //   "options": [
+  //     "12",
+  //     "8",
+  //     "7",
+  //     "6",
+  //     "2"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
+  // {
+  //   "id": "2",
+  //   "text": "Se nella cella A4 si pone la formula =A1+A2, cosa appare?",
+  //   "topic": "INFORMATICA",
+  //   "options": [
+  //     "5",
+  //     "3",
+  //     "7",
+  //     "12",
+  //     "45"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
+  // {
+  //   "id": "2",
+  //   "text": "Se nella cella A4 si pone la formula =A1+A2, cosa appare?",
+  //   "topic": "INFORMATICA",
+  //   "options": [
+  //     "10",
+  //     "5",
+  //     "9",
+  //     "11",
+  //     "6"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "4401",
     "text": "A cosa serve l'hard disk?",
@@ -86565,25 +86565,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "8",
-    "text": "Qual è il risultato della formula =CONCATENA(A1;A2;A3;A4)",
-    "topic": "INFORMATICA",
-    "options": [
-      "2468",
-      "24",
-      "68",
-      "246",
-      "123456"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "8",
+  //   "text": "Qual è il risultato della formula =CONCATENA(A1;A2;A3;A4)",
+  //   "topic": "INFORMATICA",
+  //   "options": [
+  //     "2468",
+  //     "24",
+  //     "68",
+  //     "246",
+  //     "123456"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "4581",
     "text": "Per trasferire file FTP tra sistemi internet cos'è necessario fare?",
@@ -88522,25 +88522,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "9",
-    "text": "1) MV5  2) CE1 3) DZ9  4) P03",
-    "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
-    "options": [
-      "2-4-1-3",
-      "4-2-1-3",
-      "2-3-1-4",
-      "2-5-4-1",
-      "2-3-4-5"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "9",
+  //   "text": "1) MV5  2) CE1 3) DZ9  4) P03",
+  //   "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
+  //   "options": [
+  //     "2-4-1-3",
+  //     "4-2-1-3",
+  //     "2-3-1-4",
+  //     "2-5-4-1",
+  //     "2-3-4-5"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   {
     "id": "4684",
     "text": "Quale sarà il risultato della seguente espressione, D + (Z – L) – (E +",
@@ -93006,25 +93006,25 @@ export const initialQuestions = [
     "isFavorite": 0,
     "questionVersion": 8
   },
-  {
-    "id": "1",
-    "text": "",
-    "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
-    "options": [
-      ">",
-      "<",
-      "=",
-      "≠",
-      "≤"
-    ],
-    "correctAnswerIndex": 0,
-    "explanation": "",
-    "difficulty": QuestionDifficulty.Medium,
-    "timesCorrect": 0,
-    "timesIncorrect": 0,
-    "isFavorite": 0,
-    "questionVersion": 8
-  },
+  // {
+  //   "id": "1",
+  //   "text": "",
+  //   "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
+  //   "options": [
+  //     ">",
+  //     "<",
+  //     "=",
+  //     "≠",
+  //     "≤"
+  //   ],
+  //   "correctAnswerIndex": 0,
+  //   "explanation": "",
+  //   "difficulty": QuestionDifficulty.Medium,
+  //   "timesCorrect": 0,
+  //   "timesIncorrect": 0,
+  //   "isFavorite": 0,
+  //   "questionVersion": 8
+  // },
   // {
   //   "id": "28",
   //   "text": "",
@@ -112767,8 +112767,8 @@ export const initialQuestions = [
     "questionVersion": 8
   },
   {
-    "id": "1880",
-    "text": "Ai primi del Novecento la sua larghezza (40 mila km) era più di tre volte il diametro terrestre, ma, nel 1979, si era ridotta già di 15 mila km. L'astronoma AmyMiller-Simon ha scoperto che da allora la decrescita della Grande Macchia Rossa è ulteriormente accelerata.",
+    "id": "5966",
+    "text": "La caratteristica Macchia Rossa di Giove è una grossa ellisse, grande quanto l'intera superficie terrestre che, pare, sta velocemente rimpicciolendo. Paragonando infatti dati recenti ottenuti dalle sonde Voyager, Galileo e Cassini con quelli ricavati dagli astronomi del tardo 1800, alla Nasa hanno concluso che la superficie della macchia sta diminuendo. La Macchia Rossa, una gigantesca tempesta che da secoli imperversa sul pianeta, era già nota nel 1880. Ai primi del Novecento la sua larghezza (40 mila km) era più di tre volte il diametro terrestre, ma, nel 1979, si era ridotta già di 15 mila km. L'astronoma Amy Miller-Simon ha scoperto che da allora la decrescita della Grande Macchia Rossa è ulteriormente accelerata. ",
     "topic": "RAGIONAMENTO CRITICO - VERBALE",
     "options": [
       "Su Giove è in corso da secoli una tempesta che dà luogo a un'enorme Macchia Rossa di forma ellittica, attualmente grande come la superficie terrestre. I dati recentemente rilevati dagli astronomi attraverso alcune sonde spaziali rivelano che le dimensioni di questo fenomeno caratteristico, noto già sul finire dell'800, stanno diminuendo con rapidità crescente",
@@ -113449,5 +113449,62 @@ export const initialQuestions = [
     "timesIncorrect": 0,
     "isFavorite": 0,
     "questionVersion": 11
+  },
+  {
+    "id": "6002",
+    "text": "PROVA PROVAPROVA",
+    "topic": "RAGIONAMENTO CRITICO - VERBALE",
+    "options": [
+      "alcune scimmie non sono scimpanzé",
+      "le banane non sono scimpanzé",
+      "tutte le scimmie non mangiano le banane",
+      "alcuni scimpanzé non mangiano le banane",
+      "alcuni scimpanzé non mangiano frutta"
+    ],
+    "correctAnswerIndex": 0,
+    "explanation": "",
+    "difficulty": QuestionDifficulty.Medium,
+    "timesCorrect": 0,
+    "timesIncorrect": 0,
+    "isFavorite": 0,
+    "questionVersion": 12
+  },
+  {
+    "id": "6003",
+    "text": "WOWOW",
+    "topic": "RAGIONAMENTO CRITICO - VERBALE",
+    "options": [
+      "alcune scimmie non sono scimpanzé",
+      "le banane non sono scimpanzé",
+      "tutte le scimmie non mangiano le banane",
+      "alcuni scimpanzé non mangiano le banane",
+      "alcuni scimpanzé non mangiano frutta"
+    ],
+    "correctAnswerIndex": 0,
+    "explanation": "",
+    "difficulty": QuestionDifficulty.Medium,
+    "timesCorrect": 0,
+    "timesIncorrect": 0,
+    "isFavorite": 0,
+    "questionVersion": 13
+  },
+  {
+    "id": "6004",
+    "text": "WOWOW",
+    "topic": "RAGIONAMENTO CRITICO - VERBALE",
+    "options": [
+      "alcune scimmie non sono scimpanzé",
+      "le banane non sono scimpanzé",
+      "tutte le scimmie non mangiano le banane",
+      "alcuni scimpanzé non mangiano le banane",
+      "alcuni scimpanzé non mangiano frutta"
+    ],
+    "correctAnswerIndex": 0,
+    "explanation": "",
+    "difficulty": QuestionDifficulty.Medium,
+    "timesCorrect": 0,
+    "timesIncorrect": 0,
+    "isFavorite": 0,
+    "questionVersion": 14
   }
 ]

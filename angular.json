@@ -34,7 +34,7 @@
                 "input": "public"
               },
               "src/favicon.ico",
-              "src/assets/data/quiz_data.json"
+              "src/assets"
             ],
             "styles": [
               "src/styles.scss",
@@ -98,7 +98,7 @@
                 "input": "public"
               },
               "src/favicon.ico",
-              "src/assets/data/quiz_data.json"
+              "src/assets"
             ],
             "styles": [
               "src/styles.scss"

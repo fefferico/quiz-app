@@ -19,6 +19,14 @@
       <button (click)="cycleFontFamily()" aria-label="Cambia font"
         class="p-1.5 sm:p-2 text-xs leading-none min-w-[70px]">{{ currentFont.name }}</button>
     </div>
+    <div class="my-2 text-right">
+      <button (click)="toggleQuizSounds()" title="{{ quizSpecificSoundsEnabled ? 'Disattiva Suoni' : 'Attiva Suoni' }}"
+        class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+        <fa-icon [icon]="quizSpecificSoundsEnabled ? faSoundOn : faSoundOff"
+          class="text-lg {{ quizSpecificSoundsEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
+        </fa-icon>
+      </button>
+    </div>
   </div>
   <!-- End Accessibility Controls -->
 
@@ -27,7 +35,7 @@
   </div>
 
   <div *ngIf="errorLoading && !isLoading" class="text-center py-10">
-    <p class="text-xl text-red-600 dark:text-red-400 font-semibold">Error!</p>
+    <p class="text-xl text-red-600 dark:text-red-400 font-semibold">Errore!</p>
     <p class="text-gray-700 dark:text-gray-300 mt-2">{{ errorLoading }}</p>
     <button routerLink="/quiz/setup"
       class="mt-6 w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-2 px-4 rounded">
@@ -102,8 +110,8 @@
         <div class="flex-grow">
           <h2 class="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100 leading-tight"
             [innerHTML]="currentQuestion.text"></h2>
-          <p *ngIf="currentQuestion.topic" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Argomento:
-            {{ currentQuestion.topic }}</p>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">ID:
+            {{ currentQuestion.id + (currentQuestion.topic ? ' - Argomento: ' + currentQuestion.topic : '')}}</p>
         </div>
         <button *ngIf="currentQuestion" (click)="toggleFavoriteCurrentQuestion()"
           [title]="currentQuestion.isFavorite ? 'Remove from Favorites' : 'Aggiungi ai Preferiti'"

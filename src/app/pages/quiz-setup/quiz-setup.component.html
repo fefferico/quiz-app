@@ -7,17 +7,16 @@
 
   <form (ngSubmit)="startQuiz()" #quizSetupForm="ngForm">
 
+    <!-- Study Mode Toggle -->
     <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow">
       <label class="flex items-center justify-between cursor-pointer">
         <span class="text-lg font-medium text-indigo-700 dark:text-indigo-300">
           Modalità Studio <span class="block sm:inline text-sm font-normal text-gray-600 dark:text-gray-400">(Visualizza
-            tutte le domande
-            con le relative
-            risposte corrette)</span>
+            tutte le domande con le relative risposte corrette)</span>
         </span>
         <div class="relative flex-shrink-0 ml-2">
           <input type="checkbox" id="studyModeToggle" class="sr-only" [(ngModel)]="isStudyMode"
-            name="isStudyModeToggle">
+            name="isStudyModeToggle" [disabled]="preloadedFixedQuestionIds.length > 0"> <!-- Disable if fixed IDs are preloaded -->
           <div class="block bg-gray-200 dark:bg-gray-600 w-14 h-8 rounded-full"></div>
           <div
             class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
@@ -26,19 +25,34 @@
       </label>
       <p *ngIf="isStudyMode" class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
         Timer e punteggio disabilitati. Il numero di domande potrebbe essere ignorato per mostrare tutti i criteri
-        corrispondenti.<br><strong>Se si desidera studiare un numero specifico di domande, tohliere la spunta dalla
+        corrispondenti.<br><strong *ngIf="!preloadedFixedQuestionIds.length">Se si desidera studiare un numero specifico di domande, togliere la spunta dalla
           casella "Tutti gli argomenti"</strong>
       </p>
     </div>
 
-    <div class="mb-6" [ngClass]="{'opacity-60 pointer-events-none': isStudyMode && selectAllTopics}">
+    <!-- Fixed Question IDs Info/Input (Optional UI) -->
+    <div *ngIf="preloadedFixedQuestionIds.length > 0" class="mb-6 p-4 bg-green-50 dark:bg-green-900 dark:bg-opacity-30 rounded-lg shadow">
+        <p class="text-sm text-green-700 dark:text-green-300">
+            Quiz configurato per {{ preloadedFixedQuestionIds.length }} domande specifiche. Altre opzioni di filtro sono disabilitate.
+        </p>
+    </div>
+    <div class="mb-6" *ngIf="preloadedFixedQuestionIds.length === 0">
+      <label for="fixedIds" class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
+        ID Domande Specifiche (opzionale, separate da virgola):
+      </label>
+      <input type="text" id="fixedIds" name="fixedIds" [(ngModel)]="fixedQuestionIdsInput"
+             placeholder="id1,id2,id3"
+             class="block w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 text-sm">
+    </div>
+
+    <!-- Number of Questions (disabled if fixed IDs are set) -->
+    <div class="mb-6" [ngClass]="{'opacity-60 pointer-events-none': (isStudyMode && selectAllTopics) || preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
       <label for="numQuestions" class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
         Numero di domande
-        <span *ngIf="isStudyMode && selectAllTopics" class="text-sm text-gray-500 dark:text-gray-400">(Filtri Modalità
-          Studio)</span>:
+        <span *ngIf="isStudyMode && selectAllTopics" class="text-sm text-gray-500 dark:text-gray-400">(Filtri Modalità Studio)</span>:
       </label>
       <select id="numQuestions" name="numQuestionsGlobal" [(ngModel)]="selectedNumQuestions"
-        [disabled]="(useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode) || (isStudyMode && selectAllTopics)"
+        [disabled]="(useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode) || (isStudyMode && selectAllTopics) || preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
         (ngModelChange)="calculateTotalQuestionsFromTopicCounts()"
         class="block w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm sm:text-base">
         <option *ngFor="let num of numQuestionsOptions" [value]="num">{{ num }} Domande</option>
@@ -49,31 +63,31 @@
       </p>
     </div>
 
-    <div class="mb-6">
+    <!-- Topic Selection (disabled if fixed IDs are set) -->
+    <div class="mb-6" [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
       <div class="flex items-center">
         <input id="selectAllTopics" name="selectAllTopics" type="checkbox" [(ngModel)]="selectAllTopics"
           (ngModelChange)="onSelectAllTopicsChange()"
+          [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
           class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
         <label for="selectAllTopics" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Tutti gli argomenti
-          <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(modalità
-            semplificata)</span>
-          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(studia tutte le
-            domande)</span>
+          <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(modalità semplificata)</span>
+          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(studia tutte le domande)</span>
         </label>
       </div>
     </div>
 
+    <!-- Detailed Topic Selection (disabled if fixed IDs are set) -->
     <div *ngIf="!selectAllTopics && availableTopics.length > 0 && !isStudyMode"
-      class="mb-8 border-t dark:border-gray-700 pt-6">
-      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di
-        domande per argomento
-        (Modalità personalizzata):
-      </h3>
+      class="mb-8 border-t dark:border-gray-700 pt-6"
+      [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
+      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di domande per argomento (Modalità personalizzata):</h3>
       <div class="space-y-2 mb-4">
         <div *ngFor="let topic of availableTopics" class="flex items-center">
           <input id="topic-cb-{{topic}}" name="topic-cb-{{topic}}" type="checkbox"
             [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
+            [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
             class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
           <label for="topic-cb-{{topic}}" class="ml-3 block text-sm font-medium text-gray-900 dark:text-gray-200">
             {{ topic }}
@@ -81,8 +95,7 @@
         </div>
       </div>
       <div *ngIf="topicCounts.length > 0" class="space-y-3 border-t dark:border-gray-700 pt-4 mt-4">
-        <h4 class="text-md font-medium text-gray-600 dark:text-gray-400 mb-2">Imposta il numero di domande per
-          argomento:</h4>
+        <h4 class="text-md font-medium text-gray-600 dark:text-gray-400 mb-2">Imposta il numero di domande per argomento:</h4>
         <div *ngFor="let topicCountItem of topicCounts; let i = index"
           class="p-3 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
@@ -94,24 +107,27 @@
               <input type="number" min="1" id="count-{{topicCountItem.topic}}"
                 name="count-{{topicCountItem.topic}}-{{i}}" [(ngModel)]="topicCountItem.count"
                 (ngModelChange)="calculateTotalQuestionsFromTopicCounts()"
+                [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
                 class="block w-full p-1.5 text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400">
             </div>
           </div>
         </div>
       </div>
       <p *ngIf="topicCounts.length > 0" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-        Totale domande impostate: <strong class="text-indigo-700 dark:text-indigo-400">{{ selectedNumQuestions
-          }}</strong>
+        Totale domande impostate: <strong class="text-indigo-700 dark:text-indigo-400">{{ selectedNumQuestions }}</strong>
       </p>
     </div>
 
+    <!-- Simple Topic Selection for Study Mode (disabled if fixed IDs are set) -->
     <div *ngIf="!selectAllTopics && availableTopics.length > 0 && isStudyMode"
-      class="mb-8 border-t dark:border-gray-700 pt-6">
+      class="mb-8 border-t dark:border-gray-700 pt-6"
+      [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
       <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
         <div *ngFor="let topic of availableTopics" class="flex items-center">
           <input id="study-topic-cb-{{topic}}" name="study-topic-cb-{{topic}}" type="checkbox"
             [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
+            [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
             class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
           <label for="study-topic-cb-{{topic}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-200">
             {{ topic }}
@@ -120,20 +136,24 @@
       </div>
     </div>
 
-    <div class="mb-8">
+    <!-- Keyword Filter (disabled if fixed IDs are set) -->
+    <div class="mb-8" [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
       <label for="keywords" class="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
         Filtra per parola chiave (facoltativo):
       </label>
       <input type="text" id="keywords" name="keywords" [(ngModel)]="keywordsInput"
-        placeholder="esempio, capitale, fiume, WW2"
-        class="block w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm sm:text-base">
+             placeholder="esempio, capitale, fiume, WW2"
+             [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
+             class="block w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm sm:text-base">
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Separa parole chiave multiple con spazi o virgole.</p>
     </div>
 
+    <!-- Timer Settings -->
     <div *ngIf="!isStudyMode" class="mb-8 border-t dark:border-gray-700 pt-6 mt-6">
       <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Cronometro (facoltativo)</h3>
       <div class="flex items-center mb-4">
         <input id="enableCronometer" name="enableCronometer" type="checkbox" [(ngModel)]="enableCronometerInput"
+          [disabled]="isStudyMode"
           class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
         <label for="enableCronometerInput" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Abilita il Cronometro
@@ -143,6 +163,7 @@
       <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Conto alla rovescia (facoltativo)</h3>
       <div class="flex items-center mb-4">
         <input id="enableTimer" name="enableTimer" type="checkbox" [(ngModel)]="enableTimerInput"
+          [disabled]="isStudyMode"
           class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
         <label for="enableTimer" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Abilita il Conto alla rovescia
@@ -153,16 +174,19 @@
         <div>
           <label for="timerHours" class="block text-xs font-medium text-gray-700 dark:text-gray-400">Ore</label>
           <input type="number" id="timerHours" name="timerHours" min="0" max="23" [(ngModel)]="timerHoursInput"
+            [disabled]="isStudyMode"
             class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm text-sm sm:text-base focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400">
         </div>
         <div>
           <label for="timerMinutes" class="block text-xs font-medium text-gray-700 dark:text-gray-400">Minuti</label>
           <input type="number" id="timerMinutes" name="timerMinutes" min="0" max="59" [(ngModel)]="timerMinutesInput"
+            [disabled]="isStudyMode"
             class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm text-sm sm:text-base focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400">
         </div>
         <div>
           <label for="timerSeconds" class="block text-xs font-medium text-gray-700 dark:text-gray-400">Secondi</label>
           <input type="number" id="timerSeconds" name="timerSeconds" min="0" max="59" [(ngModel)]="timerSecondsInput"
+            [disabled]="isStudyMode"
             class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm text-sm sm:text-base focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400">
         </div>
       </div>
@@ -170,6 +194,20 @@
         class="text-xs text-red-500 dark:text-red-400 mt-1">
         Si prega di impostare un timer maggiore di 0 secondi.
       </p>
+    </div>
+    <!-- Timer Settings -->
+
+    <!-- Sound Settings -->
+    <div *ngIf="!isStudyMode" class="mb-8 border-t dark:border-gray-700 pt-6 mt-6">
+      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Effetti Sonori (facoltativo)</h3>
+      <div class="flex items-center">
+        <input id="enableStreakSounds" name="enableStreakSounds" type="checkbox" 
+               [(ngModel)]="enableStreakSoundsInput"
+               class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
+        <label for="enableStreakSounds" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Abilita suoni per serie di risposte corrette
+        </label>
+      </div>
     </div>
 
 
@@ -193,7 +231,7 @@
 
         <div class="relative inline-block text-left order-2 sm:order-none w-full sm:w-auto" *ngIf="!isStudyMode">
           <div class="group">
-            <button type="button" [disabled]="!canStartQuiz() || isExportingPDF"
+            <button type="button" [disabled]="!canStartQuiz() || isExportingPDF || preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
               class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-blue-300 dark:border-blue-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-blue-700 hover:bg-blue-50 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 dark:disabled:opacity-40">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
@@ -201,7 +239,6 @@
                   clip-rule="evenodd" />
               </svg>
               Esporta domande
-
             </button>
             <div
               class="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out

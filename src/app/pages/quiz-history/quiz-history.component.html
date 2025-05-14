@@ -81,7 +81,7 @@
 
       <div *ngIf="quizAttempts.length > 0; else noResultsAfterFilter" class="space-y-4">
         <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)"
-          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg dark:hover:shadow-xl-dark transition-shadow duration-150 cursor-pointer border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            [ngClass]="getResultClass(attempt)">
 
           <div class="flex-grow mb-3 sm:mb-0 w-full sm:w-auto">
             <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">

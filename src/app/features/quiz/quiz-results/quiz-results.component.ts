@@ -1,46 +1,53 @@
 // src/app/features/quiz/quiz-results/quiz-results.component.ts
-import { Component, OnInit, OnDestroy, inject, ElementRef, ViewChild } from '@angular/core'; // Added ElementRef, ViewChild
-import { CommonModule, DatePipe, DecimalPipe, PercentPipe } from '@angular/common'; // Added DecimalPipe, PercentPipe
-import { ActivatedRoute, Router, RouterLink } from '@angular/router'; // Added RouterLink
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core'; // Added ChangeDetectorRef
+import { CommonModule, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
-import jsPDF from 'jspdf'; // <-- IMPORT jsPDF
-// import html2canvas from 'html2canvas'; // Import if using html2canvas approach
+import jsPDF from 'jspdf';
 
 import { DatabaseService } from '../../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model';
+import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
 import { Question } from '../../../models/question.model';
 
-interface GroupedQuestion {
+interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
-  questions: AnsweredQuestion[];
+  questions: AnsweredQuestion[]; // These are augmented with answer info
 }
 
 @Component({
   selector: 'app-quiz-results',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe, PercentPipe, FontAwesomeModule], // Added DecimalPipe, PercentPipe
+  imports: [CommonModule, RouterLink, DatePipe, DecimalPipe, PercentPipe, FontAwesomeModule],
   templateUrl: './quiz-results.component.html',
   styleUrls: ['./quiz-results.component.scss']
 })
 export class QuizResultsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
-  private router = inject(Router); // For navigation
+  private router = inject(Router);
   private dbService = inject(DatabaseService);
-  private routeSub!: Subscription;
+  private cdr = inject(ChangeDetectorRef); // For manual change detection if needed
 
-  segnala: IconDefinition = faExclamation; // This was already here, seems unused in the template you showed previously
-  repeatIcon: IconDefinition = faRepeat; // This was already here, seems unused in the template you showed previously
-  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
-
+  // Icons
+  segnala: IconDefinition = faExclamation;
+  repeatIcon: IconDefinition = faRepeat;
+  homeIcon: IconDefinition = faHome;
+  faChevronDown: IconDefinition = faChevronDown; // For accordion closed
+  faChevronUp: IconDefinition = faChevronUp;     // For accordion open
 
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
-  groupedQuestions: GroupedQuestion[] = [];
+  groupedQuestions: GroupedQuestionDisplay[] = [];
 
   isLoading = true;
   errorLoading = '';
+
+  // --- NEW: For Accordion State ---
+  accordionState = new Map<string, boolean>(); // Map: topicName -> isOpen
+  // --- END NEW ---
+
+  private routeSub!: Subscription;
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
@@ -48,10 +55,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       if (this.quizAttemptId) {
         this.loadQuizAttemptDetails(this.quizAttemptId);
       } else {
-        this.errorLoading = 'No Quiz ID provided.';
+        this.errorLoading = 'Nessun ID Quiz fornito.';
         this.isLoading = false;
-        // Optionally redirect if no ID
-        // this.router.navigate(['/home']);
       }
     });
   }
@@ -59,63 +64,97 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   async loadQuizAttemptDetails(id: string): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
+    this.accordionState.clear(); // Clear previous accordion state
     try {
       const attempt = await this.dbService.getQuizAttemptById(id);
       if (attempt) {
         this.quizAttempt = attempt;
         this.groupQuestionsByTopic();
+        // Initialize accordion state: all closed by default, or first one open
+        this.groupedQuestions.forEach((group, index) => {
+          this.accordionState.set(group.topic, index === 0); // Open the first group by default
+        });
       } else {
-        this.errorLoading = 'Quiz attempt not found. It might have been deleted or the ID is incorrect.';
+        this.errorLoading = 'Tentativo di quiz non trovato. Potrebbe essere stato eliminato o l\'ID non è corretto.';
       }
     } catch (error) {
-      console.error('Error loading quiz attempt:', error);
-      this.errorLoading = 'Failed to load quiz results. Please try again.';
+      console.error('Errore nel caricamento dei dettagli del tentativo di quiz:', error);
+      this.errorLoading = 'Impossibile caricare i risultati del quiz. Per favore riprova.';
     } finally {
       this.isLoading = false;
     }
   }
 
-  //for (const answeredQ of this.quizAttempt.allQuestions) {
-  //    const topic = answeredQ && answeredQ.userAnswerIndex != undefined ? answeredQ.questionSnapshot.topic || 'Uncategorized' : 'Uncategorized'; // Fallback topic
-
-
   groupQuestionsByTopic(): void {
-    if (!this.quizAttempt) return;
+    if (!this.quizAttempt || !this.quizAttempt.allQuestions) {
+      this.groupedQuestions = [];
+      return;
+    }
 
     const groups: { [key: string]: AnsweredQuestion[] } = {};
-    for (const answeredQ of this.quizAttempt.allQuestions.filter(qst => !this.quizAttempt?.answeredQuestions.map(q => q.questionId).includes(qst.questionId)).concat(this.quizAttempt?.answeredQuestions)) {
-      const topic = answeredQ.questionSnapshot.topic || 'Uncategorized'; // Fallback topic
-      answeredQ.isCorrect = this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === answeredQ.questionId && qst.userAnswerIndex === answeredQ.questionSnapshot.correctAnswerIndex) >= 0 ? true : false;
+    const answeredMap = new Map<string, AnsweredQuestion>();
+    (this.quizAttempt.answeredQuestions || []).forEach(aq => answeredMap.set(aq.questionId, aq));
+
+    // Iterate through all questions that were part of the attempt
+    for (const qInfo of this.quizAttempt.allQuestions) {
+      const topic = qInfo.questionSnapshot.topic || 'Uncategorized';
       if (!groups[topic]) {
         groups[topic] = [];
       }
-      groups[topic].push(answeredQ);
+
+      const answeredVersion = answeredMap.get(qInfo.questionId);
+      const displayQuestion: AnsweredQuestion = {
+        questionId: qInfo.questionId,
+        // The snapshot from allQuestions IS the definitive record of how the question was presented.
+        questionSnapshot: qInfo.questionSnapshot,
+        userAnswerIndex: answeredVersion ? answeredVersion.userAnswerIndex : -1, // -1 indicates unanswered
+        isCorrect: answeredVersion ? answeredVersion.isCorrect : false, // Treat unanswered as incorrect for results
+      };
+      groups[topic].push(displayQuestion);
     }
 
     this.groupedQuestions = Object.keys(groups)
-      .sort() // Sort topics alphabetically
+      .sort((a, b) => a.localeCompare(b)) // Sort topics alphabetically
       .map(topic => ({
         topic: topic,
-        questions: groups[topic]
+        questions: groups[topic] // These questions are now correctly augmented
       }));
   }
 
   getOptionClass(question: AnsweredQuestion, optionIndex: number): string {
-    const { userAnswerIndex, questionSnapshot } = question;
+    const { userAnswerIndex, questionSnapshot, isCorrect } = question;
     const correctAnswerIndex = questionSnapshot.correctAnswerIndex;
 
+    // Default styles for an option that is not selected and not the correct answer
+    let classes = 'bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300';
+
+    // If this option is the correct answer
     if (optionIndex === correctAnswerIndex) {
-      if (question.userAnswerIndex === -1){
-        return 'bg-yellow-100 border-yellow-500 text-yellow-700 font-semibold  line-through'; // Correct option
-      } else {
-        return 'bg-green-100 border-green-500 text-green-700 font-semibold'; // Correct option
+      classes = 'bg-green-100 dark:bg-green-700 dark:bg-opacity-60 border-green-500 dark:border-green-500 text-green-800 dark:text-green-100 font-semibold';
+    }
+
+    // If this option was the user's answer
+    if (userAnswerIndex === optionIndex) {
+      if (!isCorrect) { // And it was incorrect
+        classes = 'bg-red-100 dark:bg-red-800 dark:bg-opacity-60 border-red-500 dark:border-red-500 text-red-700 dark:text-red-200 line-through';
       }
+      // If it was correct, it's already handled by the green class above
+    } else if (userAnswerIndex === -1 && optionIndex === correctAnswerIndex) {
+      // If the question was unanswered, and this is the correct option
+      classes = 'bg-yellow-100 dark:bg-yellow-700 dark:bg-opacity-50 border-yellow-500 dark:border-yellow-600 text-yellow-800 dark:text-yellow-200 font-semibold';
     }
-    if (optionIndex === userAnswerIndex && optionIndex !== correctAnswerIndex) {
-      return 'bg-red-100 border-red-500 text-red-700 line-through'; // User's incorrect option
-    }
-    return 'bg-gray-50 border-gray-300 text-gray-600'; // Other options
+
+    return classes;
   }
+
+  // --- NEW: Accordion Toggle Method ---
+  toggleAccordion(topic: string): void {
+    const currentState = this.accordionState.get(topic);
+    this.accordionState.set(topic, !currentState);
+    // No need for cdr.detectChanges() here usually, as Angular's change detection
+    // should pick up the change to accordionState if it's used in an *ngIf in the template.
+  }
+  // --- END NEW ---
 
   ngOnDestroy(): void {
     if (this.routeSub) {
@@ -124,37 +163,36 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   async toggleFavoriteFromResult(questionId: string, event: MouseEvent): Promise<void> {
-    event.stopPropagation(); // Prevent other click actions if star is inside a clickable row
+    event.stopPropagation();
     const newFavStatus = await this.dbService.toggleFavoriteStatus(questionId);
-    // Update UI: Find the question in `groupedQuestions` and update its snapshot's isFavorite.
-    // This is a bit tricky because questionSnapshot is a copy.
-    // A better way might be to have a parallel structure or re-fetch for true live status.
-    // For now, let's assume the toggle worked in DB. The user would see change on next view of favorites list.
-    // Or, if you want immediate UI update here:
+
     if (newFavStatus !== undefined && this.quizAttempt) {
-      this.quizAttempt.answeredQuestions.forEach(aq => {
-        if (aq.questionId === questionId) {
-          // This updates the snapshot, which might not be ideal if snapshot should be immutable.
-          // A better approach would be to have a separate live `isFavorite` status for display.
-          (aq.questionSnapshot as any).isFavorite = newFavStatus; // Cast to any or extend snapshot interface
+      // Update the specific question's favorite status within the groupedQuestions for immediate UI reflection
+      for (const group of this.groupedQuestions) {
+        const questionInGroup = group.questions.find(q => q.questionId === questionId);
+        if (questionInGroup) {
+          // Directly modify the snapshot. Be aware of immutability concerns if this snapshot is shared.
+          // For display purposes here, it's usually fine.
+          (questionInGroup.questionSnapshot as any).isFavorite = newFavStatus;
+          break; // Found and updated
         }
-      });
+      }
+      // Also update in the main quizAttempt.allQuestions if it's referenced directly elsewhere
+      const qInAll = this.quizAttempt.allQuestions.find(qInfo => qInfo.questionId === questionId);
+      if (qInAll) {
+        (qInAll.questionSnapshot as any).isFavorite = newFavStatus;
+      }
+      this.cdr.detectChanges(); // Force UI update if the change is deep
     }
   }
 
+
   checkIfThereAtLeastAnAnswer(q: AnsweredQuestion): boolean {
-    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.length > 0) || false;
+    return q.userAnswerIndex !== -1;
   }
 
-  checkIfAnswerIsCorrect(q: AnsweredQuestion): boolean {
-    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === q.questionId && qst.userAnswerIndex === q.questionSnapshot.correctAnswerIndex) >= 0) || false;
-  }
-
-  checkIfQuestionIsTheSame(q: AnsweredQuestion): boolean {
-    return (this.quizAttempt && this.quizAttempt.answeredQuestions && this.quizAttempt.answeredQuestions.findIndex(qst => qst.questionId === q.questionId) >= 0) || false;
-  }
-
-
+  // checkIfAnswerIsCorrect is now part of the AnsweredQuestion object (q.isCorrect)
+  // checkIfQuestionIsTheSame is not needed as we iterate over attempt.allQuestions
 
   exportResultsToPDF(): void {
     if (!this.quizAttempt) return;
@@ -162,9 +200,10 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let yPos = 20; // Initial Y position for drawing
-    const lineHeight = 7; // Approximate line height
+    let yPos = 20;
+    const lineHeight = 7;
     const margin = 15;
+    const contentWidth = pageWidth - margin * 2;
 
     const checkYPos = (neededHeight: number = lineHeight * 2) => {
       if (yPos + neededHeight > pageHeight - margin) {
@@ -173,166 +212,183 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       }
     };
 
-    // --- Header ---
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Quiz Results', pageWidth / 2, yPos, { align: 'center' });
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.text('Risultati Quiz', pageWidth / 2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
 
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Completed: ${new DatePipe('en-US').transform(this.quizAttempt.timestampEnd, 'medium')}`, margin, yPos);
+    doc.setFontSize(12); doc.setFont('helvetica', 'normal');
+    doc.text(`Completato: ${new DatePipe('it-IT').transform(this.quizAttempt.timestampEnd, 'medium')}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Durata: ${this.calcDurataQuiz(this.quizAttempt)}`, margin, yPos);
     yPos += lineHeight;
 
+
     doc.setFont('helvetica', 'bold');
-    doc.text('Overall Score:', margin, yPos);
+    doc.text('Punteggio Totale:', margin, yPos);
     doc.setFont('helvetica', 'normal');
     doc.text(
       `${this.quizAttempt.score} / ${this.quizAttempt.totalQuestionsInQuiz} (${new PercentPipe('en-US').transform(
-        (this.quizAttempt.score || 0) / this.quizAttempt.totalQuestionsInQuiz, '1.0-1'
+        (this.quizAttempt.score || 0) / (this.quizAttempt.totalQuestionsInQuiz || 1), '1.0-1' // Ensure totalQuestionsInQuiz is not 0
       )})`,
-      margin + 40, yPos
+      margin + 45, yPos // Adjusted offset
     );
     yPos += lineHeight * 2;
 
-    // --- Questions Breakdown ---
     this.groupedQuestions.forEach(group => {
       checkYPos(lineHeight * 3);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Topic: ${group.topic}`, margin, yPos);
+      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text(`Argomento: ${group.topic}`, margin, yPos);
       yPos += lineHeight * 1.5;
       doc.setFontSize(10);
 
       group.questions.forEach((q, index) => {
-        checkYPos(lineHeight * (q.questionSnapshot.options.length + 4 + (q.questionSnapshot.explanation ? 3 : 0)));
+        // Estimate needed height
+        let neededHeight = lineHeight * 2; // For question text (assuming 2 lines max, adjust if needed)
+        neededHeight += q.questionSnapshot.options.length * lineHeight; // For options
+        if (q.questionSnapshot.explanation) neededHeight += lineHeight * 2; // For explanation
+        checkYPos(neededHeight);
 
         doc.setFont('helvetica', 'bold');
-        doc.text(`Q${index + 1}: ${q.questionSnapshot.text}`, margin, yPos, { maxWidth: pageWidth - margin * 2 });
-        yPos += lineHeight * Math.ceil(doc.getTextDimensions(`Q${index + 1}: ${q.questionSnapshot.text}`, { maxWidth: pageWidth - margin * 2 }).h / (lineHeight * 0.7)); // Adjust based on wrapped lines
+        const questionText = `D${index + 1}: ${q.questionSnapshot.text}`;
+        const splitQuestionText = doc.splitTextToSize(questionText, contentWidth);
+        doc.text(splitQuestionText, margin, yPos);
+        yPos += splitQuestionText.length * (lineHeight * 0.8); // Use actual lines height
 
         doc.setFont('helvetica', 'normal');
         q.questionSnapshot.options.forEach((option, optIndex) => {
           let prefix = '';
-          let optionColor: string | undefined = undefined; // Default black
+          let optionColor: [number, number, number] | undefined = undefined; // RGB array
 
           if (optIndex === q.questionSnapshot.correctAnswerIndex) {
-            prefix = '(Correct) ';
-            optionColor = '#28a745'; // Green
+            prefix = '(Corretta) ';
+            optionColor = [40, 167, 69]; // Green RGB
           }
-          if (optIndex === q.userAnswerIndex) {
-            prefix += (q.isCorrect ? '' : '(Your Incorrect Answer) ');
-            if (!q.isCorrect) optionColor = '#dc3545'; // Red
+          if (optIndex === q.userAnswerIndex) { // User's answer
+            prefix += q.isCorrect ? '' : '(Tua Risposta Errata) ';
+            if (!q.isCorrect) optionColor = [220, 53, 69]; // Red RGB
+          } else if (q.userAnswerIndex === -1 && optIndex === q.questionSnapshot.correctAnswerIndex) {
+            // If unanswered and this is the correct one, show as "missed correct"
+            prefix = '(Corretta - Non Risposta) ';
+            optionColor = [255, 193, 7]; // Yellow/Amber RGB
           }
 
-          if (optionColor) doc.setTextColor(optionColor);
-          doc.text(`${String.fromCharCode(65 + optIndex)}. ${prefix}${option}`, margin + 5, yPos, { maxWidth: pageWidth - margin * 2 - 5 });
+
+          if (optionColor) doc.setTextColor(optionColor[0], optionColor[1], optionColor[2]);
+          const optionFullText = `${String.fromCharCode(65 + optIndex)}. ${prefix}${option}`;
+          const splitOptionText = doc.splitTextToSize(optionFullText, contentWidth - 5);
+          doc.text(splitOptionText, margin + 5, yPos);
           if (optionColor) doc.setTextColor(0, 0, 0); // Reset to black
-          yPos += lineHeight;
+          yPos += splitOptionText.length * (lineHeight * 0.8);
         });
 
         if (q.questionSnapshot.explanation) {
           checkYPos(lineHeight * 2);
           doc.setFont('helvetica', 'italic');
-          doc.text(`Explanation: ${q.questionSnapshot.explanation}`, margin + 5, yPos, { maxWidth: pageWidth - margin * 2 - 5 });
-          yPos += lineHeight * Math.ceil(doc.getTextDimensions(`Explanation: ${q.questionSnapshot.explanation}`, { maxWidth: pageWidth - margin * 2 - 5 }).h / (lineHeight * 0.7));
+          const explanationText = `Spiegazione: ${q.questionSnapshot.explanation}`;
+          const splitExplanation = doc.splitTextToSize(explanationText, contentWidth - 5);
+          doc.text(splitExplanation, margin + 5, yPos);
+          yPos += splitExplanation.length * (lineHeight * 0.8);
           doc.setFont('helvetica', 'normal');
         }
-        yPos += lineHeight * 0.5; // Extra space between questions
+        yPos += lineHeight * 0.5;
       });
-      yPos += lineHeight; // Extra space between topics
+      yPos += lineHeight;
     });
 
-    // --- Footer (Page Number) ---
-    const pageCount = (doc.internal as any).getNumberOfPages(); // Type assertion for internal property
+    const pageCount = (doc.internal as any).getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
-      doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin - 10, pageHeight - 10);
+      doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin - 5, pageHeight - 10, { align: 'right' });
     }
 
-    doc.save(`quiz-results-${this.quizAttempt.id.substring(0, 8)}.pdf`);
+    doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
   }
 
-  // --- html2canvas approach (alternative, more complex setup) ---
-  // async exportResultsToPDF_html2canvas(): Promise<void> {
-  //   if (!this.resultsContainerRef?.nativeElement) return;
-  //   const data = this.resultsContainerRef.nativeElement;
-  //   const canvas = await html2canvas(data, { scale: 2 }); // Scale for better quality
-  //   const imgWidth = 208; // A4 width in mm (minus margins)
-  //   const pageHeight = 295; // A4 height in mm (minus margins)
-  //   const imgHeight = canvas.height * imgWidth / canvas.width;
-  //   let heightLeft = imgHeight;
-  //   const contentDataURL = canvas.toDataURL('image/png');
-  //   const pdf = new jsPDF('p', 'mm', 'a4');
-  //   let position = 0;
-  //   pdf.addImage(contentDataURL, 'PNG', 0, position, imgWidth, imgHeight);
-  //   heightLeft -= pageHeight;
-  //   while (heightLeft >= 0) {
-  //     position = heightLeft - imgHeight;
-  //     pdf.addPage();
-  //     pdf.addImage(contentDataURL, 'PNG', 0, position, imgWidth, imgHeight);
-  //     heightLeft -= pageHeight;
-  //   }
-  //   pdf.save(`quiz-results-${this.quizAttempt?.id.substring(0,8)}.pdf`);
-  // }
 
   calcDurataQuiz(quizAttempt: QuizAttempt): string {
-    if (quizAttempt && quizAttempt?.timestampEnd && quizAttempt?.timestampStart) {
-      return this.msToTime(quizAttempt.timestampEnd.getTime() - quizAttempt.timestampStart.getTime());
+    if (quizAttempt && quizAttempt.timestampEnd && quizAttempt.timestampStart) {
+      // Check if timestamps are Date objects or strings/numbers
+      const endTime = typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
+        ? new Date(quizAttempt.timestampEnd).getTime()
+        : quizAttempt.timestampEnd.getTime();
+      const startTime = typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
+        ? new Date(quizAttempt.timestampStart).getTime()
+        : quizAttempt.timestampStart.getTime();
+
+      if (!isNaN(endTime) && !isNaN(startTime)) {
+        return this.msToTime(endTime - startTime);
+      }
     }
-    return "";
+    return "N/D";
   }
 
+
   private msToTime(ms: number): string {
+    if (ms < 0) ms = 0;
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-
-    // Pad with leading zeros
     const pad = (n: number) => n.toString().padStart(2, '0');
-
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   }
 
-  repeatQuiz(): void {
-    if (!this.quizAttempt) {
+  async repeatQuiz(): Promise<void> { // Make async if dbService calls are async
+    if (!this.quizAttempt) return;
+    // Get original question IDs from the attempt's allQuestions array
+    const questionIds = this.quizAttempt.allQuestions.map(qInfo => qInfo.questionId);
+    if (questionIds.length === 0) {
+      alert("Nessuna domanda trovata in questo tentativo da ripetere.");
       return;
     }
-    this.dbService.getQuestionByIds(this.quizAttempt.allQuestions.map(q => q.questionId)).then((questions) => {
-      this.onInternalSubmit(this.quizAttempt);
-    });
+    this.onInternalSubmit(this.quizAttempt, questionIds);
   }
 
-  repeatWrongQuiz(): void {
-    if (!this.quizAttempt) {
+  async repeatWrongQuiz(): Promise<void> { // Make async
+    if (!this.quizAttempt) return;
+    const wrongOrUnansweredQuestionIds = this.quizAttempt.allQuestions
+      .filter(qInfo => {
+        const answeredInfo = this.quizAttempt!.answeredQuestions.find(aq => aq.questionId === qInfo.questionId);
+        return !answeredInfo || !answeredInfo.isCorrect; // Not in answeredQuestions OR isCorrect is false
+      })
+      .map(qInfo => qInfo.questionId);
+
+    if (wrongOrUnansweredQuestionIds.length === 0) {
+      alert("Nessuna domanda sbagliata o non risposta in questo tentativo. Ottimo lavoro!");
       return;
     }
-    this.dbService.getQuestionByIds(this.quizAttempt.allQuestions.filter(q=>q.userAnswerIndex === -1 || q.isCorrect === false).map(q => q.questionId)).then((questions) => {
-      this.onInternalSubmit(this.quizAttempt, questions);
-    });
+    this.onInternalSubmit(this.quizAttempt, wrongOrUnansweredQuestionIds);
   }
 
-  onInternalSubmit(quizAttempt: QuizAttempt | undefined, questions?: Question[]): void {
-    let quizSettings: Partial<QuizSettings> | undefined = quizAttempt?.settings;
+  onInternalSubmit(originalAttempt: QuizAttempt | undefined, questionIdsToRepeat?: string[]): void {
+    if (!originalAttempt) return;
 
-    let navigateToPath = '/quiz/take'; // Default path
-    console.log(`REPEATING quiz with settings:`, quizSettings);
-    const fixedQuestionIds: string[] | undefined = questions ? questions.map(q => q.id) : quizAttempt?.allQuestions.map(q => q.questionId);
-    const shuffledQuestionIds = fixedQuestionIds?.sort(() => 0.5 - Math.random());
+    const settings = originalAttempt.settings;
+    const idsToUse = questionIdsToRepeat && questionIdsToRepeat.length > 0
+      ? questionIdsToRepeat
+      : originalAttempt.allQuestions.map(q => q.questionId);
 
-    this.router.navigate([navigateToPath], { // Use dynamic path
+    if (idsToUse.length === 0) {
+      alert("Nessuna domanda specificata per il nuovo quiz.");
+      return;
+    }
+
+    const shuffledQuestionIds = [...idsToUse].sort(() => 0.5 - Math.random());
+
+    this.router.navigate(['/quiz/take'], {
       queryParams: {
-        numQuestions: quizSettings?.numQuestions, // Could be very large for "all" in study mode
-        topics: quizSettings?.selectedTopics?.join(','),
-        keywords: quizSettings?.keywords?.join(','),
-        // For quiz mode, pass other relevant params
-        topicDistribution: quizSettings?.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
-        enableTimer: false,
+        quizTitle: `Ripetizione: ${settings.selectedTopics?.join(', ') || 'Quiz Misto'}`,
+        numQuestions: shuffledQuestionIds.length, // numQuestions is now the count of selected IDs
+        // Topics and keywords from original settings might be too broad if we are repeating specific Qs
+        // We are now using fixedQuestionIds, so topics/keywords from settings are less relevant for selection
+        // topics: settings.selectedTopics?.join(','), 
+        // keywords: settings.keywords?.join(','),
+        // topicDistribution: settings.topicDistribution ? JSON.stringify(settings.topicDistribution) : '',
+        enableTimer: false, // Typically disable timer for review/repeat quizzes
         timerDuration: 0,
-        // get specific question id
-        fixedQuestionIds: shuffledQuestionIds
+        enableCronometer: true, // Optionally enable cronometer
+        fixedQuestionIds: shuffledQuestionIds.join(',') // Pass the specific IDs
       }
     });
   }

@@ -7,10 +7,11 @@ export interface Question {
   options: string[];
   correctAnswerIndex: number;
   explanation?: string;
-  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  difficulty?: QuestionDifficulty;
   timesCorrect?: number;
   timesIncorrect?: number;
   isFavorite?: number; // <-- NEW (initialize to false)
+  questionVersion?: number; // NEW: Optional version for the question content
 }
 
 export enum QuestionDifficulty {

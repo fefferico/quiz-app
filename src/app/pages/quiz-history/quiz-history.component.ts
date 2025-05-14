@@ -207,6 +207,26 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     this.router.navigate(['/quiz/results', attemptId]);
   }
 
+  
+  getResultClass(attempt: QuizAttempt): string {
+
+    let classes = 'mb-6 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg border border-gray-200 dark:border-gray-700';
+
+    const totQuestions = attempt.allQuestions.length || 1;
+    const resultsPercentage = attempt.answeredQuestions.reduce((sum, tc) => sum + Number((tc.isCorrect ? 1 : 0) || 0), 0)/totQuestions*100;
+
+    if (resultsPercentage >= 75){
+      classes = 'mb-6 p-4 bg-green-100 dark:bg-green-800 shadow-md rounded-lg border border-green-200 dark:border-green-700';
+    } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
+      classes = 'mb-6 p-4 bg-yellow-100 dark:bg-yellow-800 shadow-md rounded-lg border border-yellow-200 dark:border-yellow-700';
+    } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
+      classes = 'mb-6 p-4 bg-orange-100 dark:bg-orange-800 shadow-md rounded-lg border border-orange-200 dark:border-orange-700';
+    } else {
+      classes = 'mb-6 p-4 bg-red-100 dark:bg-red-800 shadow-md rounded-lg border border-red-200 dark:border-red-700';
+    }
+    return classes;
+  }
+
   ngOnDestroy(): void {
     if (this.attemptsSub) {
       this.attemptsSub.unsubscribe();

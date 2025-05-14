@@ -12,10 +12,11 @@ import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
 import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat, faMusic, faVolumeMute } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../../services/alert.service';
 import { AlertButton, AlertOptions } from '../../../models/alert.model';
 import { AlertComponent } from '../../../shared/alert/alert.component';
+import { SoundService } from '../../../core/services/sound.service.spec';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -47,6 +48,20 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private el = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone); // Inject NgZone
+  private soundService = inject(SoundService);
+
+  private soundIsPlaying: boolean = false;
+
+  faSoundOn = faMusic;
+  faSoundOff = faVolumeMute;
+
+  // --- NEW: Sound and Streak Properties ---
+  quizSpecificSoundsEnabled = false; // Determined by quiz settings
+  private currentCorrectStreak = 0;
+  readonly STREAK_THRESHOLDS = [3, 5, 10]; // Example: Play sound at 3, 5, 10 correct in a row
+  readonly STREAK_SOUND_KEYS = ['streak1', 'streak2', 'streak3']; // Corresponding sound keys
+  // --- END NEW ---
+
 
   private routeSub!: Subscription;
   private destroy$ = new Subject<void>();
@@ -200,6 +215,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         const fixedQuestionIds = params['fixedQuestionIds'] ? params['fixedQuestionIds'].toString().split(',') : [];
         this.quizTitle = params['quizTitle'] || 'Quiz';
 
+        this.quizSpecificSoundsEnabled = params['enableStreakSounds'] === 'true';
+        this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled); // Update global service state for this quiz session
+
         if (resumeAttemptId) {
           this.isResuming = true;
           this.currentQuizAttemptId = resumeAttemptId;
@@ -230,29 +248,27 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             topicDistribution: selectedTopicDistribution,
             enableTimer: this.isTimerEnabled,
             enableCronometer: this.isCronometerEnabled,
-            timerDurationSeconds: this.timerDuration
+            timerDurationSeconds: this.timerDuration,
+            questionIDs: fixedQuestionIds
           };
-          await this.loadQuestions(false, fixedQuestionIds);
+          await this.loadQuestions(false);
         }
       });
     this.applyFontSettingsToWrapper();
   }
 
-  async loadQuestions(isResumeLoad: boolean = false, fixedQuestionIds: string[] = []): Promise<void> {
+  async loadQuestions(isResumeLoad: boolean = false): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
       if (!isResumeLoad) {
-        if (fixedQuestionIds.length > 0) {
-          this.questions = await this.dbService.getQuestionByIds(fixedQuestionIds);
-        } else {
-          this.questions = await this.dbService.getRandomQuestions(
-            this.quizSettings.numQuestions,
-            this.quizSettings.selectedTopics,
-            this.quizSettings.keywords,
-            this.quizSettings.topicDistribution
-          );
-        }
+        this.questions = await this.dbService.getRandomQuestions(
+          this.quizSettings.numQuestions,
+          this.quizSettings.selectedTopics,
+          this.quizSettings.keywords,
+          this.quizSettings.questionIDs,
+          this.quizSettings.topicDistribution
+        );
         if (this.quizSettings.topicDistribution && this.quizSettings.topicDistribution.length > 0) {
           this.quizSettings.numQuestions = this.questions.length;
         } else {
@@ -379,6 +395,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     this.quizIsOverByTime = false;
     const durationForThisRun = this._timeLeftSeconds;
+    const originalDuration = this._timeLeftSeconds;
 
     this.timeLeft$ = timer(0, 1000).pipe(
       takeUntil(this.destroy$),
@@ -396,6 +413,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     this.timerSubscription = this.timeLeft$.subscribe(timeLeftSeconds => {
       this._timeLeftSeconds = timeLeftSeconds;
+
+      if (this.quizSpecificSoundsEnabled && (this._timeLeftSeconds/originalDuration*100 <= 20) && !this.soundIsPlaying){
+          this.soundService.play('warning');
+          this.soundIsPlaying = true;
+        }
     });
   }
 
@@ -436,7 +458,17 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       };
 
       const originalCorrectAnswerText = this.currentQuestion.options[this.currentQuestion.correctAnswerIndex];
-      this.currentQuestion.options = this.shuffleArray(this.currentQuestion.options);
+
+      // shuffle options just for not yet answered questions
+      if (!this.userAnswers || !this.userAnswers.some((answ: AnsweredQuestion) => answ.questionId === this.currentQuestion?.id)) {
+        this.currentQuestion.options = this.shuffleArray(this.currentQuestion.options);
+      } else {
+        const previousAnswer: AnsweredQuestion | undefined = this.userAnswers.find(answ => answ.questionId === this.currentQuestion?.id);
+
+        if (previousAnswer && previousAnswer.questionSnapshot.options) {
+          this.currentQuestion.options = previousAnswer.questionSnapshot.options;
+        }
+      }
       this.currentQuestion.correctAnswerIndex = this.currentQuestion.options.findIndex(
         option => option === originalCorrectAnswerText
       );
@@ -508,14 +540,39 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
       isCorrect: isCorrect,
       questionSnapshot: {
-        text: originalQuestionData.text,
-        topic: originalQuestionData.topic,
-        options: [...originalQuestionData.options], // Snapshot original options
-        correctAnswerIndex: originalQuestionData.correctAnswerIndex, // Snapshot original correct index
-        explanation: originalQuestionData.explanation,
-        isFavorite: originalQuestionData.isFavorite || 0
+        text: this.currentQuestion.text,
+        topic: this.currentQuestion.topic,
+        options: [...this.currentQuestion.options], // To preserve the original shuffled option
+        correctAnswerIndex: this.currentQuestion.correctAnswerIndex, // Snapshot original correct index
+        explanation: this.currentQuestion.explanation,
+        isFavorite: this.currentQuestion.isFavorite || 0
       }
     });
+
+    if (this.quizSpecificSoundsEnabled) { // Only if sounds are enabled for this quiz
+      if (isCorrect) {
+        this.currentCorrectStreak++;
+        // Play general correct sound (optional)
+        this.soundService.play('correct'); 
+
+        // Check for streak thresholds
+        for (let i = this.STREAK_THRESHOLDS.length - 1; i >= 0; i--) { // Check from highest streak down
+          if (this.currentCorrectStreak === this.STREAK_THRESHOLDS[i]) {
+            this.soundService.play(this.STREAK_SOUND_KEYS[i]);
+            break; // Play only one streak sound
+          }
+        }
+        if (this.currentCorrectStreak > this.STREAK_THRESHOLDS[this.STREAK_THRESHOLDS.length - 1]) {
+          // If streak exceeds max defined, could play the highest streak sound again or a different one
+          // this.soundService.play(this.STREAK_SOUND_KEYS[this.STREAK_SOUND_KEYS.length - 1]);
+        }
+
+      } else {
+        this.currentCorrectStreak = 0; // Reset streak on incorrect answer
+        // Play general incorrect sound (optional)
+        this.soundService.play('incorrect');
+      }
+    }
 
     this.unansweredQuestions = this.unansweredQuestions.filter(
       (qst): qst is AnsweredQuestion => qst !== undefined && qst.questionId !== actualQuestionId
@@ -567,7 +624,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionSnapshot: {
             text: this.questions[this.currentQuestionIndex].text,
             topic: this.questions[this.currentQuestionIndex].topic,
-            options: [...this.questions[this.currentQuestionIndex].options],
+            options: [...this.currentQuestion.options],
             correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
             explanation: this.questions[this.currentQuestionIndex].explanation,
             isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
@@ -603,6 +660,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   async endQuiz(isTimeUp: boolean = false): Promise<void> {
+    this.soundIsPlaying = false;
     this.clearAutoAdvanceTimeout();
     if (this.quizCompleted && !isTimeUp) return; // If already completed (not by time), don't re-process
     if (isTimeUp && this.quizCompleted) return; // If time up and already processed as completed, don't re-process
@@ -683,6 +741,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       // timeLeftOnPauseSeconds is not relevant here as quiz is ending
     };
 
+    if (this.quizSpecificSoundsEnabled){
+      if (score/this.questions.length > 75){
+        this.soundService.play('done');
+      } else {
+        this.soundService.play('fail');
+      }
+    }
+
     try {
       await this.dbService.saveQuizAttempt(quizAttempt);
       for (const answeredQ of this.userAnswers) {
@@ -693,6 +759,13 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       console.error('Error ending quiz:', error);
       this.router.navigate(['/home']);
     }
+  }
+
+  // Example of how you might add a UI toggle for sounds *during* the quiz (optional)
+  toggleQuizSounds(): void {
+    this.quizSpecificSoundsEnabled = !this.quizSpecificSoundsEnabled;
+    this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
+    // Persist this choice for the current quiz if desired (e.g., in QuizAttempt settings, or a local component state)
   }
 
   ngOnDestroy(): void {
