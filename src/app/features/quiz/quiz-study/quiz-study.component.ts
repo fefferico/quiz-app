@@ -8,12 +8,13 @@ import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
 // QuizSettings and TopicCount might be needed if complex filtering is passed
 import { QuizSettings, TopicCount } from '../../../models/quiz.model';
-
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 
 @Component({
   selector: 'app-quiz-study',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FontAwesomeModule],
   templateUrl: './quiz-study.component.html',
   styleUrls: ['./quiz-study.component.scss']
 })
@@ -22,6 +23,9 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private dbService = inject(DatabaseService);
   private routeSub!: Subscription;
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
 
   // Re-use parts of QuizSettings for fetching
   studySettings!: Partial<QuizSettings>; // numQuestions, selectedTopics, keywords

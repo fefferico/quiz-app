@@ -4,6 +4,9 @@ import { CommonModule, PercentPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { QuizSettings } from '../../models/quiz.model';
 
 interface CategorizedQuestion extends Question {
   failureRate: number;
@@ -23,13 +26,16 @@ interface QuestionGroup {
 @Component({
   selector: 'app-study-focus',
   standalone: true,
-  imports: [CommonModule, RouterLink, PercentPipe],
+  imports: [CommonModule, RouterLink, PercentPipe, FontAwesomeModule],
   templateUrl: './study-focus.component.html',
   styleUrls: ['./study-focus.component.scss']
 })
 export class StudyFocusComponent implements OnInit {
   private dbService = inject(DatabaseService);
   private router = inject(Router);
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
 
   isLoading = true;
   allQuestionsWithStats: CategorizedQuestion[] = [];
@@ -38,10 +44,10 @@ export class StudyFocusComponent implements OnInit {
   // Define categories and their thresholds (failure rate: 0.0 to 1.0)
   // Order matters for display
   readonly categories = [
-    { name: 'Very Difficult', min: 0.75, max: 1.01, description: 'Often answered incorrectly. Prioritize these!', cssClass: 'border-red-500 bg-red-50', ctaLabel: 'Practice Difficult Questions' },
-    { name: 'Should Check More', min: 0.40, max: 0.75, description: 'You miss these a fair bit. Good to review.', cssClass: 'border-yellow-500 bg-yellow-50', ctaLabel: 'Review These' },
-    { name: 'Sometimes You Fail', min: 0.15, max: 0.40, description: 'Mostly good, but occasional slips.', cssClass: 'border-blue-500 bg-blue-50', ctaLabel: 'Practice These' },
-    { name: 'Know Them Very Well', min: 0.0, max: 0.15, description: 'Excellent! You rarely miss these.', cssClass: 'border-green-500 bg-green-50', ctaLabel: 'Quick Refresh (Optional)' }
+    { name: 'Molto difficili', min: 0.75, max: 1.01, description: 'Spesso risposte in modo errato. Dai priorità a queste!', cssClass: 'border-red-500 bg-red-50', ctaLabel: 'Pratica Domande Difficili' },
+    { name: 'Da rivedere', min: 0.40, max: 0.75, description: 'Le sbagli abbastanza spesso. Buono da rivedere.', cssClass: 'border-yellow-500 bg-yellow-50', ctaLabel: 'Rivedi Queste' },
+    { name: 'Così così', min: 0.15, max: 0.40, description: 'Per lo più bene, ma qualche scivolone occasionale.', cssClass: 'border-blue-500 bg-blue-50', ctaLabel: 'Pratica Queste' },
+    { name: 'Le sai molto bene', min: 0.0, max: 0.15, description: 'Eccellente! Le sbagli raramente.', cssClass: 'border-green-500 bg-green-50', ctaLabel: 'Ripasso Veloce (Opzionale)' }
   ];
   protected readonly MIN_ATTEMPTS_FOR_CATEGORY = 3; // Min attempts before categorizing a question
 
@@ -105,15 +111,28 @@ export class StudyFocusComponent implements OnInit {
     // QuizTaking would need to be able to fetch questions by an array of IDs.
     // For now, let's log and plan this navigation.
     console.log("Start quiz with specific questions:", questionIds);
-    alert(`Feature to start quiz with these ${questionIds.length} questions is a next step! IDs: ${questionIds.join(', ')}`);
-    // For now, as a placeholder, navigate to setup
-    // this.router.navigate(['/quiz/setup']);
+    let navigateToPath = '/quiz/take'; // Default path
 
-    // To implement this properly, DatabaseService would need a `getQuestionsByIds(ids: string[]): Promise<Question[]>`
-    // And QuizTakingComponent would need to accept `questionIds` in queryParams
-    // and call this new service method in its `loadQuestions`.
-    // Let's simulate passing to QuizSetup which then might pass to QuizTaking.
-    // This requires QuizSetupComponent to handle a `fixedQuestionIds` param.
-    // We can implement this later.
+    let quizSettings: Partial<QuizSettings> = {}; // Use Partial as some fields are mode-dependent
+    quizSettings = {
+      numQuestions: questionIds.length,
+      selectedTopics: [], // Empty means all if selectAllTopics is true
+      enableTimer: false,
+      timerDurationSeconds: 0
+    };
+
+    this.router.navigate([navigateToPath], { // Use dynamic path
+      queryParams: {
+        numQuestions: quizSettings.numQuestions, // Could be very large for "all" in study mode
+        topics: quizSettings.selectedTopics?.join(','),
+        keywords: '',
+        // For quiz mode, pass other relevant params
+        topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
+        enableTimer: false,
+        timerDuration: 0,
+        // get specific question id
+        fixedQuestionIds: questionIds
+      }
+    });
   }
 }

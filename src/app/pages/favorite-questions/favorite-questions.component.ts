@@ -4,17 +4,24 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { AlertService } from '../../services/alert.service';
 
 @Component({
   selector: 'app-favorite-questions',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FontAwesomeModule],
   templateUrl: './favorite-questions.component.html',
   styleUrls: ['./favorite-questions.component.scss']
 })
 export class FavoriteQuestionsComponent implements OnInit {
   private dbService = inject(DatabaseService);
   private router = inject(Router);
+  private alertService = inject(AlertService);
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
 
   favoriteQuestions: Question[] = [];
   isLoading = true;
@@ -44,7 +51,7 @@ export class FavoriteQuestionsComponent implements OnInit {
 
   startQuizWithFavorites(): void {
     if (this.favoriteQuestions.length === 0) {
-      alert("You have no favorite questions to start a quiz with.");
+      this.alertService.showAlert("Attenzione","Non sono presenti domande preferite con cui poter iniziare un quiz.");
       return;
     }
     const questionIds = this.favoriteQuestions.map(q => q.id);

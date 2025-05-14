@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Question, QuestionAdminService } from '../services/question-admin.service'; // Adjust path
 import { AdminQuestionFormComponent } from '../question-form/question-form.component'; // Adjust path
 import { Observable } from 'rxjs';
+import { AlertService } from '../../services/alert.service';
 
 @Component({
   selector: 'app-admin-question-list',
@@ -16,6 +17,7 @@ export class AdminQuestionListComponent implements OnInit {
   selectedQuestion: Question | null = null;
   showForm = false;
   availableTopics$: Observable<string[]> = new Observable<string[]>();
+  private alertService = inject(AlertService);
 
   constructor(private questionAdminService: QuestionAdminService) { }
 
@@ -43,9 +45,9 @@ export class AdminQuestionListComponent implements OnInit {
       this.questionAdminService.deleteQuestion(id).subscribe({
         next: () => {
           this.loadQuestions(); // Refresh the list
-          alert('Domanda eliminata con successo.');
+          this.alertService.showAlert("Info","Domanda eliminata con successo.");
         },
-        error: (err) => alert(`Errore durante l'eliminazione: ${err.message}`)
+        error: (err) => this.alertService.showAlert("Attenzione",err.message)
       });
     }
   }

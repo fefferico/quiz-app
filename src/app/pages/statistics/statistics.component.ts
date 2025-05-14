@@ -14,6 +14,9 @@ import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.com
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
 
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { AlertService } from '../../services/alert.service';
 
 Chart.register(...registerables);
 
@@ -58,8 +61,8 @@ interface TopicCoverageData {
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  imports: [CommonModule, RouterLink, DecimalPipe, PercentPipe, SimpleModalComponent, DatePipe,
-    SetupModalComponent],
+  imports: [CommonModule, RouterLink, PercentPipe, SimpleModalComponent,
+    SetupModalComponent, FontAwesomeModule],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.scss']
 })
@@ -67,6 +70,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private dbService = inject(DatabaseService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private alertService = inject(AlertService);
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
 
   quizAttempts: QuizAttempt[] = [];
   allQuestionsFromDb: Question[] = []; // Store all questions from the DB bank
@@ -125,30 +132,30 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (this.dailyChart) {
       this.dailyChart.destroy(); this.dailyChart = undefined;
     }
-    
-    if (this.todayPerformanceChartRef?.nativeElement) {
-        const dateFormatter = new DatePipe('it-IT'); // Use it-IT for consistency if dates are formatted this way elsewhere
-        const todayDateStr = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
-        const todayData = this.dailyPerformance.find(dp => dp.date === todayDateStr);
-        const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateStr);
 
-        if (todayData || (todayDetailed && todayDetailed.wrongAnswersIds.length > 0)) {
-            this.createTodayPerformanceChart();
-        } else if (this.todayChart) {
-            this.todayChart.destroy(); this.todayChart = undefined;
-            // Optionally clear canvas or show "no data"
-            const canvas = this.todayPerformanceChartRef.nativeElement;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.textAlign = 'center';
-                ctx.font = '14px Arial';
-                ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568'; // Basic dark/light text
-                ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
-            }
-        }
-    } else if (this.todayChart) {
+    if (this.todayPerformanceChartRef?.nativeElement) {
+      const dateFormatter = new DatePipe('it-IT'); // Use it-IT for consistency if dates are formatted this way elsewhere
+      const todayDateStr = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
+      const todayData = this.dailyPerformance.find(dp => dp.date === todayDateStr);
+      const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateStr);
+
+      if (todayData || (todayDetailed && todayDetailed.wrongAnswersIds.length > 0)) {
+        this.createTodayPerformanceChart();
+      } else if (this.todayChart) {
         this.todayChart.destroy(); this.todayChart = undefined;
+        // Optionally clear canvas or show "no data"
+        const canvas = this.todayPerformanceChartRef.nativeElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.textAlign = 'center';
+          ctx.font = '14px Arial';
+          ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568'; // Basic dark/light text
+          ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
+        }
+      }
+    } else if (this.todayChart) {
+      this.todayChart.destroy(); this.todayChart = undefined;
     }
   }
 
@@ -330,8 +337,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   // --- CALCULATE TOPIC COVERAGE ---
   calculateTopicCoverage(): void { // Removed async as allQuestionsFromDb is now a property
     if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
-        this.topicCoverage = [];
-        return;
+      this.topicCoverage = [];
+      return;
     }
 
     const questionsByTopicDb = new Map<string, Question[]>();
@@ -359,7 +366,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const totalInBank = questionsInBankForTopic.length;
       const encounteredSet = encounteredQuestionIdsByTopic.get(topic) || new Set();
       const encounteredCount = encounteredSet.size;
-      
+
       this.topicCoverage.push({
         topic: topic,
         totalQuestionsInTopicBank: totalInBank,
@@ -383,16 +390,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Ensure there's some data to plot for today
     if (!todayOverallPerf && !(todayDetailed && todayDetailed.wrongAnswersIds.length >= 0)) {
-        const canvas = this.todayPerformanceChartRef.nativeElement;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.textAlign = 'center';
-            ctx.font = '14px Arial';
-            ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
-            ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
-        }
-        return;
+      const canvas = this.todayPerformanceChartRef.nativeElement;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
+        ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
+      }
+      return;
     }
 
     const ctxToday = this.todayPerformanceChartRef.nativeElement.getContext('2d');
@@ -400,9 +407,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const labels = [todayOverallPerf?.date || todayDetailed?.date || 'Oggi'];
     const dataForChart = {
-        accuracy: todayOverallPerf ? [todayOverallPerf.averageAccuracy * 100] : [0],
-        quizzesTaken: todayOverallPerf ? [todayOverallPerf.quizzesTaken] : [0],
-        wrongAnswers: todayDetailed ? [todayDetailed.wrongAnswersIds.length] : [0]
+      accuracy: todayOverallPerf ? [todayOverallPerf.averageAccuracy * 100] : [0],
+      quizzesTaken: todayOverallPerf ? [todayOverallPerf.quizzesTaken] : [0],
+      wrongAnswers: todayDetailed ? [todayDetailed.wrongAnswersIds.length] : [0]
     };
 
     const chartTodayConfig: ChartConfiguration = {
@@ -479,10 +486,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const ctx = this.topicPerformanceChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const labels = this.topicPerformance.map(tp => tp.topic.length > 25 ? tp.topic.substring(0,22) + '...' : tp.topic); // Truncate long labels
+    const labels = this.topicPerformance.map(tp => tp.topic.length > 25 ? tp.topic.substring(0, 22) + '...' : tp.topic); // Truncate long labels
     const data = this.topicPerformance.map(tp => tp.accuracy * 100);
-    const backgroundColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length,1))}, 70%, 60%, 0.6)`);
-    const borderColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length,1))}, 70%, 50%, 1)`);
+    const backgroundColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length, 1))}, 70%, 60%, 0.6)`);
+    const borderColors = labels.map((_, i) => `hsla(${i * (360 / Math.max(labels.length, 1))}, 70%, 50%, 1)`);
 
     this.topicChart = new Chart(ctx, {
       type: 'bar',
@@ -510,10 +517,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       try {
         await this.dbService.resetDatabase();
         await this.loadAndProcessStatistics(); // Reload to show empty state and re-initialize
-        alert('Statistiche resettate con successo.');
+        this.alertService.showAlert("Info",'Statistiche resettate con successo.');
       } catch (error) {
         console.error('Error resetting statistics:', error);
-        alert("Errore durante il reset delle statistiche.");
+        this.alertService.showAlert("Attenzione","Errore durante il reset delle statistiche.");
       }
     }
   }
@@ -535,17 +542,17 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       // If no wrong/unanswered, offer to practice all questions from the topic
       const allTopicQuestions = this.allQuestionsFromDb.filter(q => (q.topic || 'Uncategorized') === topic);
       if (allTopicQuestions.length > 0) {
-          if(confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}". Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
-              allTopicQuestions.forEach(q => practiceQuestionIds.add(q.id));
-          } else {
-              return;
-          }
+        if (confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}". Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
+          allTopicQuestions.forEach(q => practiceQuestionIds.add(q.id));
+        } else {
+          return;
+        }
       } else {
-        alert(`Nessuna domanda disponibile per l'argomento: ${topic}.`);
+        this.alertService.showAlert("Attenzione",`Nessuna domanda disponibile per l'argomento: ${topic}.`);
         return;
       }
     }
-    
+
     const finalQuestionIds = Array.from(practiceQuestionIds);
     this.router.navigate(['/quiz/take'], {
       queryParams: {
@@ -564,40 +571,40 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         queryParams: { quizTitle: 'Rivedi Errori di Oggi', question_ids: questionIds.join(','), numQuestions: questionIds.length }
       });
     } else {
-      alert("Nessun errore registrato oggi o nessun dato disponibile!");
+      this.alertService.showAlert("Info","Nessun errore registrato oggi o nessun dato disponibile!");
     }
   }
 
   async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
     const selectedData = this.tipologiaDomande[index];
     if (!selectedData || !selectedData.questionIds || selectedData.questionIds.length === 0) {
-      alert(`Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
+      this.alertService.showAlert("Info",`Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
       return;
     }
     this.quizSetupModalTitle = selectedData.topic;
     this.topics = [];
 
     try {
-        const questionsForModal = await this.dbService.getQuestionByIds(selectedData.questionIds);
-        const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
-        questionsForModal.forEach(q => {
-            const topic = q.topic || 'Uncategorized';
-            if (!topicsMap.has(topic)) {
-                topicsMap.set(topic, { count: 0, questionIds: [] });
-            }
-            const topicData = topicsMap.get(topic)!;
-            topicData.count++;
-            topicData.questionIds.push(q.id);
-        });
-        this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
-            topic: topicName,
-            count: data.count,
-            questionIds: data.questionIds
-        }));
-        this.openQuizSetupModal();
+      const questionsForModal = await this.dbService.getQuestionByIds(selectedData.questionIds);
+      const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
+      questionsForModal.forEach(q => {
+        const topic = q.topic || 'Uncategorized';
+        if (!topicsMap.has(topic)) {
+          topicsMap.set(topic, { count: 0, questionIds: [] });
+        }
+        const topicData = topicsMap.get(topic)!;
+        topicData.count++;
+        topicData.questionIds.push(q.id);
+      });
+      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+        topic: topicName,
+        count: data.count,
+        questionIds: data.questionIds
+      }));
+      this.openQuizSetupModal();
     } catch (error) {
-        console.error("Error fetching questions for modal setup:", error);
-        alert("Errore nel preparare il quiz di pratica.");
+      console.error("Error fetching questions for modal setup:", error);
+      this.alertService.showAlert("Attenzione","Errore nel preparare il quiz di pratica.");
     }
   }
 
@@ -609,7 +616,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async exportStatisticsToPDF(): Promise<void> {
     if (this.quizAttempts.length === 0 && this.allQuestionsFromDb.length === 0) { // Check if any data exists
-      alert("Non ci sono statistiche da esportare.");
+      this.alertService.showAlert("Info","Non ci sono statistiche da esportare.");
       return;
     }
 
@@ -628,14 +635,14 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         yPos = margin;
       }
     };
-    
+
     const addPageNumbers = () => {
-        const pageCount = (doc.internal as any).getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFontSize(8);
-          doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, { align: 'right' });
-        }
+      const pageCount = (doc.internal as any).getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, { align: 'right' });
+      }
     };
 
 
@@ -644,93 +651,93 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     yPos += lineHeight * 3;
 
     if (this.quizAttempts.length > 0) {
-        doc.setFontSize(14); doc.text('Performance Generale', margin, yPos); yPos += lineHeight * 1.5;
-        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-        [
-          `Quiz Svolti: ${this.totalQuizzesTaken}`,
-          `Domande Affrontate: ${this.totalQuestionsAttempted}`,
-          `Risposte Corrette: ${this.totalCorrectAnswers}`,
-          `Precisione Generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
-          `Punteggio Medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
-        ].forEach(stat => { checkYPos(lineHeight); doc.text(stat, margin + 2, yPos); yPos += lineHeight; });
-        yPos += sectionSpacing;
+      doc.setFontSize(14); doc.text('Performance Generale', margin, yPos); yPos += lineHeight * 1.5;
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      [
+        `Quiz Svolti: ${this.totalQuizzesTaken}`,
+        `Domande Affrontate: ${this.totalQuestionsAttempted}`,
+        `Risposte Corrette: ${this.totalCorrectAnswers}`,
+        `Precisione Generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
+        `Punteggio Medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
+      ].forEach(stat => { checkYPos(lineHeight); doc.text(stat, margin + 2, yPos); yPos += lineHeight; });
+      yPos += sectionSpacing;
     }
 
 
     if (this.topicCoverage.length > 0) {
-        checkYPos(lineHeight * 3);
-        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text('Copertura Argomenti', margin, yPos); yPos += lineHeight * 1.5;
-        (doc as any).autoTable({
-            startY: yPos,
-            head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
-            body: this.topicCoverage.map(tc => [
-                tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
-                new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
-            ]),
-            theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
-            headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
-            columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } }, // Topic name left aligned
-            margin: { left: margin, right: margin },
-            didDrawPage: (data: any) => { yPos = data.cursor.y; if(yPos > pageHeight - margin - 10) yPos = margin}
-        });
-        yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
+      checkYPos(lineHeight * 3);
+      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text('Copertura Argomenti', margin, yPos); yPos += lineHeight * 1.5;
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
+        body: this.topicCoverage.map(tc => [
+          tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
+          new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
+        ]),
+        theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+        headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
+        columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } }, // Topic name left aligned
+        margin: { left: margin, right: margin },
+        didDrawPage: (data: any) => { yPos = data.cursor.y; if (yPos > pageHeight - margin - 10) yPos = margin }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
     }
 
 
     if (this.topicChart && this.topicPerformance.length > 0) {
-        checkYPos(80); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text('Precisione per Argomento', margin, yPos); yPos += lineHeight * 1.5;
-        try {
-            const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
-            const imgProps = this.topicChart.canvas;
-            const aspectRatio = imgProps.width / imgProps.height;
-            const imgWidth = Math.min(contentWidth, 160); // Slightly smaller
-            const imgHeight = imgWidth / aspectRatio;
-            checkYPos(imgHeight + lineHeight);
-            doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
-            yPos += imgHeight + lineHeight;
-        } catch (e) { console.error("Error PDF Topic Chart:", e); yPos += lineHeight; }
-        yPos += sectionSpacing / 2;
+      checkYPos(80); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text('Precisione per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+      try {
+        const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
+        const imgProps = this.topicChart.canvas;
+        const aspectRatio = imgProps.width / imgProps.height;
+        const imgWidth = Math.min(contentWidth, 160); // Slightly smaller
+        const imgHeight = imgWidth / aspectRatio;
+        checkYPos(imgHeight + lineHeight);
+        doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+        yPos += imgHeight + lineHeight;
+      } catch (e) { console.error("Error PDF Topic Chart:", e); yPos += lineHeight; }
+      yPos += sectionSpacing / 2;
     }
 
     if (this.dailyChart && this.dailyPerformance.length > 0) {
-        checkYPos(100); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text('Andamento Giornaliero', margin, yPos); yPos += lineHeight * 1.5;
-        try {
-            const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
-            const imgProps = this.dailyChart.canvas;
-            const aspectRatio = imgProps.width / imgProps.height;
-            const imgWidth = Math.min(contentWidth, 170);
-            const imgHeight = imgWidth / aspectRatio;
-            checkYPos(imgHeight + lineHeight);
-            doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
-            yPos += imgHeight + lineHeight;
-        } catch (e) { console.error("Error PDF Daily Chart:", e); yPos += lineHeight; }
-        yPos += sectionSpacing / 2;
+      checkYPos(100); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text('Andamento Giornaliero', margin, yPos); yPos += lineHeight * 1.5;
+      try {
+        const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
+        const imgProps = this.dailyChart.canvas;
+        const aspectRatio = imgProps.width / imgProps.height;
+        const imgWidth = Math.min(contentWidth, 170);
+        const imgHeight = imgWidth / aspectRatio;
+        checkYPos(imgHeight + lineHeight);
+        doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+        yPos += imgHeight + lineHeight;
+      } catch (e) { console.error("Error PDF Daily Chart:", e); yPos += lineHeight; }
+      yPos += sectionSpacing / 2;
     }
-    
+
     if (this.wrongAnswerBreakdown.length > 0) {
-        checkYPos(lineHeight * 3);
-        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text('Focus Errori per Argomento', margin, yPos); yPos += lineHeight * 1.5;
-        (doc as any).autoTable({
-            startY: yPos,
-            head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
-            body: this.wrongAnswerBreakdown.map(wa => [
-                wa.topic, wa.wrongAnswers.toString(),
-                new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
-                new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
-            ]),
-            theme: 'grid', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
-            headStyles: { fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // red-like
-            columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } },
-            margin: { left: margin, right: margin },
-            didDrawPage: (data: any) => { yPos = data.cursor.y; if(yPos > pageHeight - margin - 10) yPos = margin}
-        });
-         yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
+      checkYPos(lineHeight * 3);
+      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text('Focus Errori per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+      (doc as any).autoTable({
+        startY: yPos,
+        head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
+        body: this.wrongAnswerBreakdown.map(wa => [
+          wa.topic, wa.wrongAnswers.toString(),
+          new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
+          new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
+        ]),
+        theme: 'grid', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+        headStyles: { fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // red-like
+        columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data: any) => { yPos = data.cursor.y; if (yPos > pageHeight - margin - 10) yPos = margin }
+      });
+      yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
     }
-    
+
     addPageNumbers(); // Add page numbers at the end
     doc.save(`report-statistiche-quiz-${new DatePipe('en-US').transform(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
   }
@@ -738,39 +745,39 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async getGenericData(): Promise<void> {
     const [
-        // allQuestions // Already fetched in this.allQuestionsFromDb
-        uniqueCorrectOnce, 
-        uniqueWrongOnce, 
-        uniqueNeverAnswered, 
-        uniqueAnsweredOnce, 
-        onlyCorrectlyAnswered,
-        domandeDaRafforzare,
-        domandeInCuiVaiMalino,
-        domandeInCuiVaiMoltoMale,
-        domandeDisastro
+      // allQuestions // Already fetched in this.allQuestionsFromDb
+      uniqueCorrectOnce,
+      uniqueWrongOnce,
+      uniqueNeverAnswered,
+      uniqueAnsweredOnce,
+      onlyCorrectlyAnswered,
+      domandeDaRafforzare,
+      domandeInCuiVaiMalino,
+      domandeInCuiVaiMoltoMale,
+      domandeDisastro
     ] = await Promise.all([
-        this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(),
-        this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(),
-        this.dbService.getAllQuestionNeverAnswered(),
-        this.dbService.getAllQuestionAnsweredAtLeastOnce(),
-        this.dbService.getOnlyQuestionCorrectlyAnswered(),
-        this.dbService.getQuestionsByCorrectnessRange(0.75, 0.9999), // up to (but not including) 100%
-        this.dbService.getQuestionsByCorrectnessRange(0.50, 0.7499),
-        this.dbService.getQuestionsByCorrectnessRange(0.25, 0.4999),
-        this.dbService.getQuestionsByCorrectnessRange(0.00, 0.2499)
+      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(),
+      this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(),
+      this.dbService.getAllQuestionNeverAnswered(),
+      this.dbService.getAllQuestionAnsweredAtLeastOnce(),
+      this.dbService.getOnlyQuestionCorrectlyAnswered(),
+      this.dbService.getQuestionsByCorrectnessRange(0.75, 0.9999), // up to (but not including) 100%
+      this.dbService.getQuestionsByCorrectnessRange(0.50, 0.7499),
+      this.dbService.getQuestionsByCorrectnessRange(0.25, 0.4999),
+      this.dbService.getQuestionsByCorrectnessRange(0.00, 0.2499)
     ]);
 
     this.tipologiaDomande = [
-      { topic: 'Domande totali nel DB', total: this.allQuestionsFromDb.length, questionIds: this.allQuestionsFromDb.map(q => q.id), correct:0, accuracy:0},
-      { topic: 'Domande mai affrontate', total: uniqueNeverAnswered.length, questionIds: uniqueNeverAnswered.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande affrontate almeno una volta', total: uniqueAnsweredOnce.length, questionIds: uniqueAnsweredOnce.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande sbagliate almeno una volta', total: uniqueWrongOnce.length, questionIds: uniqueWrongOnce.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande risposte correttamente almeno una volta', total: uniqueCorrectOnce.length, questionIds: uniqueCorrectOnce.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande di cui sai tutto (100% corrette)', total: onlyCorrectlyAnswered.length, questionIds: onlyCorrectlyAnswered.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande da rafforzare (75-99% corrette)', total: domandeDaRafforzare.length, questionIds: domandeDaRafforzare.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande in cui vai malino (50-74% corrette)', total: domandeInCuiVaiMalino.length, questionIds: domandeInCuiVaiMalino.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande in cui vai molto male (25-49% corrette)', total: domandeInCuiVaiMoltoMale.length, questionIds: domandeInCuiVaiMoltoMale.map(q => q.id), correct:0, accuracy:0 },
-      { topic: 'Domande "disastro" (0-24% corrette)', total: domandeDisastro.length, questionIds: domandeDisastro.map(q => q.id), correct:0, accuracy:0 }
+      { topic: 'Domande totali nel DB', total: this.allQuestionsFromDb.length, questionIds: this.allQuestionsFromDb.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande mai affrontate', total: uniqueNeverAnswered.length, questionIds: uniqueNeverAnswered.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande affrontate almeno una volta', total: uniqueAnsweredOnce.length, questionIds: uniqueAnsweredOnce.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande sbagliate almeno una volta', total: uniqueWrongOnce.length, questionIds: uniqueWrongOnce.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande risposte correttamente almeno una volta', total: uniqueCorrectOnce.length, questionIds: uniqueCorrectOnce.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande di cui sai tutto (100% corrette)', total: onlyCorrectlyAnswered.length, questionIds: onlyCorrectlyAnswered.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande da rafforzare (75-99% corrette)', total: domandeDaRafforzare.length, questionIds: domandeDaRafforzare.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande in cui vai malino (50-74% corrette)', total: domandeInCuiVaiMalino.length, questionIds: domandeInCuiVaiMalino.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande in cui vai molto male (25-49% corrette)', total: domandeInCuiVaiMoltoMale.length, questionIds: domandeInCuiVaiMoltoMale.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: 'Domande "disastro" (0-24% corrette)', total: domandeDisastro.length, questionIds: domandeDisastro.map(q => q.id), correct: 0, accuracy: 0 }
     ];
   }
 
@@ -779,16 +786,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   handleQuizSetupSubmitted(quizConfig: Partial<QuizSettings> & { fixedQuestionIds?: string[] }): void { // Added fixedQuestionIds
     this.closeQuizSetupModal();
-    
+
     const queryParams: any = {
-        quizTitle: this.quizSetupModalTitle || 'Quiz di Pratica',
-        numQuestions: quizConfig.numQuestions,
-        topics: quizConfig.selectedTopics?.join(','),
-        topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
-        // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
-        fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
-        enableTimer: quizConfig.enableTimer || false, // Default to false for practice
-        timerDuration: quizConfig.timerDurationSeconds || 0
+      quizTitle: this.quizSetupModalTitle || 'Quiz di Pratica',
+      numQuestions: quizConfig.numQuestions,
+      topics: quizConfig.selectedTopics?.join(','),
+      topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
+      // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
+      fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
+      enableTimer: quizConfig.enableTimer || false, // Default to false for practice
+      timerDuration: quizConfig.timerDurationSeconds || 0
     };
 
     // Clean up undefined queryParams

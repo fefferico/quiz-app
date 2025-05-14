@@ -19,8 +19,10 @@
 
     <div *ngIf="!isLoading && allQuestionsWithStats.length === 0 && questionGroups.length === 0"
         class="text-center py-10 bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow">
-        <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessuna statistica sulle domande trovata</h2>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Completa alcuni quiz per accumulare dati sulle tue performance.</p>
+        <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessuna statistica sulle domande trovata
+        </h2>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Completa alcuni quiz per accumulare dati sulle tue performance.
+        </p>
         <div class="mt-6 flex flex-col sm:flex-row sm:justify-center gap-3">
             <a routerLink="/quiz/setup"
                 class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-2 px-4 rounded-md shadow-sm">
@@ -45,8 +47,10 @@
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ group.description }}</p>
 
             <div *ngIf="group.questions.length > 0" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                <div *ngFor="let q of group.questions" class="p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm">
-                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate" title="{{q.text}}">{{ q.text }}</p>
+                <div *ngFor="let q of group.questions"
+                    class="p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-sm">
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate" title="{{q.text}}">{{
+                        q.text }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                         Argomento: {{ q.topic }} | Errate: {{ q.failureRate | percent:'1.0-0' }}
                         ({{q.timesIncorrect}}/{{q.totalAttempts}})
@@ -66,9 +70,10 @@
         </div>
     </div>
     <div class="mt-8 text-center" *ngIf="!isLoading">
-        <a routerLink="/home"
-        class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
-        Torna alla pagina principale
-        </a>
+        <button
+            class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
+            [routerLink]="'/home'" routerLinkActive="active">
+            <fa-icon class="ml-2 fa-lg" [icon]="homeIcon"></fa-icon>
+            Vai alla Dashboard</button>
     </div>
 </div>

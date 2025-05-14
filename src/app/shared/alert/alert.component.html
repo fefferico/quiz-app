@@ -1,0 +1,25 @@
+<!-- src/app/shared/alert/alert.component.html -->
+<div *ngIf="options" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+     (click)="onBackdropClick()">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md dark:text-gray-200 {{ options.customCssClass }}"
+       (click)="$event.stopPropagation()"> <!-- Prevent backdrop click from propagating -->
+
+    <header *ngIf="options.header" class="mb-4">
+      <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ options.header }}</h3>
+    </header>
+
+    <main class="mb-6">
+      <p class="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ options.message }}</p>
+    </main>
+
+    <footer *ngIf="options.buttons && options.buttons.length > 0" class="flex justify-end gap-3">
+      <button *ngFor="let button of options.buttons"
+              [ngClass]="getButtonClass(button)"
+              (click)="onButtonClick(button)">
+        {{ button.text }}
+      </button>
+    </footer>
+
+  </div>
+</div>

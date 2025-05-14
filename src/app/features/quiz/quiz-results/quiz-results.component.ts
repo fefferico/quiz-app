@@ -9,7 +9,7 @@ import jsPDF from 'jspdf'; // <-- IMPORT jsPDF
 import { DatabaseService } from '../../../core/services/database.service';
 import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { Question } from '../../../models/question.model';
 
 interface GroupedQuestion {
@@ -32,6 +32,9 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
   segnala: IconDefinition = faExclamation; // This was already here, seems unused in the template you showed previously
   repeatIcon: IconDefinition = faRepeat; // This was already here, seems unused in the template you showed previously
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+
+
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
   groupedQuestions: GroupedQuestion[] = [];

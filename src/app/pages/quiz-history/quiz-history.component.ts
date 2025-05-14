@@ -9,17 +9,26 @@ import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt } from '../../models/quiz.model';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { AlertService } from '../../services/alert.service';
+import { AlertButton } from '../../models/alert.model';
+
 @Component({
   selector: 'app-quiz-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, DatePipe], // <-- ADD FormsModule
+  imports: [CommonModule, RouterLink, FormsModule, DatePipe, FontAwesomeModule], // <-- ADD FormsModule
   templateUrl: './quiz-history.component.html',
   styleUrls: ['./quiz-history.component.scss']
 })
 export class QuizHistoryComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private dbService = inject(DatabaseService);
+  private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef); // For triggering change detection if needed
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
 
   private attemptsSub!: Subscription;
   allQuizAttempts: QuizAttempt[] = []; // Store all attempts fetched from DB
@@ -157,23 +166,41 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
         this.applyFilters(); // Re-apply filters to update displayed list
       } catch (error) {
         console.error('Error deleting quiz attempt:', error);
-        alert('Failed to delete quiz attempt.');
+        this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la rimozione del tentativo del quiz. Riprova più tardi.");
       }
     }
   }
 
   async clearAllHistory(): Promise<void> {
-    if (confirm('Sei SICURO di voler cancellare TUTTO lo storico dei quiz? QUESTA AZIONE È IRREVERSIBILE.')) {
+    const customBtns: AlertButton[] = [{
+      text: 'Annulla',
+      role: 'cancel',
+      cssClass: 'bg-gray-500 hover:bg-gray-600' // Example custom class
+    } as AlertButton,
+    {
+      text: 'CANCELLA',
+      role: 'confirm',
+      data: 'ok_confirmed'
+    } as AlertButton];
+    this.alertService.showConfirmationDialog("Attenzione", "Sei SICURO di voler cancellare TUTTO lo storico dei quiz? QUESTA AZIONE È IRREVERSIBILE.", customBtns).then(result => {
+      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+        return;
+      }
       try {
-        await this.dbService.clearAllQuizAttempts(); // You'll need to implement this in DatabaseService
-        this.allQuizAttempts = [];
-        this.quizAttempts = [];
-        alert('Storico quiz cancellato.');
+        this.dbService.clearAllQuizAttempts().catch(err => {
+          console.error('Error clearing quiz history:', err);
+          this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la cancellazione dello Storico. Riprovare più tardi");
+        }).then(res => {
+          this.allQuizAttempts = [];
+          this.quizAttempts = [];
+          this.alertService.showAlert("Info", "Storico quiz cancellato.");
+        }); // You'll need to implement this in DatabaseService
+
       } catch (error) {
         console.error('Error clearing quiz history:', error);
-        alert('Errore durante la cancellazione dello storico.');
+        this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la cancellazione dello Storico. Riprovare più tardi");
       }
-    }
+    });
   }
 
   viewResults(attemptId: string): void {

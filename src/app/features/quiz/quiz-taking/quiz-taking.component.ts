@@ -13,6 +13,9 @@ import { Question } from '../../../models/question.model';
 import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { AlertService } from '../../../services/alert.service';
+import { AlertButton, AlertOptions } from '../../../models/alert.model';
+import { AlertComponent } from '../../../shared/alert/alert.component';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -39,6 +42,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dbService = inject(DatabaseService);
+  private alertService = inject(AlertService);
   private renderer = inject(Renderer2);
   private el = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
@@ -114,7 +118,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (this.quizIsOverByTime || this.quizCompleted || !this.currentQuestion || this.isLoading) {
-      return; 
+      return;
     }
 
     // Prevent default for keys we handle to avoid page scroll, etc.
@@ -262,8 +266,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         return;
       }
 
-      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDuration > 0 && !this.timerSubscription && (!isResumeLoad || (isResumeLoad && this._timeLeftSeconds > 0) ) ) {
-         // Only start new timer if not resuming OR if resuming and there's time left
+      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDuration > 0 && !this.timerSubscription && (!isResumeLoad || (isResumeLoad && this._timeLeftSeconds > 0))) {
+        // Only start new timer if not resuming OR if resuming and there's time left
         this.startTimer();
       }
       if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
@@ -281,81 +285,92 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   async pauseQuiz(): Promise<void> {
     if (!this.currentQuizAttemptId || this.quizCompleted) return;
-    this.clearAutoAdvanceTimeout();
 
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-      this.timerSubscription = undefined;
-    }
-    if (this.cronometerSubscription) {
-      this.cronometerSubscription.unsubscribe();
-      this.cronometerSubscription = undefined;
-    }
-
-    const isCurrentQuestionAnswered = this.userAnswers.some(ans => ans.questionId === this.currentQuestion?.id);
-    if (!isCurrentQuestionAnswered && this.currentQuestion) {
-      this.unansweredQuestions.push({
-        questionId: this.questions[this.currentQuestionIndex].id, // Use ID from master list
-        userAnswerIndex: -1,
-        isCorrect: false,
-        questionSnapshot: {
-          text: this.questions[this.currentQuestionIndex].text,
-          topic: this.questions[this.currentQuestionIndex].topic,
-          options: [...this.questions[this.currentQuestionIndex].options], // Original options
-          correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
-          explanation: this.questions[this.currentQuestionIndex].explanation,
-          isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
-        }
-      });
-    }
-
-    this.quizStatus = 'paused';
-    const attemptToSave: QuizAttempt = {
-      id: this.currentQuizAttemptId,
-      timestampStart: this.quizStartTime,
-      settings: this.quizSettings,
-      totalQuestionsInQuiz: this.questions.length,
-      answeredQuestions: [...this.userAnswers],
-      unansweredQuestions: [...this.unansweredQuestions.filter(uq => uq !== undefined) as AnsweredQuestion[]],
-      allQuestions: this.questions.map(q => {
-        const userAnswer = this.userAnswers.find(ua => ua.questionId === q.id);
-        const originalQuestionData = this.questions.find(origQ => origQ.id === q.id) || q; // Fallback to q if not found
-        return {
-          questionId: q.id,
-          userAnswerIndex: userAnswer ? userAnswer.userAnswerIndex : -1,
-          isCorrect: userAnswer ? userAnswer.isCorrect : false,
-          questionSnapshot: {
-            text: originalQuestionData.text,
-            topic: originalQuestionData.topic,
-            options: [...originalQuestionData.options],
-            correctAnswerIndex: originalQuestionData.correctAnswerIndex,
-            explanation: originalQuestionData.explanation,
-            isFavorite: originalQuestionData.isFavorite || 0
-          }
-        };
-      }),
-      status: 'paused',
-      currentQuestionIndex: this.currentQuestionIndex,
-      timeLeftOnPauseSeconds: this.isTimerEnabled ? this._timeLeftSeconds : undefined,
-      timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
-    };
-
-    try {
-      await this.dbService.saveQuizAttempt(attemptToSave);
-      alert('Quiz sospeso. Puoi riprenderlo più tardi dalla schermata principale.');
+    this.alertService.showConfirmationDialog("Attenzione", 'Stati per sospendere il quiz, così facendo potrai riprenderlo più tardi dalla schermata principale. Confermi?').then(result => {
+      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+        return;
+      }
+      this.quizStatus = 'paused';
       this.quizCompleted = true;
-      this.router.navigate(['/home']);
-    } catch (error) {
-      console.error("Errore nel mettere in pausa il quiz:", error);
-      alert('Non sono riuscito a mettere in pausa il quiz. Riprova più tardi.');
-    }
+
+      this.clearAutoAdvanceTimeout();
+
+      if (this.timerSubscription) {
+        this.timerSubscription.unsubscribe();
+        this.timerSubscription = undefined;
+      }
+      if (this.cronometerSubscription) {
+        this.cronometerSubscription.unsubscribe();
+        this.cronometerSubscription = undefined;
+      }
+
+      const isCurrentQuestionAnswered = this.userAnswers.some(ans => ans.questionId === this.currentQuestion?.id);
+      if (!isCurrentQuestionAnswered && this.currentQuestion) {
+        this.unansweredQuestions.push({
+          questionId: this.questions[this.currentQuestionIndex].id, // Use ID from master list
+          userAnswerIndex: -1,
+          isCorrect: false,
+          questionSnapshot: {
+            text: this.questions[this.currentQuestionIndex].text,
+            topic: this.questions[this.currentQuestionIndex].topic,
+            options: [...this.questions[this.currentQuestionIndex].options], // Original options
+            correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
+            explanation: this.questions[this.currentQuestionIndex].explanation,
+            isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
+          }
+        });
+      }
+
+      if (!this.currentQuizAttemptId) {
+        this.alertService.showAlert("Attenzione", "Non è stato possibile recuperare l'identificativo del quiz corrente");
+        return;
+      }
+      const attemptToSave: QuizAttempt = {
+        id: this.currentQuizAttemptId,
+        timestampStart: this.quizStartTime,
+        settings: this.quizSettings,
+        totalQuestionsInQuiz: this.questions.length,
+        answeredQuestions: [...this.userAnswers],
+        unansweredQuestions: [...this.unansweredQuestions.filter(uq => uq !== undefined) as AnsweredQuestion[]],
+        allQuestions: this.questions.map(q => {
+          const userAnswer = this.userAnswers.find(ua => ua.questionId === q.id);
+          const originalQuestionData = this.questions.find(origQ => origQ.id === q.id) || q; // Fallback to q if not found
+          return {
+            questionId: q.id,
+            userAnswerIndex: userAnswer ? userAnswer.userAnswerIndex : -1,
+            isCorrect: userAnswer ? userAnswer.isCorrect : false,
+            questionSnapshot: {
+              text: originalQuestionData.text,
+              topic: originalQuestionData.topic,
+              options: [...originalQuestionData.options],
+              correctAnswerIndex: originalQuestionData.correctAnswerIndex,
+              explanation: originalQuestionData.explanation,
+              isFavorite: originalQuestionData.isFavorite || 0
+            }
+          };
+        }),
+        status: 'paused',
+        currentQuestionIndex: this.currentQuestionIndex,
+        timeLeftOnPauseSeconds: this.isTimerEnabled ? this._timeLeftSeconds : undefined,
+        timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
+      };
+
+      try {
+        this.dbService.saveQuizAttempt(attemptToSave).then(res => {
+          this.router.navigate(['/home']);
+        });
+      } catch (error) {
+        console.error("Errore nel mettere in pausa il quiz:", error);
+        this.alertService.showAlert("Attenzione", "Non sono riuscito a mettere in pausa il quiz. Riprova più tardi.");
+      }
+    });
   }
 
   startTimer(): void {
     if (!this.isTimerEnabled || this._timeLeftSeconds <= 0) {
-      if (this._timeLeftSeconds <=0 && this.isTimerEnabled) { // If timer was enabled but ran out before quiz start
-          this.quizIsOverByTime = true;
-          this.endQuiz(true);
+      if (this._timeLeftSeconds <= 0 && this.isTimerEnabled) { // If timer was enabled but ran out before quiz start
+        this.quizIsOverByTime = true;
+        this.endQuiz(true);
       }
       return;
     }
@@ -415,11 +430,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     if (this.questions.length > 0 && this.currentQuestionIndex < this.questions.length) {
       // Work with a shallow copy for display to allow shuffling options without altering the master `this.questions`
       const masterQuestion = this.questions[this.currentQuestionIndex];
-      this.currentQuestion = { 
+      this.currentQuestion = {
         ...masterQuestion,
         options: [...masterQuestion.options] // Ensure options array is also a copy
       };
-      
+
       const originalCorrectAnswerText = this.currentQuestion.options[this.currentQuestion.correctAnswerIndex];
       this.currentQuestion.options = this.shuffleArray(this.currentQuestion.options);
       this.currentQuestion.correctAnswerIndex = this.currentQuestion.options.findIndex(
@@ -492,7 +507,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       questionId: actualQuestionId,
       userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
       isCorrect: isCorrect,
-      questionSnapshot: { 
+      questionSnapshot: {
         text: originalQuestionData.text,
         topic: originalQuestionData.topic,
         options: [...originalQuestionData.options], // Snapshot original options
@@ -514,7 +529,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     if (this.isAnswerSubmitted && this.currentQuestionIndex < this.questions.length - 1 && !this.quizIsOverByTime) {
       this.autoAdvanceTimeout = setTimeout(() => {
         this.ngZone.run(() => { // Ensure Angular knows about changes from setTimeout
-            this.nextQuestion();
+          this.nextQuestion();
         });
       }, 2000);
     }
@@ -543,13 +558,13 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     if (this.currentQuestionIndex < this.questions.length - 1) {
       if (!this.isAnswerSubmitted && this.currentQuestion &&
-          !this.unansweredQuestions.some(qst => qst?.questionId === this.questions[this.currentQuestionIndex].id) &&
-          !this.userAnswers.some(ans => ans.questionId === this.questions[this.currentQuestionIndex].id)) {
+        !this.unansweredQuestions.some(qst => qst?.questionId === this.questions[this.currentQuestionIndex].id) &&
+        !this.userAnswers.some(ans => ans.questionId === this.questions[this.currentQuestionIndex].id)) {
         this.unansweredQuestions.push({
           questionId: this.questions[this.currentQuestionIndex].id,
           userAnswerIndex: -1,
           isCorrect: false,
-          questionSnapshot: { 
+          questionSnapshot: {
             text: this.questions[this.currentQuestionIndex].text,
             topic: this.questions[this.currentQuestionIndex].topic,
             options: [...this.questions[this.currentQuestionIndex].options],
@@ -577,12 +592,12 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   goToFirstUnansweredQuestion(): void {
     this.clearAutoAdvanceTimeout();
     const firstUnansweredQIndex = this.questions.findIndex(
-        q => !this.userAnswers.some(ans => ans.questionId === q.id)
+      q => !this.userAnswers.some(ans => ans.questionId === q.id)
     );
     if (firstUnansweredQIndex > -1) {
-        this.currentQuestionIndex = firstUnansweredQIndex;
+      this.currentQuestionIndex = firstUnansweredQIndex;
     } else {
-        this.currentQuestionIndex = Math.max(0, this.questions.length - 1);
+      this.currentQuestionIndex = Math.max(0, this.questions.length - 1);
     }
     this.setCurrentQuestion();
   }
@@ -613,7 +628,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionId: q.id,
           userAnswerIndex: -1,
           isCorrect: false,
-          questionSnapshot: { 
+          questionSnapshot: {
             text: originalQuestionData.text,
             topic: originalQuestionData.topic,
             options: [...originalQuestionData.options],
@@ -700,11 +715,23 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     if (this.quizCompleted || this.quizStatus === 'paused' || this.questions.length === 0 || this.isLoading || this.errorLoading) {
       return true;
     }
-    return confirm(
-      "Si è sicuri di voler abbandonare il quiz? " +
-      "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa. " +
-      'Clicca "OK" per abbandonare senza salvare, o "Annulla" per rimanere e usare il pulsante "Metti in pausa il quiz". '
-    );
+
+    const customBtns: AlertButton[] = [{
+      text: 'Annulla',
+      role: 'cancel',
+      cssClass: 'bg-gray-500 hover:bg-gray-600' // Example custom class
+    } as AlertButton,
+    {
+      text: 'ESCI',
+      role: 'confirm',
+      data: 'ok_confirmed'
+    } as AlertButton];
+    return this.alertService.showConfirmationDialog("Si è sicuri di voler abbandonare il quiz?", "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa.", customBtns).then(result => {
+      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+        return false;
+      }
+      return true;
+    });
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -721,7 +748,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       const pausedAttempt = await this.dbService.getQuizAttemptById(attemptId);
       if (pausedAttempt && pausedAttempt.status === 'paused') {
         this.quizSettings = pausedAttempt.settings;
-        
+
         this.questions = pausedAttempt.allQuestions.map(snapshotItem => ({
           id: snapshotItem.questionId,
           text: snapshotItem.questionSnapshot.text,
@@ -747,24 +774,24 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this.timerDuration = this._timeLeftSeconds; // Important for startTimer logic
           // Timer will be started in loadQuestions if conditions met
         } else if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds <= 0) {
-            this.quizIsOverByTime = true; // Quiz had already timed out
+          this.quizIsOverByTime = true; // Quiz had already timed out
         }
 
         if (this.isCronometerEnabled && pausedAttempt.timeElapsedOnPauseSeconds !== undefined) {
           this._timeElapsedSeconds = pausedAttempt.timeElapsedOnPauseSeconds;
           // Cronometer will be started in loadQuestions
         }
-        
+
         pausedAttempt.status = 'in-progress'; // Mark as in-progress now
         await this.dbService.saveQuizAttempt(pausedAttempt);
 
         // Call loadQuestions with isResumeLoad = true, which will then call setCurrentQuestion
         // and start timers if applicable and not already over.
-        await this.loadQuestions(true); 
+        await this.loadQuestions(true);
 
-        if(this.quizIsOverByTime) { // If quiz was already timed out when paused
-            this.endQuiz(true);
-            return;
+        if (this.quizIsOverByTime) { // If quiz was already timed out when paused
+          this.endQuiz(true);
+          return;
         }
 
 
@@ -849,4 +876,22 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     this.updateRootFontSize();
     this.updateFontFamilyClass();
   }
+
+  async showConfirmation() {
+    const result = await this.alertService.showConfirm(
+      'Conferma Azione',
+      'Sei sicuro di voler procedere?',
+      'Sì, Procedi',
+      'Annulla'
+    );
+
+    if (result && result.role === 'confirm') {
+      console.log('Azione confermata!', result.data); // result.data would be true here
+      // Add further logic for confirmation
+    } else {
+      console.log('Azione annullata o alert dismesso.');
+    }
+  }
+
+
 }

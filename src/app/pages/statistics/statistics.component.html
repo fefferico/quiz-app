@@ -21,7 +21,8 @@
     <p class="text-xl text-indigo-600 dark:text-indigo-400">Caricamento statistiche in corso...</p>
   </div>
 
-  <div *ngIf="errorLoading && !isLoading" class="text-center py-10 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 p-6 rounded-lg shadow">
+  <div *ngIf="errorLoading && !isLoading"
+    class="text-center py-10 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 p-6 rounded-lg shadow">
     <p class="text-2xl text-red-700 dark:text-red-400 font-semibold">Errore!</p>
     <p class="text-gray-700 dark:text-gray-300 mt-2">{{ errorLoading }}</p>
   </div>
@@ -32,35 +33,46 @@
       <section class="mb-10">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultati complessivi</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
+          <div
+            class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
             <h3 class="text-base sm:text-lg font-medium text-gray-500 dark:text-gray-400">Quiz svolti</h3>
-            <p class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ totalQuizzesTaken }}</p>
+            <p class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ totalQuizzesTaken }}
+            </p>
           </div>
-          <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
+          <div
+            class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
             <h3 class="text-base sm:text-lg font-medium text-gray-500 dark:text-gray-400">Domande provate</h3>
-            <p class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{ totalQuestionsAttempted }}</p>
+            <p class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{{
+              totalQuestionsAttempted }}</p>
           </div>
-          <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
+          <div
+            class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
             <h3 class="text-base sm:text-lg font-medium text-gray-500 dark:text-gray-400">Precisione complessiva</h3>
-            <p class="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400 mt-1">{{ overallAccuracy | percent:'1.0-1' }}</p>
+            <p class="text-3xl sm:text-4xl font-bold text-green-600 dark:text-green-400 mt-1">{{ overallAccuracy |
+              percent:'1.0-1' }}</p>
           </div>
-          <div class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
+          <div
+            class="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-center">
             <h3 class="text-base sm:text-lg font-medium text-gray-500 dark:text-gray-400">Punteggio medio</h3>
-            <p class="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ averageScorePercentage | percent:'1.0-1' }}</p>
+            <p class="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ averageScorePercentage |
+              percent:'1.0-1' }}</p>
           </div>
         </div>
       </section>
 
       <!-- Daily Performance Trend Chart -->
       <section class="mb-10">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Andamento giornaliero (Ultimi {{dailyPerformance.length}}
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Andamento giornaliero
+          (Ultimi {{dailyPerformance.length}}
           giorni)</h2>
-        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+        <div
+          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
           <div *ngIf="dailyPerformance.length > 0; else noDailyData" class="h-64 sm:h-96 md:h-[450px]">
             <canvas #dailyPerformanceChart></canvas>
           </div>
           <ng-template #noDailyData>
-            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni, fai ancora qualche quiz per
+            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni, fai ancora
+              qualche quiz per
               vedere i grafici!</p>
           </ng-template>
         </div>
@@ -69,13 +81,17 @@
       <!-- Today Performance -->
       <section class="mb-10">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultato odierno</h2>
-        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <div *ngIf="dailyPerformanceDetailed && dailyPerformanceDetailed.length > 0 && (dailyPerformanceDetailed[0]?.wrongAnswersIds?.length ?? 0) >= 0; else noTodayData" class="h-64 sm:h-96 md:h-[450px]">
-             <!-- Check dailyPerformanceDetailed[0] exists before accessing properties -->
+        <div
+          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <div
+            *ngIf="dailyPerformanceDetailed && dailyPerformanceDetailed.length > 0 && (dailyPerformanceDetailed[0]?.wrongAnswersIds?.length ?? 0) >= 0; else noTodayData"
+            class="h-64 sm:h-96 md:h-[450px]">
+            <!-- Check dailyPerformanceDetailed[0] exists before accessing properties -->
             <canvas #todayPerfomanceChart></canvas>
           </div>
           <ng-template #noTodayData>
-            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per la giornata odierna, fai
+            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per la
+              giornata odierna, fai
               ancora qualche quiz per vedere i grafici!</p>
           </ng-template>
         </div>
@@ -90,42 +106,53 @@
 
       <!-- Topic Performance Chart -->
       <section class="mb-10">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultati per argomento (Precisione)</h2>
-        <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <div *ngIf="topicPerformance.length > 0; else noTopicData" class="h-80 sm:h-96 md:min-h-[400px]"> <!-- Adjusted height -->
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultati per argomento
+          (Precisione)</h2>
+        <div
+          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          <div *ngIf="topicPerformance.length > 0; else noTopicData" class="h-80 sm:h-96 md:min-h-[400px]">
+            <!-- Adjusted height -->
             <canvas #topicPerformanceChart></canvas>
           </div>
           <ng-template #noTopicData>
-            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per mostrare grafici per
+            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per
+              mostrare grafici per
               argomento.</p>
           </ng-template>
         </div>
       </section>
-      
+
       <!-- NEW: Topic Coverage Table -->
       <section class="mb-10" *ngIf="topicCoverage.length > 0">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Copertura Argomenti</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Argomento</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Domande nel DB</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Domande Incontrate</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Copertura (%)</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr *ngFor="let tc of topicCoverage">
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tc.topic }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ tc.totalQuestionsInTopicBank }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ tc.questionsEncountered }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-right"
-                    [ngClass]="{
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tc.topic
+                  }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{
+                  tc.totalQuestionsInTopicBank }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{
+                  tc.questionsEncountered }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-right" [ngClass]="{
                         'text-green-600 dark:text-green-400': tc.coveragePercentage >= 0.75,
                         'text-yellow-600 dark:text-yellow-400': tc.coveragePercentage >= 0.5 && tc.coveragePercentage < 0.75,
                         'text-orange-600 dark:text-orange-400': tc.coveragePercentage >= 0.25 && tc.coveragePercentage < 0.5,
@@ -142,28 +169,38 @@
 
       <!-- Wrong Answer Breakdown by Topic -->
       <section class="mb-10" *ngIf="wrongAnswerBreakdown.length > 0">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-400 mb-4">Focus Area: risposte sbagliate per argomento</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-400 mb-4">Focus Area: risposte
+          sbagliate per argomento</h2>
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                   Argomento</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                   Sbagliate</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                   % su Tot. Sbagliate</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                   Tasso Errore Argomento</th>
-                <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-600 uppercase tracking-wider">
                   Azioni</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr *ngFor="let wa of wrongAnswerBreakdown">
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ wa.topic }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ wa.wrongAnswers }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ wa.percentageOfGlobalWrong |
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ wa.topic
+                  }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{
+                  wa.wrongAnswers }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{
+                  wa.percentageOfGlobalWrong |
                   percent:'1.0-1' }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-right"
                   [ngClass]="{'text-red-600 dark:text-red-400': wa.topicSpecificFailureRate >= 0.7, 'text-yellow-600 dark:text-yellow-400': wa.topicSpecificFailureRate < 0.7 && wa.topicSpecificFailureRate >= 0.4, 'text-green-600 dark:text-green-400': wa.topicSpecificFailureRate < 0.4}">
@@ -183,26 +220,35 @@
 
       <!-- Topic Performance Table (Precisione) -->
       <section class="mb-10" *ngIf="topicPerformance.length > 0">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Dettaglio Precisione per Argomento</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Dettaglio Precisione per
+          Argomento</h2>
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Argomento</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Corrette</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Risposte Date</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Precisione</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr *ngFor="let tp of topicPerformance">
-                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tp.topic }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ tp.correct }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ tp.total }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tp.topic
+                  }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{
+                  tp.correct }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">{{ tp.total
+                  }}</td>
                 <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-right"
                   [ngClass]="{'text-green-600 dark:text-green-400': tp.accuracy >= 0.7, 'text-yellow-600 dark:text-yellow-400': tp.accuracy < 0.7 && tp.accuracy >= 0.4, 'text-red-600 dark:text-red-400': tp.accuracy < 0.4}">
                   {{ tp.accuracy | percent:'1.0-1' }}
@@ -215,14 +261,18 @@
 
       <!-- Dettaglio Domande Affrontate -->
       <section class="mb-10">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Analisi Domande per Area</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Analisi Domande per Area
+        </h2>
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Area di Studio</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th scope="col"
+                  class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   N. Domande</th>
                 <th scope="col"
                   class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -231,14 +281,13 @@
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr *ngFor="let tp of tipologiaDomande; index as i">
-                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tp.topic }}</td>
+                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ tp.topic
+                  }}</td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold dark:text-gray-200 text-right">
                   {{ tp.total }}
                 </td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-center">
-                  <button (click)="startPracticeQuizForGeneralData(i)"
-                          [disabled]="tp.total === 0"
-                          class="bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold py-1 px-2.5 my-1 rounded-md shadow-sm text-xs
+                  <button (click)="startPracticeQuizForGeneralData(i)" [disabled]="tp.total === 0" class="bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold py-1 px-2.5 my-1 rounded-md shadow-sm text-xs
                                  disabled:opacity-50 disabled:cursor-not-allowed">
                     Imposta Quiz
                   </button>
@@ -250,11 +299,8 @@
 
         <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="quizSetupModalTitle || 'Configurazione quiz'"
           (close)="closeQuizSetupModal()">
-          <app-setup-modal *ngIf="isQuizSetupModalOpen"
-            [topics]="topics" 
-            [modalTitle]="quizSetupModalTitle"
-            (submitFeedback)="handleQuizSetupSubmitted($event)"
-            (cancelFeedback)="closeQuizSetupModal()">
+          <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [modalTitle]="quizSetupModalTitle"
+            (submitFeedback)="handleQuizSetupSubmitted($event)" (cancelFeedback)="closeQuizSetupModal()">
           </app-setup-modal>
         </app-simple-modal>
       </section>
@@ -270,8 +316,8 @@
 
     <ng-template #noStats>
       <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor" stroke-width="1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -289,13 +335,14 @@
 
   <div class="mt-8 text-center" *ngIf="!isLoading && !errorLoading">
     <div class="flex flex-col sm:flex-row sm:justify-center items-center gap-4">
-        <a routerLink="/study-focus"
+      <a routerLink="/study-focus"
         class="w-full sm:w-auto inline-block bg-orange-500 hover:bg-orange-700 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150">
         Aree da approfondire</a>
-        <a routerLink="/home"
-        class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150">
-        Torna alla pagina principale
-        </a>
+      <button
+        class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
+        [routerLink]="'/home'" routerLinkActive="active">
+        <fa-icon class="ml-2 fa-lg" [icon]="homeIcon"></fa-icon>
+        Vai alla Dashboard</button>
     </div>
   </div>
 </div>

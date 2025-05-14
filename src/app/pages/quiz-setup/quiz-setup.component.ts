@@ -9,18 +9,27 @@ import { QuizSettings, TopicCount } from '../../models/quiz.model'; // Import To
 import { Question } from '../../models/question.model'; // Ensure Question is imported
 import jsPDF from 'jspdf';
 
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faExclamation, faRepeat, faHome, faPersonMilitaryRifle } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { AlertService } from '../../services/alert.service';
+
 @Component({
   selector: 'app-quiz-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FontAwesomeModule],
   templateUrl: './quiz-setup.component.html',
   styleUrls: ['./quiz-setup.component.scss']
 })
 export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCheck
   private dbService = inject(DatabaseService);
   private router = inject(Router);
+  private alertService = inject(AlertService);
 
   isExportingPDF = false; // To give user feedback during PDF generation
+
+  // -- icons
+  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  military: IconDefinition = faPersonMilitaryRifle; // This was already here, seems unused in the template you showed previously
 
   // Timer Settings
   enableTimerInput = false; // <-- NEW
@@ -194,7 +203,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
 
     // Original quiz mode validation
     if (this.useDetailedTopicCounts) {
-      return this.topicCounts.length > 0 && this.topicCounts.every(tc => tc.count > 0) && this.selectedNumQuestions > 0;
+      return this.topicCounts.length > 0 && this.topicCounts.some(tc => tc.count > 0) && this.selectedNumQuestions > 0;
     } else {
       return this.selectedNumQuestions > 0;
     }
@@ -226,7 +235,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
         timerDurationSeconds = (this.timerHoursInput * 3600) + (this.timerMinutesInput * 60) + this.timerSecondsInput;
         if (timerDurationSeconds <= 0) {
           // Alert user or handle invalid timer duration
-          alert("Timer duration must be greater than 0 seconds.");
+          this.alertService.showAlert("Attenzione", "Il Timer deve avere una durata di almeno 1 secondo");
           return;
         }
       }
@@ -271,7 +280,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
 
   async exportQuestionsToPDF(includeAnswers: boolean = false): Promise<void> {
     if (!this.canStartQuiz()) { // Use similar validation as starting a quiz/study session
-      alert('Please configure your question set first (e.g., select topics or number of questions).');
+      this.alertService.showAlert("Attenzione", 'Si prega di configurare prima il set di domande (ad esempio, selezionare gli argomenti o il numero di domande).');
       return;
     }
     this.isExportingPDF = true;
@@ -309,7 +318,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
       );
 
       if (questionsToFetch.length === 0) {
-        alert('No questions found matching your criteria to export.');
+        this.alertService.showAlert("Attenzione", 'Nessuna domanda trovata che corrisponda ai criteri per l\'esportazione.');
         this.isExportingPDF = false;
         return;
       }
@@ -395,7 +404,7 @@ export class QuizSetupComponent implements OnInit, DoCheck { // Implemented DoCh
 
     } catch (error) {
       console.error("Error exporting questions to PDF:", error);
-      alert("Failed to export questions to PDF. Please try again.");
+      this.alertService.showAlert("Attenzione", "Impossibile esportare le domande in PDF. Per favore riprova.");
     } finally {
       this.isExportingPDF = false;
     }

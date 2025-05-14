@@ -12,47 +12,46 @@
       <!-- Date Start -->
       <div>
         <label for="filterDateStart" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Da Data:</label>
-        <input type="date" id="filterDateStart" name="filterDateStart"
-               [(ngModel)]="filterDateStart" (ngModelChange)="applyFilters()"
-               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <input type="date" id="filterDateStart" name="filterDateStart" [(ngModel)]="filterDateStart"
+          (ngModelChange)="applyFilters()"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
       <!-- Date End -->
       <div>
         <label for="filterDateEnd" class="block text-sm font-medium text-gray-700 dark:text-gray-300">A Data:</label>
-        <input type="date" id="filterDateEnd" name="filterDateEnd"
-               [(ngModel)]="filterDateEnd" (ngModelChange)="applyFilters()"
-               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <input type="date" id="filterDateEnd" name="filterDateEnd" [(ngModel)]="filterDateEnd"
+          (ngModelChange)="applyFilters()"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
       <!-- Topic -->
       <div>
         <label for="filterTopic" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Argomento:</label>
-        <select id="filterTopic" name="filterTopic"
-                [(ngModel)]="filterSelectedTopic" (ngModelChange)="applyFilters()"
-                class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <select id="filterTopic" name="filterTopic" [(ngModel)]="filterSelectedTopic" (ngModelChange)="applyFilters()"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
           <option value="">Tutti gli Argomenti</option>
           <option *ngFor="let topic of availableTopics" [value]="topic">{{ topic }}</option>
         </select>
       </div>
       <!-- Min Percentage -->
       <div>
-        <label for="filterMinPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio Min (%):</label>
+        <label for="filterMinPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio
+          Min (%):</label>
         <input type="number" id="filterMinPercentage" name="filterMinPercentage" min="0" max="100"
-               [(ngModel)]="filterMinPercentage" (ngModelChange)="applyFilters()"
-               placeholder="0-100"
-               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          [(ngModel)]="filterMinPercentage" (ngModelChange)="applyFilters()" placeholder="0-100"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
       <!-- Max Percentage -->
       <div>
-        <label for="filterMaxPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio Max (%):</label>
+        <label for="filterMaxPercentage" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Punteggio
+          Max (%):</label>
         <input type="number" id="filterMaxPercentage" name="filterMaxPercentage" min="0" max="100"
-               [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()"
-               placeholder="0-100"
-               class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()" placeholder="0-100"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
       <!-- Reset Button -->
       <div class="sm:col-span-1 lg:col-span-1 flex items-end">
         <button (click)="resetFilters()"
-                class="w-full mt-1 sm:mt-0 bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-md shadow-sm text-sm">
+          class="w-full mt-1 sm:mt-0 bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-md shadow-sm text-sm">
           Resetta Filtri
         </button>
       </div>
@@ -65,7 +64,8 @@
     <p class="text-xl text-indigo-600 dark:text-indigo-400">Caricamento dello storico...</p>
   </div>
 
-  <div *ngIf="errorLoading && !isLoading" class="text-center py-10 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 p-6 rounded-lg shadow">
+  <div *ngIf="errorLoading && !isLoading"
+    class="text-center py-10 bg-red-50 dark:bg-red-900 dark:bg-opacity-30 p-6 rounded-lg shadow">
     <p class="text-2xl text-red-700 dark:text-red-400 font-semibold">Errore!</p>
     <p class="text-gray-700 dark:text-gray-300 mt-2">{{ errorLoading }}</p>
   </div>
@@ -78,14 +78,15 @@
           Cancella tutto lo storico quiz
         </button>
       </div>
-      
+
       <div *ngIf="quizAttempts.length > 0; else noResultsAfterFilter" class="space-y-4">
         <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)"
           class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg dark:hover:shadow-xl-dark transition-shadow duration-150 cursor-pointer border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center">
 
           <div class="flex-grow mb-3 sm:mb-0 w-full sm:w-auto">
             <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
-              {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{ (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
+              {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{
+              (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
             </p>
             <p class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1">
               Punteggio: {{ attempt.score }} / {{ attempt.totalQuestionsInQuiz }}
@@ -113,19 +114,22 @@
       </div>
       <ng-template #noResultsAfterFilter>
         <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessun risultato per i filtri applicati</h2>
-            <p class="mt-1 text-gray-500 dark:text-gray-400">Prova a modificare o resettare i filtri.</p>
+          <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessun risultato per i filtri
+            applicati</h2>
+          <p class="mt-1 text-gray-500 dark:text-gray-400">Prova a modificare o resettare i filtri.</p>
         </div>
       </ng-template>
     </div>
 
     <div *ngIf="allQuizAttempts.length === 0 && !isLoading"> <!-- Show "No History" only if allQuizAttempts is empty -->
       <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor" stroke-width="1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
@@ -142,9 +146,10 @@
   </div>
 
   <div class="mt-8 text-center" *ngIf="!isLoading && !errorLoading">
-    <a routerLink="/home"
-      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
-      Torna alla pagina principale
-    </a>
+    <button
+      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
+      [routerLink]="'/home'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="homeIcon"></fa-icon>
+      Vai alla Dashboard</button>
   </div>
 </div>

@@ -1,0 +1,6 @@
+/* src/app/shared/alert/alert.component.scss */
+:host {
+  display: block; /* Ensures the component itself takes up space if needed, though it's fixed */
+}
+
+/* Tailwind handles most styling, this file might be minimal or empty */

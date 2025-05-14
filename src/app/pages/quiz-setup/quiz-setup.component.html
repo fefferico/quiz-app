@@ -10,7 +10,8 @@
     <div class="mb-6 p-4 bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow">
       <label class="flex items-center justify-between cursor-pointer">
         <span class="text-lg font-medium text-indigo-700 dark:text-indigo-300">
-          Modalità Studio <span class="block sm:inline text-sm font-normal text-gray-600 dark:text-gray-400">(Visualizza tutte le domande
+          Modalità Studio <span class="block sm:inline text-sm font-normal text-gray-600 dark:text-gray-400">(Visualizza
+            tutte le domande
             con le relative
             risposte corrette)</span>
         </span>
@@ -42,7 +43,8 @@
         class="block w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm sm:text-base">
         <option *ngFor="let num of numQuestionsOptions" [value]="num">{{ num }} Domande</option>
       </select>
-      <p *ngIf="useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      <p *ngIf="useDetailedTopicCounts && topicCounts.length > 0 && !isStudyMode"
+        class="text-xs text-gray-500 dark:text-gray-400 mt-1">
         Il Totale è la somma per argomenti.
       </p>
     </div>
@@ -54,14 +56,18 @@
           class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
         <label for="selectAllTopics" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Tutti gli argomenti
-          <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(modalità semplificata)</span>
-          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(studia tutte le domande)</span>
+          <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(modalità
+            semplificata)</span>
+          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(studia tutte le
+            domande)</span>
         </label>
       </div>
     </div>
 
-    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && !isStudyMode" class="mb-8 border-t dark:border-gray-700 pt-6">
-      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di domande per argomento
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && !isStudyMode"
+      class="mb-8 border-t dark:border-gray-700 pt-6">
+      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di
+        domande per argomento
         (Modalità personalizzata):
       </h3>
       <div class="space-y-2 mb-4">
@@ -75,10 +81,13 @@
         </div>
       </div>
       <div *ngIf="topicCounts.length > 0" class="space-y-3 border-t dark:border-gray-700 pt-4 mt-4">
-        <h4 class="text-md font-medium text-gray-600 dark:text-gray-400 mb-2">Imposta il numero di domande per argomento:</h4>
-        <div *ngFor="let topicCountItem of topicCounts; let i = index" class="p-3 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
+        <h4 class="text-md font-medium text-gray-600 dark:text-gray-400 mb-2">Imposta il numero di domande per
+          argomento:</h4>
+        <div *ngFor="let topicCountItem of topicCounts; let i = index"
+          class="p-3 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700">
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <label for="count-{{topicCountItem.topic}}" class="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 sm:mb-0">
+            <label for="count-{{topicCountItem.topic}}"
+              class="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-1 sm:mb-0">
               {{ topicCountItem.topic }}:
             </label>
             <div class="w-full sm:w-28">
@@ -91,11 +100,13 @@
         </div>
       </div>
       <p *ngIf="topicCounts.length > 0" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-        Totale domande impostate: <strong class="text-indigo-700 dark:text-indigo-400">{{ selectedNumQuestions }}</strong>
+        Totale domande impostate: <strong class="text-indigo-700 dark:text-indigo-400">{{ selectedNumQuestions
+          }}</strong>
       </p>
     </div>
 
-    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && isStudyMode" class="mb-8 border-t dark:border-gray-700 pt-6">
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && isStudyMode"
+      class="mb-8 border-t dark:border-gray-700 pt-6">
       <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
         <div *ngFor="let topic of availableTopics" class="flex items-center">
@@ -175,6 +186,7 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
             </path>
           </svg>
+          <fa-icon *ngIf="!isExportingPDF && !isStudyMode" class="mx-2 fa-lg" [icon]="military"></fa-icon>
           <span *ngIf="isExportingPDF">Esecuzione in corso...</span>
           <span *ngIf="!isExportingPDF">{{ isStudyMode ? 'Inizia a studiare' : 'Inizia il Quiz' }}</span>
         </button>
@@ -182,14 +194,14 @@
         <div class="relative inline-block text-left order-2 sm:order-none w-full sm:w-auto" *ngIf="!isStudyMode">
           <div class="group">
             <button type="button" [disabled]="!canStartQuiz() || isExportingPDF"
-              class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 dark:disabled:opacity-40">
-              Esporta domande
-              <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                aria-hidden="true">
+              class="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-blue-300 dark:border-blue-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-blue-700 hover:bg-blue-50 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-50 dark:disabled:opacity-40">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
                   clip-rule="evenodd" />
               </svg>
+              Esporta domande
+
             </button>
             <div
               class="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-in-out
@@ -210,9 +222,10 @@
   </form>
 
   <div class="mt-8 text-center">
-    <a routerLink="/home"
-      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg  shadow-md hover:shadow-lg transition duration-150">
-      Torna alla pagina principale
-    </a>
+    <button
+      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
+      [routerLink]="'/home'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="homeIcon"></fa-icon>
+      Vai alla Dashboard</button>
   </div>
 </div>

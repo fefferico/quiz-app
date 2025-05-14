@@ -9,6 +9,7 @@ import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBa
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
+import { AlertService } from '../../services/alert.service';
 
 @Component({
   selector: 'app-home',
@@ -20,7 +21,9 @@ import { GenericData } from '../../models/statistics.model';
 })
 export class HomeComponent implements OnInit {
   private dbService = inject(DatabaseService);
-  private router = inject(Router);
+  private router = inject(Router); 
+  private alertService = inject(AlertService);
+
 
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
@@ -96,7 +99,7 @@ export class HomeComponent implements OnInit {
       console.log(questionsForModal)
       this.openQuizSetupModal();
     } else {
-      alert("Nessuna domanda problematica trovata per IERI. Ottimo lavoro!");
+      this.alertService.showAlert("Info", "Nessuna domanda problematica trovata per IERI. Ottimo lavoro!");
     }
   }
 
@@ -128,7 +131,7 @@ export class HomeComponent implements OnInit {
       console.log(questionsForModal)
       this.openQuizSetupModal();
     } else {
-      alert("Nessuna domanda problematica trovata per OGGI. Ottimo lavoro!");
+      this.alertService.showAlert("Info", "Nessuna domanda problematica trovata per OGGI. Ottimo lavoro!");
     }
   }
 

@@ -9,14 +9,16 @@
     <p class="text-xl text-indigo-600 dark:text-indigo-400">Caricamento preferiti in corso...</p>
   </div>
 
-  <div *ngIf="!isLoading && favoriteQuestions.length === 0" class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
-    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
-      stroke="currentColor" stroke-width="1">
+  <div *ngIf="!isLoading && favoriteQuestions.length === 0"
+    class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg shadow">
+    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500" fill="none"
+      viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
       <path stroke-linecap="round" stroke-linejoin="round"
         d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.827 3.522a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.827-3.522a1 1 0 00-1.176 0l-4.827 3.522c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.1c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z" />
     </svg>
     <h2 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nessuna domanda preferita</h2>
-    <p class="mt-1 text-gray-500 dark:text-gray-400">Segna le domande come preferite durante un quiz o una revisione per vederle qui.</p>
+    <p class="mt-1 text-gray-500 dark:text-gray-400">Segna le domande come preferite durante un quiz o una revisione per
+      vederle qui.</p>
   </div>
 
   <div *ngIf="!isLoading && favoriteQuestions.length > 0">
@@ -45,9 +47,10 @@
     </ul>
   </div>
   <div class="mt-8 text-center" *ngIf="!isLoading">
-    <a routerLink="/home"
-      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
-      Torna alla pagina principale
-    </a>
+    <button
+      class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150"
+      [routerLink]="'/home'" routerLinkActive="active">
+      <fa-icon class="ml-2 fa-lg" [icon]="homeIcon"></fa-icon>
+      Vai alla Dashboard</button>
   </div>
 </div>
