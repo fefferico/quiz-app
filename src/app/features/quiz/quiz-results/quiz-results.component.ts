@@ -35,7 +35,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   homeIcon: IconDefinition = faHome;
   faChevronDown: IconDefinition = faChevronDown; // For accordion closed
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
-  faGood: IconDefinition = faFaceSmileBeam;     // For accordion open
+  faGood: IconDefinition = faFaceSmileBeam;
 
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;

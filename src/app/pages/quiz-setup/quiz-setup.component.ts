@@ -10,7 +10,7 @@ import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome, faPersonMilitaryRifle } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevronUp, faGears, faBook } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
 
@@ -27,12 +27,16 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private alertService = inject(AlertService);
   private activatedRoute = inject(ActivatedRoute); // Inject ActivatedRoute
   private routeSub!: Subscription;
-
+  accordionState = new Map<string, boolean>(); // Map: topicName -> isOpen
 
   isExportingPDF = false;
 
   homeIcon: IconDefinition = faHome;
   military: IconDefinition = faPersonMilitaryRifle;
+  faChevronDown: IconDefinition = faChevronDown; // For accordion closed
+  faChevronUp: IconDefinition = faChevronUp;     // For accordion open
+  faGears: IconDefinition = faGears;
+  faBook: IconDefinition = faBook;
 
   enableTimerInput = false;
   enableCronometerInput = false;
@@ -47,7 +51,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   topicCounts: TopicCount[] = [];
 
   numQuestionsOptions = [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100, 200]; // Added smaller numbers
-  selectedNumQuestions: number = 10;
+  selectedNumQuestions: number = 100;
 
   selectAllTopics = true;
   useDetailedTopicCounts = false;
@@ -64,6 +68,9 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private previousUseDetailedTopicCounts = false;
 
   ngOnInit(): void {
+    this.accordionState.clear();
+    this.accordionState.set("main", false); // Open the first group by default
+
     this.loadTopics();
     // Check for fixedQuestionIds from route parameters
     this.routeSub = this.activatedRoute.queryParams.subscribe(params => {
@@ -332,10 +339,10 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       }
 
       Object.keys(queryParams).forEach(key => {
-        if (queryParams[key] === undefined ) { 
-            delete queryParams[key];
+        if (queryParams[key] === undefined) {
+          delete queryParams[key];
         }
-    });
+      });
     }
 
     // Clean up undefined or empty queryParams
@@ -463,6 +470,11 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     } finally {
       this.isExportingPDF = false;
     }
+  }
+
+  toggleAccordion(topic: string): void {
+    const currentState = this.accordionState.get(topic);
+    this.accordionState.set(topic, !currentState);
   }
 
   ngOnDestroy(): void { // Ensure to unsubscribe
