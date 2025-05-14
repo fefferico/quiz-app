@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1747096949042,
+  "timestamp": 1747187642254,
   "index": "fefferico/index.html",
   "assetGroups": [
     {
@@ -18,10 +18,10 @@
         "fefferico/chunk-WQOAYQIY.js",
         "fefferico/favicon.ico",
         "fefferico/index.html",
-        "fefferico/main-2675UXGW.js",
+        "fefferico/main-FOSPB2KV.js",
         "fefferico/manifest.webmanifest",
         "fefferico/polyfills-FFHMD2TL.js",
-        "fefferico/styles-EVVOUCMA.css"
+        "fefferico/styles-BFJABEVP.css"
       ],
       "patterns": []
     },
@@ -65,15 +65,15 @@
     "fefferico/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
     "fefferico/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "fefferico/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "fefferico/index.html": "ac9c5164443a0b641ce6e988c6ee449b216bd961",
-    "fefferico/main-2675UXGW.js": "ebb7297fa7fd031194be15a5657388352ee466fb",
+    "fefferico/index.html": "cbb3cd840bad8efca518267f16cf7243227ba484",
+    "fefferico/main-FOSPB2KV.js": "1e7f220ee1a4c7a3162b58ed8f6cec3bffae159f",
     "fefferico/manifest.webmanifest": "d02a2e99bf6f61248efcd74f2d42b38ddfa00021",
     "fefferico/media/fontawesome-webfont-3KIJVIEY.svg": "98a8aa5cf7d62c2eff5f07ede8d844b874ef06ed",
     "fefferico/media/fontawesome-webfont-5GKVPAEF.woff2": "d6f48cba7d076fb6f2fd6ba993a75b9dc1ecbf0c",
     "fefferico/media/fontawesome-webfont-RJ6LE7IU.ttf": "13b1eab65a983c7a73bc7997c479d66943f7c6cb",
     "fefferico/media/fontawesome-webfont-Z4ARLA73.woff": "28b782240b3e76db824e12c02754a9731a167527",
     "fefferico/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
-    "fefferico/styles-EVVOUCMA.css": "5ad885dcc67a984353831cb437095e712695ae27"
+    "fefferico/styles-BFJABEVP.css": "1ef19b28c7d2c6cb451a2a18a2d214bc71d3307c"
   },
   "navigationUrls": [
     {
