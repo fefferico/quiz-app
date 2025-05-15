@@ -52,7 +52,7 @@
     </button>
     <button (click)="startNeverEncounteredQuiz()"
       [disabled]="neverEncounteredQuestionIds.length === 0 || isLoadingModal"
-      class="flex w-full inline-block bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center disabled:opacity-50 disabled:cursor-not-allowed">
+      class="flex w-full inline-block justify-center bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center disabled:opacity-50 disabled:cursor-not-allowed">
       <fa-icon *ngIf="!isLoadingModal" class="mr-2" [icon]="faQuestion"></fa-icon> <!-- Or another suitable icon -->
       <svg *ngIf="isLoadingModal" class="mr-3 -ml-1 size-5 animate-spin text-white" viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg" fill="none">
