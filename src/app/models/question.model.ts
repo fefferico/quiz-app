@@ -12,6 +12,9 @@ export interface Question {
   timesIncorrect?: number;
   isFavorite?: number; // <-- NEW (initialize to false)
   questionVersion?: number; // NEW: Optional version for the question content
+  lastAnsweredTimestamp?: number;
+  lastAnswerCorrect?: boolean;
+  accuracy?: number;
 }
 
 export enum QuestionDifficulty {

@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { initialQuestions } from '../../../assets/data/quiz_data';
 
 // --- IMPORTANT: Increment this version number whenever you update initialQuestions ---
-const CURRENT_DB_SCHEMA_VERSION = 14; // Example: If previous was 5
+const CURRENT_DB_SCHEMA_VERSION = 15; // Example: If previous was 5
 
 // 1. Define a class that extends Dexie
 export class AppDB extends Dexie {
@@ -26,7 +26,7 @@ export class AppDB extends Dexie {
   constructor(private http: HttpClient) {
     super('QuizAppDB');
     this.version(CURRENT_DB_SCHEMA_VERSION).stores({
-      questions: 'id, topic, difficulty, timesCorrect, timesIncorrect, isFavorite, questionVersion',  // Removed & for boolean indexing
+      questions: 'id, topic, difficulty, timesCorrect, timesIncorrect, isFavorite, questionVersion, lastAnsweredTimestamp, lastAnswerCorrect, accuracy',  // Removed & for boolean indexing
       quizAttempts: 'id, timestampEnd, status, settings.selectedTopics,timestampStart' // Status index added
     }).upgrade(async tx => {
 
@@ -115,7 +115,7 @@ export class AppDB extends Dexie {
           currentQuestion = quest;
           await this.questions.add(quest);
         }
-      }  catch (error) {
+      } catch (error) {
         console.error('Error populating initial questions:', currentQuestion);
       }
       console.log('Database populated with initial questions.');
@@ -446,7 +446,7 @@ export class DatabaseService {
   }
 
   // --- NEW METHOD: Get Yesterday's Wrong/Unanswered Question IDs ---
-  async getYesterdayProblematicQuestionIds(): Promise<string[]> {
+  async getYesterdayProblematicQuestionIdsOld(): Promise<string[]> {
     const yesterdayStart = new Date();
     yesterdayStart.setDate(yesterdayStart.getDate() - 1);
     yesterdayStart.setHours(0, 0, 0, 0);
@@ -488,172 +488,133 @@ export class DatabaseService {
 
     return Array.from(problematicQuestionIds);
   }
-  // --- END NEW METHOD
 
-  // --- NEW METHOD: Get Todays's Wrong/Unanswered Question IDs ---
-  async getTodayProblematicQuestionIds(): Promise<string[]> {
+  async getProblematicQuestionsIdsBtDate(date: string = 'today'): Promise<string[]> {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
     const todayEnd = new Date();
-    todayEnd.setDate(todayEnd.getDate());
     todayEnd.setHours(23, 59, 59, 999);
 
-    const todayAttempts = await this.db.quizAttempts
-      .where('timestampEnd') // Assuming timestampEnd is set when a quiz is completed/paused
-      .between(todayStart, todayEnd, true, true)
-      .toArray();
+    const yesterdayStart = new Date();
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    yesterdayStart.setHours(0, 0, 0, 0);
 
-    const problematicQuestionIds = new Set<string>();
+    const yesterdayEnd = new Date();
+    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+    yesterdayEnd.setHours(23, 59, 59, 999);
 
-    todayAttempts.forEach(attempt => {
-      // 1. Questions answered incorrectly
-      attempt.answeredQuestions.forEach(answeredQ => {
-        if (!answeredQ.isCorrect && !problematicQuestionIds.has(answeredQ.questionId)) {
-          problematicQuestionIds.add(answeredQ.questionId);
-        }
-      });
+    let attempts = [];
 
-      // 2. Questions that were part of the quiz but not in answeredQuestions (i.e., unanswered)
-      //    We rely on `attempt.allQuestions` which should have all questions *in that attempt*.
-      if (attempt.allQuestions && attempt.allQuestions.length > 0) {
-        const answeredIds = new Set(attempt.answeredQuestions.map(aq => aq.questionId));
-        attempt.allQuestions.forEach(qInfoInAttempt => {
-          if (!answeredIds.has(qInfoInAttempt.questionId) && !problematicQuestionIds.has(qInfoInAttempt.questionId)) {
-            problematicQuestionIds.add(qInfoInAttempt.questionId);
+    let unansweredIDs = new Set<string>();
+    let answeredWronglyIDs = new Set<string>();
+
+    if (date === 'today') {
+      attempts = await this.db.quizAttempts
+        .where('timestampEnd').aboveOrEqual(todayStart.getTime())
+        .toArray();
+    } else {
+      attempts = await this.db.quizAttempts
+        .where('timestampEnd')
+        .between(yesterdayStart, yesterdayEnd, true, true)
+        .toArray();
+    }
+
+    const problematicIds = new Set<string>();
+    if (!attempts || attempts.length === 0) {
+      return Array.from(problematicIds);
+    } else {
+      for (const attempt of attempts) {
+        if (attempt.answeredQuestions && attempt.answeredQuestions.length > 0) {
+          for (const aq of attempt.allQuestions) {
+            const qst = await this.getQuestionById(aq.questionId);
+            // recovering the correctness from the question and the attempt itself
+            const isUnanswerInsideAttemp = attempt.allQuestions && attempt.allQuestions.find(attemptQst => attemptQst?.questionId === qst?.id) ? true : false;
+            const isWrongInsideAttempt = !aq.isCorrect;
+            const isQstNeverBeenAnswered = (qst?.lastAnsweredTimestamp ?? 0) === 0;
+
+            let isWrongInsideQst: boolean | undefined = true;
+            if (date === 'today') {
+              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= todayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= todayEnd.getTime() && !qst?.lastAnswerCorrect));
+            } else {
+              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= yesterdayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= yesterdayEnd.getTime() && !qst?.lastAnswerCorrect));
+            }
+            if (((isWrongInsideAttempt || isUnanswerInsideAttemp) && (!isWrongInsideQst && isQstNeverBeenAnswered)) || isWrongInsideQst) {
+              problematicIds.add(aq.questionId);
+              answeredWronglyIDs.add(aq.questionId);
+            }
           }
-        });
+        } else {
+          if (attempt.unansweredQuestions && attempt.unansweredQuestions.length > 0) {
+            for (const qst of attempt.unansweredQuestions) {
+              if (qst && qst.questionId) {
+                problematicIds.add(qst.questionId);
+                unansweredIDs.add(qst.questionId);
+              }
+            }
+          }
+        }
       }
-      // Fallback or alternative: if `unansweredQuestions` array is reliably populated on quiz end/pause
-      // attempt.unansweredQuestions?.forEach(unansweredQ => {
-      //   if (unansweredQ) problematicQuestionIds.add(unansweredQ.questionId);
-      // });
-    });
+      // we have to be 100% certain that previously skipped questions (unansweredIDs) does not contain IDs of questions which has been marked as correct lately
+      // Remove from unansweredIDs any question that has since been answered correctly
+      for (const id of unansweredIDs) {
+        const qst = await this.getQuestionById(id);
+        let isCorrectInsideQst: boolean | undefined = false;
+        if (date === 'today') {
+          isCorrectInsideQst = qst && (qst?.lastAnsweredTimestamp ?? 0) > 0 && (((qst?.lastAnsweredTimestamp ?? 0) >= todayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= todayEnd.getTime() && qst?.lastAnswerCorrect));
+        } else {
+          isCorrectInsideQst = qst && (qst?.lastAnsweredTimestamp ?? 0) > 0 && (((qst?.lastAnsweredTimestamp ?? 0) >= yesterdayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= yesterdayEnd.getTime() && qst?.lastAnswerCorrect));
+        }
+        if (isCorrectInsideQst) {
+          unansweredIDs.delete(id);
+        }
+      }
 
-    return Array.from(problematicQuestionIds);
+      const resultingSet = new Set([...answeredWronglyIDs, ...unansweredIDs]);
+      return Array.from(resultingSet);
+    }
   }
-  // --- END NEW METHOD
 
-  // --- NEW METHOD: Get Todays's Wrong/Unanswered Question ---
   async getTodayProblematicQuestion(): Promise<Question[]> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
 
-    const todayEnd = new Date();
-    todayEnd.setDate(todayEnd.getDate());
-    todayEnd.setHours(23, 59, 59, 999);
-
-    const todayAttempts = await this.db.quizAttempts
-      .where('timestampEnd') // Assuming timestampEnd is set when a quiz is completed/paused
-      .between(todayStart, todayEnd, true, true)
-      .toArray();
-
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate('today');
     const problematicQuestion = new Set<Question>();
 
-    todayAttempts.forEach(attempt => {
-      // 1. Questions answered incorrectly
-      attempt.answeredQuestions.forEach(answeredQ => {
-        if (!answeredQ.isCorrect) {
-          problematicQuestion.add({
-            ...answeredQ.questionSnapshot,
-            id: answeredQ.questionId // Ensure the id is included
-          });
-        }
-      });
+    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
+      return [];
+    }
 
-      // 2. Questions that were part of the quiz but not in answeredQuestions (i.e., unanswered)
-      //    We rely on `attempt.allQuestions` which should have all questions *in that attempt*.
-      if (attempt.allQuestions && attempt.allQuestions.length > 0) {
-        const answeredIds = new Set(attempt.answeredQuestions.map(aq => aq.questionId));
-        attempt.allQuestions.forEach(qInfoInAttempt => {
-          if (!answeredIds.has(qInfoInAttempt.questionId)) {
-            problematicQuestion.add({
-              ...qInfoInAttempt.questionSnapshot,
-              id: qInfoInAttempt.questionId // Ensure the id is included
-            });
-          }
-        });
-      }
-      // Fallback or alternative: if `unansweredQuestions` array is reliably populated on quiz end/pause
-      // attempt.unansweredQuestions?.forEach(unansweredQ => {
-      //   if (unansweredQ) problematicQuestionIds.add(unansweredQ.questionId);
-      // });
-    });
-
-    // Ensure unique records by using a Map with question IDs as keys
-    const uniqueProblematicQuestions = new Map<string, Question>();
-    problematicQuestion.forEach(question => {
-      if (!uniqueProblematicQuestions.has(question.id)) {
-        uniqueProblematicQuestions.set(question.id, question);
-      }
-    });
-    problematicQuestion.clear();
-    uniqueProblematicQuestions.forEach((question) => problematicQuestion.add(question));
-
-    return Promise.resolve(Array.from(uniqueProblematicQuestions.values()));
+    const questions = await this.getQuestionByIds(problematicQuestionIds);
+    for (const qst of questions) {
+      problematicQuestion.add(qst);
+    }
+    return Array.from(problematicQuestion.values());
   }
-  // --- END NEW METHOD
 
-  // --- NEW METHOD: Get Yesterdays's Wrong/Unanswered Question ---
   async getYesterdayProblematicQuestion(): Promise<Question[]> {
-    const yesterdayStart = new Date();
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    yesterdayStart.setHours(0, 0, 0, 0);
 
-    const yesterdayEnd = new Date();
-    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
-    yesterdayEnd.setHours(23, 59, 59, 999);
-
-    const yesterdayAttempts = await this.db.quizAttempts
-      .where('timestampEnd') // Assuming timestampEnd is set when a quiz is completed/paused
-      .between(yesterdayStart, yesterdayEnd, true, true)
-      .toArray();
-
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate('yesterday');
     const problematicQuestion = new Set<Question>();
 
-    yesterdayAttempts.forEach(attempt => {
-      // 1. Questions answered incorrectly
-      attempt.answeredQuestions.forEach(answeredQ => {
-        if (!answeredQ.isCorrect) {
-          problematicQuestion.add({
-            ...answeredQ.questionSnapshot,
-            id: answeredQ.questionId // Ensure the id is included
-          });
-        }
-      });
+    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
+      return [];
+    }
 
-      // 2. Questions that were part of the quiz but not in answeredQuestions (i.e., unanswered)
-      //    We rely on `attempt.allQuestions` which should have all questions *in that attempt*.
-      if (attempt.allQuestions && attempt.allQuestions.length > 0) {
-        const answeredIds = new Set(attempt.answeredQuestions.map(aq => aq.questionId));
-        attempt.allQuestions.forEach(qInfoInAttempt => {
-          if (!answeredIds.has(qInfoInAttempt.questionId)) {
-            problematicQuestion.add({
-              ...qInfoInAttempt.questionSnapshot,
-              id: qInfoInAttempt.questionId // Ensure the id is included
-            });
-          }
-        });
+    const questions = await this.getQuestionByIds(problematicQuestionIds);
+    for (const qst of questions) {
+      if (!qst.lastAnswerCorrect) {
+        problematicQuestion.add(qst);
       }
-      // Fallback or alternative: if `unansweredQuestions` array is reliably populated on quiz end/pause
-      // attempt.unansweredQuestions?.forEach(unansweredQ => {
-      //   if (unansweredQ) problematicQuestionIds.add(unansweredQ.questionId);
-      // });
-    });
-
-    // Ensure unique records by using a Map with question IDs as keys
-    const uniqueProblematicQuestions = new Map<string, Question>();
-    problematicQuestion.forEach(question => {
-      if (!uniqueProblematicQuestions.has(question.id)) {
-        uniqueProblematicQuestions.set(question.id, question);
-      }
-    });
-    problematicQuestion.clear();
-    uniqueProblematicQuestions.forEach((question) => problematicQuestion.add(question));
-
-    return Promise.resolve(Array.from(uniqueProblematicQuestions.values()));
+    }
+    return Array.from(problematicQuestion.values());
   }
-  // --- END NEW METHOD
+
+  async getNeverAnsweredQuestionIds(): Promise<string[]> {
+    const questions = await this.db.questions
+      .filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0)
+      .toArray();
+    return questions.map(q => q.id);
+  }
 
 
   getQuizAttemptById(id: string): Promise<QuizAttempt | undefined> {
@@ -697,26 +658,6 @@ export class DatabaseService {
       return pausedAttempts.sort((a, b) => new Date(b.timestampStart).getTime() - new Date(a.timestampStart).getTime())[0];
     }
     return undefined;
-  }
-
-  // Method to update question stats
-  async updateQuestionStats(questionId: string, wasCorrect: boolean): Promise<void> {
-    try {
-      const question = await this.db.questions.get(questionId);
-      if (question) {
-        question.timesCorrect = question.timesCorrect || 0;
-        question.timesIncorrect = question.timesIncorrect || 0;
-        if (wasCorrect) {
-          question.timesCorrect++;
-        } else {
-          question.timesIncorrect++;
-        }
-        await this.db.questions.put(question); // Update the question
-        // console.log(`Stats updated for question ${questionId}: C=${question.timesCorrect}, I=${question.timesIncorrect}`);
-      }
-    } catch (error) {
-      console.error(`Error updating stats for question ${questionId}:`, error);
-    }
   }
 
   async toggleFavoriteStatus(questionId: string): Promise<number | undefined> {
@@ -766,6 +707,53 @@ export class DatabaseService {
     });
     return Array.from(questionMap.values());
     // return Promise.resolve([]); // Replace with actual implementation
+  }
+
+  //   // Method to update question stats
+  // async updateQuestionStats(questionId: string, wasCorrect: boolean): Promise<void> {
+  //   try {
+  //     const question = await this.db.questions.get(questionId);
+  //     if (question) {
+  //       question.timesCorrect = question.timesCorrect || 0;
+  //       question.timesIncorrect = question.timesIncorrect || 0;
+  //       if (wasCorrect) {
+  //         question.timesCorrect++;
+  //       } else {
+  //         question.timesIncorrect++;
+  //       }
+  //       await this.db.questions.put(question); // Update the question
+  //       // console.log(`Stats updated for question ${questionId}: C=${question.timesCorrect}, I=${question.timesIncorrect}`);
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error updating stats for question ${questionId}:`, error);
+  //   }
+  // }
+
+  // IMPORTANT: Ensure your updateQuestionStats correctly updates whatever fields
+  // getNeverAnsweredQuestionIds relies on (e.g., a 'answeredCount' or 'lastAnsweredDate' on the question or its stats)
+  async updateQuestionStats(questionId: string, isCorrect: boolean): Promise<void> {
+    try {
+      const stats = await this.db.questions.get(questionId);
+      const now = new Date().getTime();
+      if (stats) {
+        await this.db.questions.update(questionId, {
+          timesCorrect: (stats.timesCorrect ?? 0) + (isCorrect ? 1 : 0),
+          timesIncorrect: (stats.timesIncorrect ?? 0) + (isCorrect ? 0 : 1),
+          lastAnsweredTimestamp: now,
+          lastAnswerCorrect: isCorrect
+        });
+      }
+      // Update accuracy
+      const updatedStats = await this.db.questions.get(questionId);
+      const timesAnswered = (updatedStats?.timesCorrect ?? 0) + (updatedStats?.timesIncorrect ?? 0);
+      if (updatedStats && timesAnswered > 0) {
+        const accuracy = ((updatedStats.timesCorrect ?? 0) / timesAnswered) * 100;
+        await this.db.questions.update(questionId, { accuracy: parseFloat(accuracy.toFixed(2)) });
+      }
+
+    } catch (error) {
+      console.error(`Error updating stats for question ${questionId}:`, error);
+    }
   }
 
 

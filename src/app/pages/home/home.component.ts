@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
+import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
@@ -31,6 +31,9 @@ export class HomeComponent implements OnInit {
   quizSetupModalTitle = 'QUIZ';
   topics: GenericData[] = [];
 
+  isLoadingModal = false;
+  loadingButtonIndex = -1;
+
   // icons
   faAdd: IconDefinition = faAdd;
   faHistory: IconDefinition = faHistory;
@@ -40,16 +43,19 @@ export class HomeComponent implements OnInit {
   faRepeat: IconDefinition = faRepeat;
   faExclamation: IconDefinition = faExclamation;
   faPlay: IconDefinition = faPlay;
+  faQuestion: IconDefinition = faQuestion;
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
 
   pausedQuiz: QuizAttempt | undefined;
   yesterdayProblematicQuestionIds: string[] = []; // Store IDs
   todayProblematicQuestionIds: string[] = []; // Store IDs
+  neverEncounteredQuestionIds: string[] = []; // NEW: Store IDs for never encountered
 
   ngOnInit(): void {
     this.checkForPausedQuiz();
     this.loadYesterdayProblematicQuestions(); // Load on init
     this.loadTodayProblematicQuestions(); // Load on init
+    this.loadNeverEncounteredQuestionIds(); // NEW: Load on init
   }
 
   async checkForPausedQuiz(): Promise<void> {
@@ -63,13 +69,17 @@ export class HomeComponent implements OnInit {
   }
 
   async loadYesterdayProblematicQuestions(): Promise<void> { // Renamed for clarity
-    this.yesterdayProblematicQuestionIds = await this.dbService.getYesterdayProblematicQuestionIds();
+    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsBtDate('yesterday');
     // console.log('Yesterday problematic IDs:', this.yesterdayProblematicQuestionIds);
   }
 
   async loadTodayProblematicQuestions(): Promise<void> { // Renamed for clarity
-    this.todayProblematicQuestionIds = await this.dbService.getTodayProblematicQuestionIds();
+    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsBtDate('today');
     // console.log('Yesterday problematic IDs:', this.todayProblematicQuestionIds);
+  }
+
+  async loadNeverEncounteredQuestionIds(): Promise<void> {
+    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(); // Assuming this method exists
   }
 
 
@@ -136,6 +146,37 @@ export class HomeComponent implements OnInit {
     } else {
       this.alertService.showAlert("Info", "Nessuna domanda problematica trovata per OGGI. Ottimo lavoro!");
     }
+  }
+
+  async startNeverEncounteredQuiz(): Promise<void> {
+    if (this.neverEncounteredQuestionIds.length > 0) {
+      this.isLoadingModal = true;
+      // Fetch the full question objects for the modal (to display topics and counts)
+      const questionsForModal = await this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds); // Assuming this method exists
+
+      const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
+      questionsForModal.forEach(q => {
+        const topic = q.topic || 'Senza Argomento';
+        if (!topicsMap.has(topic)) {
+          topicsMap.set(topic, { count: 0, questionIds: [] });
+        }
+        const topicData = topicsMap.get(topic)!;
+        topicData.count++;
+        topicData.questionIds.push(q.id); // Store ID
+      });
+
+      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+        topic: topicName,
+        count: data.count,
+        questionIds: data.questionIds // Pass the specific IDs for this topic
+      }));
+
+      this.quizSetupModalTitle = 'Domande Mai Viste';
+      this.openQuizSetupModal();
+    } else {
+      this.alertService.showAlert("Info", "Congratulazioni! Hai risposto a tutte le domande disponibili almeno una volta.");
+    }
+    this.isLoadingModal = false;
   }
 
   openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }
