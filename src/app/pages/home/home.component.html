@@ -50,20 +50,6 @@
       <fa-icon class="mr-2" [icon]="faStar"></fa-icon>
       Quiz Preferiti
     </button>
-    <!-- Button for Yesterday's Problematic Questions -->
-    <button (click)="startYesterdayProblematicQuiz()"
-      class="w-full inline-block bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
-      <fa-icon class="mr-2" [icon]="faUndoAlt"></fa-icon>
-      Rivedi Errori di IERI ({{ yesterdayProblematicQuestionIds.length }})
-    </button>
-    <button (click)="startTodayProblematicQuiz()"
-      class="w-full inline-block bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
-      <fa-icon class="mr-2" [icon]="faUndoAlt"></fa-icon>
-      Rivedi Errori di OGGI ({{ todayProblematicQuestionIds.length }})
-    </button>
-    <!-- End Button -->
-
-    <!-- NEW: Button for Never Encountered Questions -->
     <button (click)="startNeverEncounteredQuiz()"
       [disabled]="neverEncounteredQuestionIds.length === 0 || isLoadingModal"
       class="flex w-full inline-block bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center disabled:opacity-50 disabled:cursor-not-allowed">
@@ -77,9 +63,45 @@
       </svg>
       {{ isLoadingModal ? 'Recupero domande in corso...' : 'Domande Mai Viste ( ' + neverEncounteredQuestionIds.length +
       ')' }}
-
     </button>
-    <!-- END NEW Button -->
+
+   <!-- Section for X-Day Problematic Quiz -->
+    <div class="col-span-1 sm:col-span-2 md:col-span-1 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg">
+      <label for="xDayDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Seleziona Data per Errori:</label>
+      <input type="date" id="xDayDate" #xDayDateInput 
+             [ngModel]="selectedXDayDate | date:'yyyy-MM-dd'" 
+             (ngModelChange)="selectedXDayDate = $event"
+             class="p-2 border border-gray-300 dark:border-gray-500 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:ring-indigo-500 focus:border-indigo-500 w-full max-w-xs">
+      <button (click)="startXDayProblematicQuiz(xDayDateInput.value)"
+        [disabled]="!selectedXDayDate || (isLoadingModal && loadingButtonIndex === 3)"
+        class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+        <fa-icon *ngIf="!(isLoadingModal && loadingButtonIndex === 3)" class="mr-2" [icon]="faUndoAlt"></fa-icon>
+        <svg *ngIf="isLoadingModal && loadingButtonIndex === 3" class="mr-3 -ml-1 size-5 animate-spin text-white" viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+          </path>
+        </svg>
+        <span *ngIf="!(isLoadingModal && loadingButtonIndex === 3)">Rivedi Errori del Giorno Selezionato</span>
+        <span *ngIf="isLoadingModal && loadingButtonIndex === 3">Recupero...</span>
+      </button>
+    </div>
+    <!-- End Section for X-Day Problematic Quiz -->
+
+
+    <button (click)="startYesterdayProblematicQuiz()"
+      class="w-full inline-block bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
+      <fa-icon class="mr-2" [icon]="faUndoAlt"></fa-icon>
+      Rivedi Errori di IERI ({{ yesterdayProblematicQuestionIds.length }})
+    </button>
+    <button (click)="startTodayProblematicQuiz()"
+      class="w-full inline-block bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
+      <fa-icon class="mr-2" [icon]="faUndoAlt"></fa-icon>
+      Rivedi Errori di OGGI ({{ todayProblematicQuestionIds.length }})
+    </button>
+
+
 
     <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="quizSetupModalTitle || 'Configurazione quiz'"
       (close)="closeQuizSetupModal()">

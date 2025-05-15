@@ -1,6 +1,6 @@
 // src/app/pages/home/home.component.ts
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
@@ -11,12 +11,15 @@ import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal
 import { GenericData } from '../../models/statistics.model';
 import { AlertService } from '../../services/alert.service';
 import { SoundService } from '../../core/services/sound.service';
+import { Question } from '../../models/question.model';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
+  providers: [DatePipe],
   standalone: true,
   imports: [CommonModule, RouterLink, SimpleModalComponent,
-    SetupModalComponent, FontAwesomeModule],
+    SetupModalComponent, FontAwesomeModule, FormsModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
@@ -25,6 +28,7 @@ export class HomeComponent implements OnInit {
   private router = inject(Router);
   private alertService = inject(AlertService);
   private soundService = inject(SoundService);
+  private datePipe = inject(DatePipe); // Inject DatePipe
 
   isMusicPlaying: boolean = false;
   isQuizSetupModalOpen = false;
@@ -33,6 +37,9 @@ export class HomeComponent implements OnInit {
 
   isLoadingModal = false;
   loadingButtonIndex = -1;
+
+  selectedXDayDate: string | null = null; // Store selected date as string or Date
+
 
   // icons
   faAdd: IconDefinition = faAdd;
@@ -47,6 +54,7 @@ export class HomeComponent implements OnInit {
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
 
   pausedQuiz: QuizAttempt | undefined;
+  xDayProblematicQuestionIds: string[] = []; // Store IDs
   yesterdayProblematicQuestionIds: string[] = []; // Store IDs
   todayProblematicQuestionIds: string[] = []; // Store IDs
   neverEncounteredQuestionIds: string[] = []; // NEW: Store IDs for never encountered
@@ -56,6 +64,9 @@ export class HomeComponent implements OnInit {
     this.loadYesterdayProblematicQuestions(); // Load on init
     this.loadTodayProblematicQuestions(); // Load on init
     this.loadNeverEncounteredQuestionIds(); // NEW: Load on init
+
+    // Set a default date for the X-Day input (e.g., today)
+    this.selectedXDayDate = this.datePipe.transform(new Date(), 'yyyy-MM-dd');
   }
 
   async checkForPausedQuiz(): Promise<void> {
@@ -83,6 +94,64 @@ export class HomeComponent implements OnInit {
   }
 
 
+
+  async startXDayProblematicQuiz(dateString: string | null): Promise<void> {
+    if (!dateString) {
+      this.alertService.showAlert("Attenzione", "Per favore, seleziona una data.");
+      return;
+    }
+    const selectedDate = new Date(dateString); // The input value is "YYYY-MM-DD"
+    // Adjust for timezone to ensure the date is interpreted as local midnight
+    selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
+
+
+    this.loadingButtonIndex = 3; // For X-Day button
+    this.isLoadingModal = true;
+    let questionsForModal: Question[] = [];
+    try {
+      questionsForModal = await this.dbService.getXDayProblematicQuestion(selectedDate);
+    } catch (error) {
+      console.error("Error fetching X-Day problematic questions:", error);
+      this.alertService.showAlert("Errore", "Impossibile recuperare le domande per la data selezionata.");
+      return;
+    } finally {
+      this.isLoadingModal = false;
+      this.loadingButtonIndex = -1;
+    }
+
+    if (questionsForModal.length > 0) {
+      const formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || dateString;
+
+      const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
+      questionsForModal.forEach(q => {
+        const topic = q.topic || 'Uncategorized';
+        if (!topicsMap.has(topic)) {
+          topicsMap.set(topic, { count: 0, questionIds: [] });
+        }
+        const topicData = topicsMap.get(topic)!;
+        topicData.count++;
+        topicData.questionIds.push(q.id);
+      });
+      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+        topic: topicName,
+        count: data.count,
+        questionIds: data.questionIds
+      }));
+      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+        topic: topicName,
+        count: data.count,
+        questionIds: data.questionIds
+      }));
+
+      this.quizSetupModalTitle = 'Rivedi Errori del ' + formattedDate;
+      console.log(questionsForModal)
+      this.openQuizSetupModal();
+
+    } else {
+      const formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || dateString;
+      this.alertService.showAlert("Info", `Nessuna domanda problematica trovata per il ${formattedDate}.`);
+    }
+  }
 
   async startYesterdayProblematicQuiz(): Promise<void> {
     if (this.yesterdayProblematicQuestionIds.length > 0) {

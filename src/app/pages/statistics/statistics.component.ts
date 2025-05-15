@@ -2,11 +2,12 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DecimalPipe, PercentPipe, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Chart, registerables, ChartConfiguration, ChartOptions } from 'chart.js/auto';
+import { Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement } from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import 'chartjs-adapter-date-fns';
+import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 
 import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion, TopicCount, QuizSettings } from '../../models/quiz.model'; // Added QuizSettings
+import { QuizAttempt, QuizSettings, QuestionSnapshotInfo } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
 import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -15,7 +16,7 @@ import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal
 import { GenericData } from '../../models/statistics.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears} from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 
 Chart.register(...registerables);
@@ -47,7 +48,12 @@ interface TopicWrongAnswerData {
 interface DailyPerformanceDataDetailed {
   date: string;
   quizzesTaken: number;
-  wrongAnswersIds: string[];
+  wrongAnswerIds: string[];
+  correctAnswerIds?: string[];
+  skippedAnswerIds?: string[];
+  correctAnswerCount?: number;
+  wrongAnswerCount?: number;
+  skippedAnswerCount?: number;
 }
 
 interface TopicCoverageData {
@@ -61,8 +67,9 @@ interface TopicCoverageData {
 @Component({
   selector: 'app-statistics',
   standalone: true,
+  providers: [DatePipe], // Add DatePipe to providers if not already global
   imports: [CommonModule, RouterLink, PercentPipe, SimpleModalComponent,
-    SetupModalComponent, FontAwesomeModule],
+    SetupModalComponent, FontAwesomeModule, FormsModule],
   templateUrl: './statistics.component.html',
   styleUrls: ['./statistics.component.scss']
 })
@@ -71,8 +78,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private alertService = inject(AlertService);
-
-  
+  private datePipe = inject(DatePipe); // Inject DatePipe
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -104,9 +110,12 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   topicChart: Chart | undefined;
 
   dailyPerformance: DailyPerformanceData[] = [];
+  // We will use a single object for today's detailed data for simplicity
+  todayDetailedPerformance: DailyPerformanceDataDetailed | null = null;
   dailyPerformanceDetailed: DailyPerformanceDataDetailed[] = [];
   @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('todayPerfomanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('todayPerformanceChartOld') todayPerformanceChartRefOld!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('todayPerformanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
 
@@ -115,92 +124,109 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   topicCoverage: TopicCoverageData[] = [];
 
+  // --- NEW: Properties for Selected Date Chart ---
+  selectedDateForChart: string | null = null; // Store as string YYYY-MM-DD
+  selectedDateDetailedPerformance: DailyPerformanceDataDetailed | null = null;
+  isLoadingSelectedDateData = false;
+  @ViewChild('selectedDatePerformanceChart') selectedDatePerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+  selectedDateChart: Chart | undefined;
+  // --- END NEW ---
+
 
   ngOnInit(): void {
     this.loadAndProcessStatistics();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    this.selectedDateForChart = this.datePipe.transform(yesterday, 'yyyy-MM-dd');
   }
 
   ngAfterViewInit(): void {
-    // Schedule chart creation using a microtask to ensure view is updated
     Promise.resolve().then(() => this.createChartsIfReady());
   }
 
   private createChartsIfReady(): void {
     if (this.isLoading || this.errorLoading) return;
 
+    // Topic Performance Chart
     if (this.topicPerformanceChartRef?.nativeElement && this.topicPerformance.length > 0) {
       this.createTopicPerformanceChart();
     } else if (this.topicChart) {
       this.topicChart.destroy(); this.topicChart = undefined;
     }
 
+    // Daily Trend Chart
     if (this.dailyPerformanceChartRef?.nativeElement && this.dailyPerformance.length > 0) {
       this.createDailyPerformanceChart();
     } else if (this.dailyChart) {
       this.dailyChart.destroy(); this.dailyChart = undefined;
     }
 
-    if (this.todayPerformanceChartRef?.nativeElement) {
-      const dateFormatter = new DatePipe('it-IT'); // Use it-IT for consistency if dates are formatted this way elsewhere
-      const todayDateStr = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
-      const todayData = this.dailyPerformance.find(dp => dp.date === todayDateStr);
-      const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateStr);
-
-      if (todayData || (todayDetailed && todayDetailed.wrongAnswersIds.length > 0)) {
-        this.createTodayPerformanceChart();
-      } else if (this.todayChart) {
-        this.todayChart.destroy(); this.todayChart = undefined;
-        // Optionally clear canvas or show "no data"
-        const canvas = this.todayPerformanceChartRef.nativeElement;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.textAlign = 'center';
-          ctx.font = '14px Arial';
-          ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568'; // Basic dark/light text
-          ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
-        }
-      }
+    // Today's Detailed Chart
+    if (this.todayPerformanceChartRef?.nativeElement && this.todayDetailedPerformance) {
+      this.createTodayPerformanceChart();
     } else if (this.todayChart) {
       this.todayChart.destroy(); this.todayChart = undefined;
+      this.clearCanvasOrShowMessage(this.todayPerformanceChartRef, 'Nessun dato per oggi.');
+    }
+
+    // Selected Date Detailed Chart
+    if (this.selectedDatePerformanceChartRef?.nativeElement && this.selectedDateDetailedPerformance) {
+      this.createSelectedDatePerformanceChart();
+    } else if (this.selectedDateChart) {
+      this.selectedDateChart.destroy(); this.selectedDateChart = undefined;
+      this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Seleziona una data e carica i dati.');
     }
   }
 
-  async loadAndProcessStatistics(): Promise<void> {
+  private clearCanvasOrShowMessage(chartRef: ElementRef<HTMLCanvasElement> | undefined, message: string): void {
+    const canvas = chartRef?.nativeElement;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = 'center';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
+        ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+      }
+    }
+  }
+
+
+   async loadAndProcessStatistics(): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
-      // Fetch all necessary data concurrently
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
         this.dbService.getAllQuizAttempts(),
-        this.dbService.getAllQuestions() // This should fetch ALL questions from your DB
+        this.dbService.getAllQuestions()
       ]);
 
       this.quizAttempts = quizAttempts;
-      this.allQuestionsFromDb = allQuestionsFromDb; // Store all questions from the "bank"
+      this.allQuestionsFromDb = allQuestionsFromDb;
 
       if (this.quizAttempts.length > 0) {
-        this.calculateOverallStats();
-        this.calculateTopicPerformance();
-        this.calculateDailyPerformance();
-        await this.calculateDailyPerformanceWithDetails();
-        this.calculateWrongAnswerBreakdown();
-        this.calculateTopicCoverage(); // Uses this.allQuestionsFromDb and this.quizAttempts
+        await this.calculateOverallStats();
+        await this.calculateTopicPerformance();
+        await this.calculateDailyPerformance();
+        await this.calculateTodayDetailedPerformance();
+        await this.calculateWrongAnswerBreakdown();
+        await this.calculateTopicCoverage();
         await this.getGenericData();
       } else {
         this.resetAllStatsToZero();
       }
     } catch (error) {
       console.error('Error loading statistics:', error);
-      this.errorLoading = 'Failed to load statistics.';
+      this.errorLoading = 'Impossibile caricare le statistiche.';
       this.resetAllStatsToZero();
     } finally {
       this.isLoading = false;
-      this.cdr.detectChanges(); // Ensure view updates after all calculations
-      // Charts will be created in ngAfterViewInit or after data is ready
+      this.cdr.detectChanges();
       Promise.resolve().then(() => this.createChartsIfReady());
     }
   }
+
 
   private resetAllStatsToZero(): void {
     this.totalQuizzesTaken = 0;
@@ -210,14 +236,18 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.averageScorePercentage = 0;
     this.topicPerformance = [];
     this.dailyPerformance = [];
-    this.dailyPerformanceDetailed = [];
+    this.todayDetailedPerformance = null;
+    this.selectedDateDetailedPerformance = null;
     this.wrongAnswerBreakdown = [];
     this.topicCoverage = [];
     this.tipologiaDomande = [];
+
     if (this.topicChart) { this.topicChart.destroy(); this.topicChart = undefined; }
     if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; }
     if (this.todayChart) { this.todayChart.destroy(); this.todayChart = undefined; }
+    if (this.selectedDateChart) { this.selectedDateChart.destroy(); this.selectedDateChart = undefined; }
   }
+
 
   calculateOverallStats(): void {
     this.totalQuizzesTaken = this.quizAttempts.length;
@@ -252,10 +282,17 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           if (!aq.isCorrect) wrongIdsSet.add(aq.questionId);
         });
       });
+      let totalQuiz = 0;
+      todayAttempts.forEach(attempt => {
+        attempt.allQuestions.forEach(aq => {
+          totalQuiz++;
+        });
+      });
+
       this.dailyPerformanceDetailed = [{
         date: todayDateStr,
-        quizzesTaken: todayAttempts.length,
-        wrongAnswersIds: Array.from(wrongIdsSet)
+        quizzesTaken: totalQuiz,
+        wrongAnswerIds: Array.from(wrongIdsSet)
       }];
     } else {
       this.dailyPerformanceDetailed = [];
@@ -341,8 +378,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       .sort((a, b) => b.topicSpecificFailureRate - a.topicSpecificFailureRate);
   }
 
-  // --- CALCULATE TOPIC COVERAGE ---
-  calculateTopicCoverage(): void { // Removed async as allQuestionsFromDb is now a property
+  calculateTopicCoverage(): void {
     if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
       this.topicCoverage = [];
       return;
@@ -383,75 +419,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.topicCoverage.sort((a, b) => a.topic.localeCompare(b.topic));
-  }
-  // --- END CALCULATE TOPIC COVERAGE ---
-
-  createTodayPerformanceChart(): void {
-    if (this.todayChart) this.todayChart.destroy();
-    if (!this.todayPerformanceChartRef?.nativeElement) return;
-
-    const dateFormatter = new DatePipe('en-US');
-    const todayDateKey = dateFormatter.transform(new Date(), 'yyyy-MM-dd')!;
-    const todayOverallPerf = this.dailyPerformance.find(dp => dp.date === todayDateKey);
-    const todayDetailed = this.dailyPerformanceDetailed.find(dpd => dpd.date === todayDateKey);
-
-    // Ensure there's some data to plot for today
-    if (!todayOverallPerf && !(todayDetailed && todayDetailed.wrongAnswersIds.length >= 0)) {
-      const canvas = this.todayPerformanceChartRef.nativeElement;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = 'center';
-        ctx.font = '14px Arial';
-        ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
-        ctx.fillText('Nessun dato per oggi.', canvas.width / 2, canvas.height / 2);
-      }
-      return;
-    }
-
-    const ctxToday = this.todayPerformanceChartRef.nativeElement.getContext('2d');
-    if (!ctxToday) return;
-
-    const labels = [todayOverallPerf?.date || todayDetailed?.date || 'Oggi'];
-    const dataForChart = {
-      accuracy: todayOverallPerf ? [todayOverallPerf.averageAccuracy * 100] : [0],
-      quizzesTaken: todayOverallPerf ? [todayOverallPerf.quizzesTaken] : [0],
-      wrongAnswers: todayDetailed ? [todayDetailed.wrongAnswersIds.length] : [0]
-    };
-
-    const chartTodayConfig: ChartConfiguration = {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Precisione (%)', data: dataForChart.accuracy,
-            backgroundColor: 'rgba(75, 192, 192, 0.5)', borderColor: 'rgb(75, 192, 192)',
-            yAxisID: 'yAccuracy', order: 1
-          },
-          {
-            label: 'Quiz Svolti', data: dataForChart.quizzesTaken,
-            backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgb(54, 162, 235)',
-            yAxisID: 'yQuizzes', order: 3
-          },
-          {
-            label: 'Errori Oggi', data: dataForChart.wrongAnswers,
-            backgroundColor: 'rgba(255, 99, 132, 0.5)', borderColor: 'rgb(255, 99, 132)',
-            yAxisID: 'yQuizzes', order: 2
-          }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        scales: {
-          x: { title: { display: true, text: 'Data' } },
-          yAccuracy: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Precisione (%)' }, ticks: { callback: value => value + '%' } },
-          yQuizzes: { type: 'linear', position: 'right', min: 0, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 }, grid: { drawOnChartArea: false } }
-        },
-        plugins: { tooltip: { mode: 'index', intersect: false }, title: { display: true, text: 'Performance Odierna Dettagliata' } }
-      } as ChartOptions
-    };
-    this.todayChart = new Chart(ctxToday, chartTodayConfig);
   }
 
   createDailyPerformanceChart(): void {
@@ -524,10 +491,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       try {
         await this.dbService.resetDatabase();
         await this.loadAndProcessStatistics(); // Reload to show empty state and re-initialize
-        this.alertService.showAlert("Info",'Statistiche resettate con successo.');
+        this.alertService.showAlert("Info", 'Statistiche resettate con successo.');
       } catch (error) {
         console.error('Error resetting statistics:', error);
-        this.alertService.showAlert("Attenzione","Errore durante il reset delle statistiche.");
+        this.alertService.showAlert("Attenzione", "Errore durante il reset delle statistiche.");
       }
     }
   }
@@ -555,7 +522,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           return;
         }
       } else {
-        this.alertService.showAlert("Attenzione",`Nessuna domanda disponibile per l'argomento: ${topic}.`);
+        this.alertService.showAlert("Attenzione", `Nessuna domanda disponibile per l'argomento: ${topic}.`);
         return;
       }
     }
@@ -570,23 +537,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  startPracticeQuizForTodayWrong(): void {
-    const todayDetailedEntry = this.dailyPerformanceDetailed.find(dpd => dpd.date === new DatePipe('it-IT').transform(new Date(), 'yyyy-MM-dd'));
-    if (todayDetailedEntry && todayDetailedEntry.wrongAnswersIds.length > 0) {
-      const questionIds = todayDetailedEntry.wrongAnswersIds;
-      this.router.navigate(['/quiz/take'], {
-        queryParams: { quizTitle: 'Rivedi Errori di Oggi', question_ids: questionIds.join(','), numQuestions: questionIds.length }
-      });
-    } else {
-      this.alertService.showAlert("Info","Nessun errore registrato oggi o nessun dato disponibile!");
-    }
-  }
+
 
   async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
     this.isLoadingModal = true;
     const selectedData = this.tipologiaDomande[index];
     if (!selectedData || !selectedData.questionIds || selectedData.questionIds.length === 0) {
-      this.alertService.showAlert("Info",`Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
+      this.alertService.showAlert("Info", `Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
       return;
     }
     this.quizSetupModalTitle = selectedData.topic;
@@ -614,7 +571,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       this.isLoadingModal = false;
       console.error("Error fetching questions for modal setup:", error);
-      this.alertService.showAlert("Attenzione","Errore nel preparare il quiz di pratica.");
+      this.alertService.showAlert("Attenzione", "Errore nel preparare il quiz di pratica.");
     }
   }
 
@@ -622,11 +579,12 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.topicChart) this.topicChart.destroy();
     if (this.dailyChart) this.dailyChart.destroy();
     if (this.todayChart) this.todayChart.destroy();
+    if (this.selectedDateChart) this.selectedDateChart.destroy();
   }
 
   async exportStatisticsToPDF(): Promise<void> {
     if (this.quizAttempts.length === 0 && this.allQuestionsFromDb.length === 0) { // Check if any data exists
-      this.alertService.showAlert("Info","Non ci sono statistiche da esportare.");
+      this.alertService.showAlert("Info", "Non ci sono statistiche da esportare.");
       return;
     }
 
@@ -792,8 +750,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }
-  closeQuizSetupModal(): void { this.isQuizSetupModalOpen = false; }
-
+  closeQuizSetupModal(): void {
+    this.isQuizSetupModalOpen = false;
+    this.isLoadingModal = false;
+    this.loadingButtonIndex = -1;
+  }
   handleQuizSetupSubmitted(quizConfig: Partial<QuizSettings> & { fixedQuestionIds?: string[] }): void { // Added fixedQuestionIds
     this.closeQuizSetupModal();
 
@@ -812,5 +773,361 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
 
     this.router.navigate(['/quiz/take'], { queryParams });
+  }
+
+  async calculateTodayDetailedPerformance(): Promise<void> {
+    const today = new Date();
+    this.todayDetailedPerformance = await this.getDetailedPerformanceForDate(today);
+  }
+
+  private async getDetailedPerformanceForDate(date: Date): Promise<DailyPerformanceDataDetailed | null> {
+    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(date);
+    if (attemptsForDate.length === 0) {
+      return null;
+    }
+
+    const dateStr = this.datePipe.transform(date, 'yyyy-MM-dd')!;
+    let correctCount = 0;
+    const correctIds = new Set<string>();
+    const wrongIds = new Set<string>();
+    const skippedIds = new Set<string>();
+
+    attemptsForDate.forEach(attempt => {
+      attempt.answeredQuestions.forEach(aq => {
+        if (aq.questionId) { // Ensure questionId exists
+          if (aq.isCorrect) {
+            correctCount++;
+            correctIds.add(aq.questionId);
+          } else {
+            wrongIds.add(aq.questionId);
+          }
+        }
+      });
+      const allQuestionIdsInAttempt = new Set(attempt.allQuestions.map(qInfo => qInfo.questionId).filter(id => id) as string[]);
+      const answeredQuestionIdsInAttempt = new Set(attempt.answeredQuestions.map(aq => aq.questionId).filter(id => id) as string[]);
+      allQuestionIdsInAttempt.forEach(qid => {
+        if (!answeredQuestionIdsInAttempt.has(qid)) {
+          skippedIds.add(qid);
+        }
+      });
+    });
+
+    return {
+      date: dateStr,
+      quizzesTaken: attemptsForDate.length,
+      correctAnswerCount: correctCount,
+      wrongAnswerCount: wrongIds.size,
+      skippedAnswerCount: skippedIds.size,
+      correctAnswerIds: Array.from(correctIds),
+      wrongAnswerIds: Array.from(wrongIds),
+      skippedAnswerIds: Array.from(skippedIds),
+    };
+  }
+
+  // --- NEW: Methods for Selected Date Chart ---
+  onDateSelectedForChart(dateValue: string): void {
+    this.selectedDateForChart = dateValue;
+    // Clear previous data for selected date when a new date is picked,
+    // user then has to click "Carica Dati"
+    this.selectedDateDetailedPerformance = null;
+    if (this.selectedDateChart) {
+      this.selectedDateChart.destroy();
+      this.selectedDateChart = undefined;
+      this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Clicca "Carica Dati" per la nuova data.');
+    }
+  }
+
+  async loadDataForSelectedDate(): Promise<void> {
+    if (!this.selectedDateForChart) {
+      this.alertService.showAlert("Info", "Per favore, seleziona una data.");
+      return;
+    }
+    this.isLoadingSelectedDateData = true;
+    this.selectedDateDetailedPerformance = null;
+    if (this.selectedDateChart) {
+      this.selectedDateChart.destroy();
+      this.selectedDateChart = undefined;
+    }
+
+    try {
+      const dateParts = this.selectedDateForChart.split('-');
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10) - 1;
+      const day = parseInt(dateParts[2], 10);
+      const targetDate = new Date(year, month, day);
+
+      this.selectedDateDetailedPerformance = await this.getDetailedPerformanceForDate(targetDate);
+    } catch (error) {
+      console.error('Error loading data for selected date:', error);
+      this.alertService.showAlert("Errore", "Impossibile caricare i dati per la data selezionata.");
+    } finally {
+      this.isLoadingSelectedDateData = false;
+      this.cdr.detectChanges();
+      if (this.selectedDateDetailedPerformance) {
+        this.createSelectedDatePerformanceChart();
+      } else {
+        this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Nessun quiz per la data selezionata.');
+      }
+    }
+  }
+
+  createSelectedDatePerformanceChart(): void {
+    if (this.selectedDateChart) this.selectedDateChart.destroy();
+    if (!this.selectedDatePerformanceChartRef?.nativeElement || !this.selectedDateDetailedPerformance) {
+      return;
+    }
+
+    const ctx = this.selectedDatePerformanceChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    const data = this.selectedDateDetailedPerformance;
+    const chartData = {
+      labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
+      datasets: [{
+        label: `Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}`,
+        data: [
+          data.quizzesTaken,
+          data.wrongAnswerCount ?? 0,
+          data.skippedAnswerCount ?? 0,
+          data.correctAnswerCount ?? 0
+        ],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'
+        ],
+        borderWidth: 1
+      }]
+    };
+
+    const chartConfig: ChartConfiguration = {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 } } },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: `Dettaglio Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}` },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                let label = context.dataset.label || '';
+                if (context.dataset.data && context.dataset.data[context.dataIndex] !== undefined) {
+                  if (label) label += ': ';
+                  label += context.dataset.data[context.dataIndex];
+                }
+                return label;
+              }
+            }
+          }
+        },
+        onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
+          this.handleSelectedDateChartClick(event, elements, chart);
+        }
+      } as ChartOptions
+    };
+    this.selectedDateChart = new Chart(ctx, chartConfig);
+  }
+
+  async handleSelectedDateChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
+    if (elements.length > 0 && this.selectedDateDetailedPerformance) {
+      const clickedIndex = elements[0].index;
+      let questionIdsToPractice: string[] = [];
+      let modalTitle = '';
+      const dateForTitle = this.datePipe.transform(this.selectedDateDetailedPerformance.date, 'dd/MM/yy');
+
+      switch (clickedIndex) {
+        case 0: /* Quizzes Taken */ return;
+        case 1: /* Sbagliate */
+          if ((this.selectedDateDetailedPerformance.wrongAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.selectedDateDetailedPerformance.wrongAnswerIds;
+            modalTitle = `Rivedi Errori del ${dateForTitle}`;
+          } else { this.alertService.showAlert("Info", `Nessun errore per il ${dateForTitle}.`); return; }
+          break;
+        case 2: /* Saltate/Non Risposte */
+          if ((this.selectedDateDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.selectedDateDetailedPerformance.skippedAnswerIds ?? [];
+            modalTitle = `Rivedi Saltate/Non Risposte del ${dateForTitle}`;
+          } else { this.alertService.showAlert("Info", `Nessuna domanda saltata per il ${dateForTitle}.`); return; }
+          break;
+        case 3: /* Corrette */
+          if ((this.selectedDateDetailedPerformance.correctAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.selectedDateDetailedPerformance.correctAnswerIds ?? [];
+            modalTitle = `Rivedi Corrette del ${dateForTitle}`;
+          } else { this.alertService.showAlert("Info", `Nessuna risposta corretta per il ${dateForTitle}.`); return; }
+          break;
+        default: return;
+      }
+      if (questionIdsToPractice.length > 0) {
+        await this.setupQuizForModal(questionIdsToPractice, modalTitle);
+      }
+    }
+  }
+
+  async startPracticeQuizForSelectedDateProblematic(): Promise<void> {
+    if (this.selectedDateDetailedPerformance) {
+      const wrongIds = this.selectedDateDetailedPerformance.wrongAnswerIds || [];
+      const skippedIds = this.selectedDateDetailedPerformance.skippedAnswerIds || [];
+      const combinedIds = Array.from(new Set([...wrongIds, ...skippedIds]));
+
+      if (combinedIds.length > 0) {
+        const dateForTitle = this.datePipe.transform(this.selectedDateDetailedPerformance.date, 'dd/MM/yy');
+        await this.setupQuizForModal(combinedIds, `Rivedi Errori/Saltate del ${dateForTitle}`);
+      } else {
+        const dateForTitle = this.datePipe.transform(this.selectedDateDetailedPerformance.date, 'dd/MM/yy');
+        this.alertService.showAlert("Info", `Nessun errore o domanda saltata per il ${dateForTitle}.`);
+      }
+    } else {
+      this.alertService.showAlert("Info", "Carica prima i dati per una data specifica.");
+    }
+  }
+  // --- END NEW ---
+
+
+
+  createTodayPerformanceChart(): void {
+    if (this.todayChart) this.todayChart.destroy();
+    if (!this.todayPerformanceChartRef?.nativeElement || !this.todayDetailedPerformance) {
+      this.clearCanvasOrShowMessage(this.todayPerformanceChartRef, 'Nessun dato per oggi.');
+      return;
+    }
+    const ctxToday = this.todayPerformanceChartRef.nativeElement.getContext('2d');
+    if (!ctxToday) return;
+
+    const data = this.todayDetailedPerformance;
+    const chartData = {
+      labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
+      datasets: [{
+        label: `Performance di Oggi (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
+        data: [
+          data.quizzesTaken,
+          data.wrongAnswerCount ?? 0,
+          data.skippedAnswerCount ?? 0,
+          data.correctAnswerCount ?? 0
+        ],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)',
+          'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)',
+          'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'
+        ],
+        borderWidth: 1
+      }]
+    };
+    const chartTodayConfig: ChartConfiguration = {
+      type: 'bar', data: chartData,
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'x',
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 } } },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})` },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                let label = context.dataset.label || '';
+                if (context.dataset.data && context.dataset.data[context.dataIndex] !== undefined) {
+                  if (label) label += ': ';
+                  label += context.dataset.data[context.dataIndex];
+                }
+                return label;
+              }
+            }
+          }
+        },
+        onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
+          this.handleTodayChartClick(event, elements, chart);
+        }
+      } as ChartOptions
+    };
+    this.todayChart = new Chart(ctxToday, chartTodayConfig);
+  }
+
+  async handleTodayChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
+    if (elements.length > 0 && this.todayDetailedPerformance) {
+      const clickedIndex = elements[0].index;
+      let questionIdsToPractice: string[] = [];
+      let modalTitle = '';
+
+      switch (clickedIndex) { // labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette']
+        case 0: /* Quizzes Taken */ return;
+        case 1: /* Sbagliate */
+          if ((this.todayDetailedPerformance.wrongAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.todayDetailedPerformance.wrongAnswerIds;
+            modalTitle = 'Rivedi Errori di Oggi';
+          } else { this.alertService.showAlert("Info", "Nessun errore da rivedere per oggi. Ottimo!"); return; }
+          break;
+        case 2: /* Saltate/Non Risposte */
+          if ((this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.todayDetailedPerformance.skippedAnswerIds ?? [];
+            modalTitle = 'Rivedi Saltate/Non Risposte di Oggi';
+          } else { this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi."); return; }
+          break;
+        case 3: /* Corrette */
+          if ((this.todayDetailedPerformance.correctAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = this.todayDetailedPerformance.correctAnswerIds ?? [];
+            modalTitle = 'Rivedi Corrette di Oggi';
+          } else { this.alertService.showAlert("Info", "Nessuna risposta corretta da rivedere per oggi."); return; }
+          break;
+        default: return;
+      }
+      if (questionIdsToPractice.length > 0) {
+        await this.setupQuizForModal(questionIdsToPractice, modalTitle);
+      }
+    }
+  }
+
+
+  async setupQuizForModal(questionIds: string[], modalTitle: string): Promise<void> {
+    this.isLoadingModal = true;
+    this.loadingButtonIndex = -2; // Generic for chart/modal initiated quizzes
+    try {
+      const questionsForModal = await this.dbService.getQuestionByIds(questionIds);
+      const topicsMap = new Map<string, { count: number; questionIds: string[] }>();
+      questionsForModal.forEach(q => {
+        const topic = q.topic || 'Senza Argomento';
+        if (!topicsMap.has(topic)) {
+          topicsMap.set(topic, { count: 0, questionIds: [] });
+        }
+        const topicData = topicsMap.get(topic)!;
+        topicData.count++;
+        topicData.questionIds.push(q.id);
+      });
+      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
+        topic: topicName,
+        count: data.count,
+        questionIds: data.questionIds
+      }));
+      this.quizSetupModalTitle = modalTitle;
+      this.openQuizSetupModal();
+    } catch (error) {
+      console.error("Error setting up quiz from chart click:", error);
+      this.alertService.showAlert("Errore", "Impossibile preparare il quiz di pratica.");
+    } finally {
+      this.isLoadingModal = false;
+      this.loadingButtonIndex = -1;
+    }
+  }
+
+  startPracticeQuizForTodayWrong(): void {
+    if (this.todayDetailedPerformance) {
+      const wrongIds = this.todayDetailedPerformance.wrongAnswerIds || [];
+      const skippedIds = this.todayDetailedPerformance.skippedAnswerIds || [];
+      const combinedIds = Array.from(new Set([...wrongIds, ...skippedIds]));
+
+      if (combinedIds.length > 0) {
+        this.setupQuizForModal(combinedIds, 'Rivedi Errori/Saltate di Oggi');
+      } else {
+        this.alertService.showAlert("Info", "Nessun errore o domanda saltata registrati oggi da rivedere!");
+      }
+    } else {
+      this.alertService.showAlert("Info", "Nessun dato disponibile per oggi!");
+    }
   }
 }

@@ -137,7 +137,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     // If this option was the user's answer
     if (userAnswerIndex === optionIndex) {
       if (!isCorrect) { // And it was incorrect
-        classes = 'bg-red-100 dark:bg-red-800 dark:bg-opacity-60 border-red-500 dark:border-red-500 text-red-700 dark:text-red-200 line-through';
+        classes = 'bg-red-100 dark:bg-red-800 dark:bg-opacity-60 border-red-500 dark:border-red-500 text-red-700 dark:text-red-200';
       }
       // If it was correct, it's already handled by the green class above
     } else if (userAnswerIndex === -1 && optionIndex === correctAnswerIndex) {
@@ -396,7 +396,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
   getTotalStringByGroup(group: GroupedQuestionDisplay): string{
     if (group && group.questions){
-      return ' - Corrette ' + (this.getCorrectnessByGroup(group)*100) + '% ('+this.getCorrectByGroup(group).toString().concat('/',this.getGroupLength(group).toString(),')');
+      return ' - Corrette ' + (this.getCorrectnessByGroup(group)*100).toFixed(2) + '% ('+this.getCorrectByGroup(group).toString().concat('/',this.getGroupLength(group).toString(),')');
     } 
     return '';
   }

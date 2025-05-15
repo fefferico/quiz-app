@@ -9,7 +9,15 @@
             </label>
             <div class="w-28">
                 <div class="flex items-center space-x-2">
-
+                    <div class="flex-shrink-0 mt-2 sm:mt-0 text-center">
+                        <button (click)="resetCount(topic)"
+                            aria-label="Imposta a 0 il numero dei quiz di questo argomento"
+                            title="Imposta a 0 il numero dei quiz di questo argomento"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:bg-opacity-30 transition-colors">
+                            <fa-icon class="px-2 fa-lg" [icon]="faTrashBin"
+                                aria-label="Imposta a 0 il numero dei quiz di questo argomento"></fa-icon>
+                        </button>
+                    </div>
                     <input #inputValue type="number" min="1" max="{{getMaxCountOfTopic(topic)}}"
                         id="count-{{topic.topic}}" name="count-{{topic.topic}}-{{i}}" [value]="topic.count"
                         (change)="calculateTotalQuestionsFromTopicCounts($event, topic)"
@@ -25,6 +33,15 @@
         </div>
     </div>
 </div>
+<div class="flex-shrink-0 mt-2 sm:mt-0 text-center">
+    <button (click)="resetCount()" aria-label="Imposta a 0 il numero totale dei quiz"
+        title="Imposta a 0 il numero totale dei quiz"
+        class="w-50 inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-700 dark:hover:bg-gray-500 font-bold py-2 px-2 my-2 rounded-lg text-l sm:text-l shadow-md hover:shadow-lg transition duration-150 text-center">
+        <fa-icon class="px-2 fa-lg" [icon]="faTrashBin"
+            aria-label="Imposta a 0 il numero totale dei quiz"></fa-icon>
+            {{ 'Resetta tutti i totali' }}
+    </button>
+</div>
 <p *ngIf="clonedTopics.length > 0" class="text-sm text-gray-600 mt-3">
     Totale domande impostate: <strong class="text-indigo-700">{{ selectedNumQuestions }}</strong>
 </p>
@@ -38,7 +55,7 @@
     </button>
 
     <button type="submit" [disabled]="!selectedNumQuestions" (click)="onInternalSubmit()"
-        class="w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
+        class="disabled:opacity-50 disabled:cursor-not-allowed w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
 
         <!-- w-full inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150 sm:w-auto   -->
         <!-- w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center -->

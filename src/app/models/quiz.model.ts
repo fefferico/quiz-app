@@ -17,14 +17,16 @@ export interface AnsweredQuestion {
   isCorrect: boolean;
   // Snapshot of the question at the time of the quiz for robust review
   // This is important if questions in the main bank can be edited
-  questionSnapshot: {
-    text: string;
-    topic: string;
-    options: string[];
-    correctAnswerIndex: number;
-    explanation?: string;
-    isFavorite?: number; // <-- NEW: To show if the question was marked as favorite
-  };
+  questionSnapshot: QuestionSnapshotInfo
+}
+
+export interface QuestionSnapshotInfo {
+  text: string;
+  topic: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation?: string;
+  isFavorite?: number; // <-- NEW: To show if the question was marked as favorite
 }
 
 export interface TopicCount {

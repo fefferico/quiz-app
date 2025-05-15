@@ -5,7 +5,7 @@ import { QuizSettings } from '../../../../models/quiz.model';
 import { GenericData } from '../../../../models/statistics.model';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faPersonMilitaryRifle, faCancel } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-setup-modal', // Changed selector to avoid confusion
@@ -26,6 +26,8 @@ export class SetupModalComponent implements OnInit {
   // icons
   military: IconDefinition = faPersonMilitaryRifle;
   faCancel: IconDefinition = faCancel;
+  faTrashBin: IconDefinition = faTrashCan;
+  faEraser: IconDefinition = faEraser;
 
   setupQuizForm: FormGroup;
   isLoading = false;
@@ -149,6 +151,21 @@ export class SetupModalComponent implements OnInit {
   getMaxCountOfTopic(topic: GenericData): number {
     const currentOriginalTopic = this.topics.find(tc => tc.topic === topic.topic);
     return currentOriginalTopic ? currentOriginalTopic.count : 0;
+  }
+
+  resetCount(topic: GenericData | undefined = undefined): void {
+    if (!topic){
+      this.clonedTopics.forEach(_topic => { _topic.count = 0; });
+      this.selectedNumQuestions = 0;
+    }
+    // reset count of the corresponding topic
+    const originalTopic = this.topics.find(_topic => _topic.topic === topic?.topic);
+    const clonedTopic = this.clonedTopics.find(_topic => _topic.topic === topic?.topic);
+    if (originalTopic && clonedTopic) {
+      clonedTopic.count = 0;
+      // Recalculate the total number of questions
+      this.selectedNumQuestions = this.clonedTopics.filter(_topic=>_topic.topic !== topic?.topic).reduce((sum, tc) => sum + Number(tc.count || 0), 0);
+    }
   }
 
 }

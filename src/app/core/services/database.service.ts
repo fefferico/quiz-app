@@ -489,7 +489,7 @@ export class DatabaseService {
     return Array.from(problematicQuestionIds);
   }
 
-  async getProblematicQuestionsIdsBtDate(date: string = 'today'): Promise<string[]> {
+  async getProblematicQuestionsIdsBtDate(date: string | Date = 'today'): Promise<string[]> {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -504,20 +504,39 @@ export class DatabaseService {
     yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
     yesterdayEnd.setHours(23, 59, 59, 999);
 
-    let attempts = [];
+    const xDayStart: Date = new Date(date);
+    const xDayEnd: Date = new Date(date);
+
+    let attempts: QuizAttempt[] = [];
 
     let unansweredIDs = new Set<string>();
     let answeredWronglyIDs = new Set<string>();
 
     if (date === 'today') {
       attempts = await this.db.quizAttempts
-        .where('timestampEnd').aboveOrEqual(todayStart.getTime())
+        .where('timestampEnd')
+        .between(todayStart, todayEnd, true, true)
         .toArray();
-    } else {
+    } else if (date === 'yesterday') {
       attempts = await this.db.quizAttempts
         .where('timestampEnd')
         .between(yesterdayStart, yesterdayEnd, true, true)
         .toArray();
+    } else {
+      if (!date) {
+        return Promise.resolve([]);
+      }
+      if (typeof date === 'object') {
+        xDayStart.setHours(0, 0, 0, 0);
+        xDayEnd.setHours(23, 59, 59, 999);
+
+        attempts = await this.db.quizAttempts
+          .where('timestampEnd')
+          .between(xDayStart, xDayEnd, true, true)
+          .toArray();
+      } else {
+        attempts = [];
+      }
     }
 
     const problematicIds = new Set<string>();
@@ -536,8 +555,10 @@ export class DatabaseService {
             let isWrongInsideQst: boolean | undefined = true;
             if (date === 'today') {
               isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= todayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= todayEnd.getTime() && !qst?.lastAnswerCorrect));
-            } else {
+            } else if (date === 'yesterday') {
               isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= yesterdayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= yesterdayEnd.getTime() && !qst?.lastAnswerCorrect));
+            } else {
+              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= xDayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= xDayEnd.getTime() && !qst?.lastAnswerCorrect));
             }
             if (((isWrongInsideAttempt || isUnanswerInsideAttemp) && (!isWrongInsideQst && isQstNeverBeenAnswered)) || isWrongInsideQst) {
               problematicIds.add(aq.questionId);
@@ -594,6 +615,24 @@ export class DatabaseService {
   async getYesterdayProblematicQuestion(): Promise<Question[]> {
 
     const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate('yesterday');
+    const problematicQuestion = new Set<Question>();
+
+    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
+      return [];
+    }
+
+    const questions = await this.getQuestionByIds(problematicQuestionIds);
+    for (const qst of questions) {
+      if (!qst.lastAnswerCorrect) {
+        problematicQuestion.add(qst);
+      }
+    }
+    return Array.from(problematicQuestion.values());
+  }
+
+  async getXDayProblematicQuestion(date: Date): Promise<Question[]> {
+
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate(date);
     const problematicQuestion = new Set<Question>();
 
     if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
@@ -754,6 +793,20 @@ export class DatabaseService {
     } catch (error) {
       console.error(`Error updating stats for question ${questionId}:`, error);
     }
+  }
+
+  async getQuizAttemptsBySpecificDate(date: Date): Promise<QuizAttempt[]> {
+    const xDayStart: Date = new Date(date);
+    const xDayEnd: Date = new Date(date);
+
+    xDayStart.setHours(0, 0, 0, 0);
+    xDayEnd.setHours(23, 59, 59, 999);
+
+    const attempts = await this.db.quizAttempts
+      .where('timestampEnd')
+      .between(xDayStart, xDayEnd, true, true)
+      .toArray();
+    return attempts;
   }
 
 
