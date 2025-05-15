@@ -18,6 +18,7 @@ import { AlertService } from '../../../services/alert.service';
 import { AlertButton, AlertOptions } from '../../../models/alert.model';
 import { AlertComponent } from '../../../shared/alert/alert.component';
 import { SoundService } from '../../../core/services/sound.service';
+import { GenericData } from '../../../models/statistics.model';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -65,6 +66,12 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   readonly STREAK_SOUND_KEYS = ['streak1', 'streak2', 'streak3']; // Corresponding sound keys
   // --- END NEW ---
 
+
+
+  neverEncounteredQuestions: Question[] = []; 
+  neverEncounteredQuestionIds: string[] = []; // NEW: Store IDs for never encountered
+
+  topics: GenericData[] = [];
 
   private routeSub!: Subscription;
   private destroy$ = new Subject<void>();
@@ -294,7 +301,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             timerDurationSeconds: this.timerDuration,
             questionIDs: fixedQuestionIds
           };
-          await this.loadQuestions(false); // Ensure questions are loaded before potential initial speak
+          await this.startNeverEncounteredQuiz();
+          // OLD METHOD
+          //await this.loadQuestions(false); // Ensure questions are loaded before potential initial speak
         }
       });
     this.applyFontSettingsToWrapper();
@@ -1399,5 +1408,36 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     if (voice) return voice;
 
     return null;
+  }
+
+  async loadNeverEncounteredQuestionIds(): Promise<void> {
+    this.neverEncounteredQuestions = await this.dbService.getNeverEncounteredRandomQuestionsByParams(this.quizSettings.numQuestions,
+      this.quizSettings.selectedTopics,
+      this.quizSettings.keywords,
+      this.quizSettings.questionIDs,
+      this.quizSettings.topicDistribution); // Assuming this method exists
+  }
+
+  async startNeverEncounteredQuiz(): Promise<void> {
+    if (!this.neverEncounteredQuestions || this.neverEncounteredQuestions.length === 0) {
+      await this.loadNeverEncounteredQuestionIds();
+    }
+    if (this.neverEncounteredQuestions.length > 0) {
+      // Fetch the full question objects for the modal (to display topics and counts)
+      this.questions = this.neverEncounteredQuestions;
+
+      if (this.questions.length > 0 && this.isTimerEnabled) {
+        // Only start new timer if not resuming OR if resuming and there's time left
+        this.startTimer();
+      }
+      if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
+        this.startCronometer();
+      }
+      this.isLoading = false;
+      this.setCurrentQuestion();
+    } else {
+      this.isLoading = false;
+      this.alertService.showAlert("Info", "Congratulazioni! Hai risposto a tutte le domande disponibili almeno una volta.");
+    }
   }
 }

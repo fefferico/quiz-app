@@ -389,6 +389,70 @@ export class DatabaseService {
     }
   }
 
+  async getNeverEncounteredRandomQuestionsByParams(
+    count: number,
+    topics: string[] = [],
+    keywords: string[] = [],
+    questiondIDs: string[] = [],
+    topicDistribution?: TopicCount[]
+  ): Promise<Question[]> {
+    let allFetchedQuestions: Question[] = [];
+
+    if (topicDistribution && topicDistribution.length > 0) {
+      for (const dist of topicDistribution) {
+        if (dist.count <= 0) continue;
+
+        let query = null;
+        if (questiondIDs && questiondIDs.length > 0) {
+          query = this.db.questions
+            .where('topic')
+            .equalsIgnoreCase(dist.topic)
+            .filter(q => questiondIDs.includes(q.id));
+        } else {
+          query = this.db.questions.where('topic').equalsIgnoreCase(dist.topic);
+        }
+        let topicSpecificQuestions = await query
+          .filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0)
+          .toArray();
+
+        if (keywords.length > 0) {
+          topicSpecificQuestions = topicSpecificQuestions.filter(question => {
+            const questionTextLower = question.text.toLowerCase();
+            return keywords.some(kw => questionTextLower.includes(kw.toLowerCase()));
+          });
+        }
+
+        const shuffledTopicQuestions = topicSpecificQuestions.sort(() => 0.5 - Math.random());
+        allFetchedQuestions.push(...shuffledTopicQuestions.slice(0, dist.count));
+      }
+      allFetchedQuestions.sort(() => 0.5 - Math.random());
+      return allFetchedQuestions;
+    } else {
+      let questions: Question[] = [];
+      if (questiondIDs && questiondIDs.length > 0) {
+        questions = await this.getQuestionByIds(questiondIDs);
+      } else if (topics && topics.length > 0) {
+        questions = await this.getQuestionsByTopics(topics);
+      } else {
+        questions = await this.getAllQuestions();
+      }
+
+      let filteredQuestions = questions.filter(
+        q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0
+      );
+
+      if (keywords.length > 0) {
+        filteredQuestions = filteredQuestions.filter(question => {
+          const questionTextLower = question.text.toLowerCase();
+          return keywords.some(kw => questionTextLower.includes(kw.toLowerCase()));
+        });
+      }
+
+      const shuffled = filteredQuestions.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+  }
+
   async addQuestion(question: Question): Promise<string> {
     const questionWithDefaults = {
       ...question,
@@ -489,7 +553,7 @@ export class DatabaseService {
     return Array.from(problematicQuestionIds);
   }
 
-  async getProblematicQuestionsIdsBtDate(date: string | Date = 'today'): Promise<string[]> {
+  async getProblematicQuestionsIdsByDate(date: string | Date = 'today'): Promise<string[]> {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -598,7 +662,7 @@ export class DatabaseService {
 
   async getTodayProblematicQuestion(): Promise<Question[]> {
 
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate('today');
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate('today');
     const problematicQuestion = new Set<Question>();
 
     if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
@@ -614,7 +678,7 @@ export class DatabaseService {
 
   async getYesterdayProblematicQuestion(): Promise<Question[]> {
 
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate('yesterday');
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate('yesterday');
     const problematicQuestion = new Set<Question>();
 
     if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
@@ -632,7 +696,7 @@ export class DatabaseService {
 
   async getXDayProblematicQuestion(date: Date): Promise<Question[]> {
 
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsBtDate(date);
+    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate(date);
     const problematicQuestion = new Set<Question>();
 
     if (!problematicQuestionIds || problematicQuestionIds.length === 0) {

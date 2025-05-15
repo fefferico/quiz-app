@@ -80,12 +80,12 @@ export class HomeComponent implements OnInit {
   }
 
   async loadYesterdayProblematicQuestions(): Promise<void> { // Renamed for clarity
-    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsBtDate('yesterday');
+    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday');
     // console.log('Yesterday problematic IDs:', this.yesterdayProblematicQuestionIds);
   }
 
   async loadTodayProblematicQuestions(): Promise<void> { // Renamed for clarity
-    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsBtDate('today');
+    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today');
     // console.log('Yesterday problematic IDs:', this.todayProblematicQuestionIds);
   }
 

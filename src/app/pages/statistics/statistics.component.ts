@@ -193,7 +193,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-   async loadAndProcessStatistics(): Promise<void> {
+  async loadAndProcessStatistics(): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
     try {
@@ -1000,20 +1000,24 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const data = this.todayDetailedPerformance;
     const chartData = {
-      labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
+      labels: ['Quiz Svolti', 'Domande', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
       datasets: [{
         label: `Performance di Oggi (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
         data: [
           data.quizzesTaken,
+          (data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0),
           data.wrongAnswerCount ?? 0,
           data.skippedAnswerCount ?? 0,
           data.correctAnswerCount ?? 0
         ],
         backgroundColor: [
-          'rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)',
+          'rgba(213, 217, 220, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
           'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)'
         ],
         borderColor: [
+          'rgba(213, 217, 220, 0.6)',
           'rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)',
           'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'
         ],
@@ -1057,19 +1061,27 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
       switch (clickedIndex) { // labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette']
         case 0: /* Quizzes Taken */ return;
-        case 1: /* Sbagliate */
+        case 1:
+          if ((this.todayDetailedPerformance.wrongAnswerCount ?? 0) + (this.todayDetailedPerformance.correctAnswerCount ?? 0) + (this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
+            questionIdsToPractice = (this.todayDetailedPerformance.wrongAnswerIds ?? [])
+              .concat(this.todayDetailedPerformance.correctAnswerIds ?? [])
+              .concat(this.todayDetailedPerformance.skippedAnswerIds ?? []);
+            modalTitle = 'Rivedi domande di Oggi';
+          } else { this.alertService.showAlert("Info", "Nessuna domanda fatta oggi... Studia, capra!"); return; }
+          break;
+        case 2: /* Sbagliate */
           if ((this.todayDetailedPerformance.wrongAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.wrongAnswerIds;
             modalTitle = 'Rivedi Errori di Oggi';
           } else { this.alertService.showAlert("Info", "Nessun errore da rivedere per oggi. Ottimo!"); return; }
           break;
-        case 2: /* Saltate/Non Risposte */
+        case 3: /* Saltate/Non Risposte */
           if ((this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.skippedAnswerIds ?? [];
             modalTitle = 'Rivedi Saltate/Non Risposte di Oggi';
           } else { this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi."); return; }
           break;
-        case 3: /* Corrette */
+        case 4: /* Corrette */
           if ((this.todayDetailedPerformance.correctAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.correctAnswerIds ?? [];
             modalTitle = 'Rivedi Corrette di Oggi';

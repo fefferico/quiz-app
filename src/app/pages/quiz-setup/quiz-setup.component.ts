@@ -51,7 +51,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   selectedTopicsForDisplay: string[] = [];
   topicCounts: TopicCount[] = [];
 
-  numQuestionsOptions = [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100, 200]; // Added smaller numbers
+  numQuestionsOptions = [1, 2, 3, 4, 5, 10, 20, 30, 50, 75, 100, 200, 500, 1000]; // Added smaller numbers
   selectedNumQuestions: number = 100;
 
   selectAllTopics = true;
