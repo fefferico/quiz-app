@@ -4,7 +4,7 @@
       <h4 class="bg-white dark:text-gray-400">{{ modalTitle }}</h4>
       <button class="close-button-simple" (click)="closeModal()" aria-label="Chiudi">×</button>
     </div>
-    <div class="modal-body-simple">
+    <div class="modal-body-simple max-h-96 overflow-y-auto">
       <!-- Content will be projected here -->
       <ng-content></ng-content>
     </div>
