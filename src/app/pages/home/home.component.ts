@@ -5,11 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
+import { faSun, faMoon, faAdjust, faHome, IconDefinition, faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
 import { AlertService } from '../../services/alert.service';
+import { SoundService } from '../../core/services/sound.service';
 
 @Component({
   selector: 'app-home',
@@ -21,10 +22,11 @@ import { AlertService } from '../../services/alert.service';
 })
 export class HomeComponent implements OnInit {
   private dbService = inject(DatabaseService);
-  private router = inject(Router); 
+  private router = inject(Router);
   private alertService = inject(AlertService);
+  private soundService = inject(SoundService);
 
-
+  isMusicPlaying: boolean = false;
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
   topics: GenericData[] = [];
@@ -37,6 +39,7 @@ export class HomeComponent implements OnInit {
   faStar: IconDefinition = faStar;
   faRepeat: IconDefinition = faRepeat;
   faExclamation: IconDefinition = faExclamation;
+  faPlay: IconDefinition = faPlay;
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
 
   pausedQuiz: QuizAttempt | undefined;
@@ -156,5 +159,34 @@ export class HomeComponent implements OnInit {
     Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
 
     this.router.navigate(['/quiz/take'], { queryParams });
+  }
+
+  previousTrackIndex: number | null = null;
+
+  startMusic(index: number): void {
+    // index = 0 : Lazio, index = 1 : Roma
+    const tracks = ['lazio', 'roma'];
+    if (index < 0 || index >= tracks.length) return;
+
+    // If music is playing and a different track is selected, switch tracks
+    if (this.isMusicPlaying) {
+      if (this.previousTrackIndex !== index) {
+        this.soundService.play(tracks[index]);
+        this.previousTrackIndex = index;
+        return;
+      } else {
+        // Same track: stop music
+        this.soundService.setSoundsEnabled(false);
+        this.isMusicPlaying = false;
+        this.previousTrackIndex = null;
+        return;
+      }
+    }
+
+    // Start music
+    this.soundService.setSoundsEnabled(true);
+    this.soundService.play(tracks[index]);
+    this.isMusicPlaying = true;
+    this.previousTrackIndex = index;
   }
 }

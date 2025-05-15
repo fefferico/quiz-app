@@ -12,11 +12,12 @@ import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
 import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat, faMusic, faVolumeMute } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+// IMPORT faCog for the new button
+import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat, faMusic, faVolumeMute, faCog, faVolumeUp } from '@fortawesome/free-solid-svg-icons'; // Added faCog
 import { AlertService } from '../../../services/alert.service';
 import { AlertButton, AlertOptions } from '../../../models/alert.model';
 import { AlertComponent } from '../../../shared/alert/alert.component';
-import { SoundService } from '../../../core/services/sound.service.spec';
+import { SoundService } from '../../../core/services/sound.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -54,6 +55,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   faSoundOn = faMusic;
   faSoundOff = faVolumeMute;
+  faCog = faCog; // Make faCog available to the template
+  faVolumeUp = faVolumeUp; // Icon for Reading Mode ON
 
   // --- NEW: Sound and Streak Properties ---
   quizSpecificSoundsEnabled = false; // Determined by quiz settings
@@ -89,6 +92,22 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   currentFontIndex: number = 0;
   currentFont: FontOption = this.availableFonts[0];
   // --- End Accessibility Font Settings ---
+
+  // --- NEW: Property for Accessibility Controls Visibility ---
+  showAccessibilityControls: boolean = false; // Default to false (hidden)
+  // --- END NEW ---
+
+  // --- Reading Mode (TTS) Properties ---
+  isReadingModeEnabled: boolean = false;
+  private synth!: SpeechSynthesis; // Definite assignment in constructor
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
+  isCurrentlySpeaking: boolean = false;
+
+  // --- NEW: Speech Queue ---
+  private speakQueue: Array<() => Promise<void>> = [];
+  private isProcessingQueue: boolean = false;
+  private readonly OPTION_VOICE_DELAY_MS = 400; // Delay in ms between option number and text
+  // --- END NEW ---
 
   // Timer related properties
   isTimerEnabled = false;
@@ -202,7 +221,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
 
-  constructor() { }
+  constructor() {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      this.synth = window.speechSynthesis;
+    } else {
+      console.warn('SpeechSynthesis API not available. Reading mode will be disabled.');
+      // synth remains undefined, isReadingModeEnabled will be forced false
+    }
+  }
 
   ngOnInit(): void {
     this.quizStartTime = new Date();
@@ -216,7 +242,12 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         this.quizTitle = params['quizTitle'] || 'Quiz';
 
         this.quizSpecificSoundsEnabled = params['enableStreakSounds'] === 'true';
-        this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled); // Update global service state for this quiz session
+        if (this.synth) {
+          this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled && !this.isReadingModeEnabled);
+        } else {
+          this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
+          this.isReadingModeEnabled = false; // Force disable if synth not available
+        }
 
         if (resumeAttemptId) {
           this.isResuming = true;
@@ -251,11 +282,21 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             timerDurationSeconds: this.timerDuration,
             questionIDs: fixedQuestionIds
           };
-          await this.loadQuestions(false);
+          await this.loadQuestions(false); // Ensure questions are loaded before potential initial speak
         }
       });
     this.applyFontSettingsToWrapper();
+    // If reading mode was loaded as true, speak the first question
+    if (this.isReadingModeEnabled && this.currentQuestion && this.synth) {
+      this.speakCurrentQuestionContent();
+    }
   }
+
+  // --- NEW: Method to toggle Accessibility Controls Visibility ---
+  toggleAccessibilityControls(): void {
+    this.showAccessibilityControls = !this.showAccessibilityControls;
+  }
+  // --- END NEW ---
 
   async loadQuestions(isResumeLoad: boolean = false): Promise<void> {
     this.isLoading = true;
@@ -300,6 +341,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   async pauseQuiz(): Promise<void> {
+    this.stopSpeaking(); // Stop speech on quiz end
     if (!this.currentQuizAttemptId || this.quizCompleted) return;
 
     this.alertService.showConfirmationDialog("Attenzione", 'Stati per sospendere il quiz, così facendo potrai riprenderlo più tardi dalla schermata principale. Confermi?').then(result => {
@@ -414,10 +456,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     this.timerSubscription = this.timeLeft$.subscribe(timeLeftSeconds => {
       this._timeLeftSeconds = timeLeftSeconds;
 
-      if (this.quizSpecificSoundsEnabled && (this._timeLeftSeconds/originalDuration*100 <= 20) && !this.soundIsPlaying){
-          this.soundService.play('warning');
-          this.soundIsPlaying = true;
-        }
+      if (this.quizSpecificSoundsEnabled && (this._timeLeftSeconds / originalDuration * 100 <= 20) && !this.soundIsPlaying) {
+        this.soundService.play('warning');
+        this.soundIsPlaying = true;
+      }
     });
   }
 
@@ -447,7 +489,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   setCurrentQuestion(): void {
     this.clearAutoAdvanceTimeout();
-    this.highlightedOptionIndex = null; // Reset highlight on new question
+    this.highlightedOptionIndex = null;
 
     if (this.questions.length > 0 && this.currentQuestionIndex < this.questions.length) {
       // Work with a shallow copy for display to allow shuffling options without altering the master `this.questions`
@@ -495,10 +537,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         this.isAnswerSubmitted = false;
         this.answerStates = Array(this.currentQuestion.options.length).fill(AnswerState.UNANSWERED);
       }
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); // Ensure UI is updated before speaking
+      if (this.isReadingModeEnabled && this.synth) { // If mode is on, speak the new question.
+        this.speakCurrentQuestionContent();
+      }
     } else {
       this.currentQuestion = undefined;
-      if (!this.isLoading && this.questions.length > 0 && !this.quizCompleted) { // If out of bounds but not loading/error
+      this.stopSpeaking(); // No question, so stop any lingering speech
+      if (!this.isLoading && this.questions.length > 0 && !this.quizCompleted) {
         this.endQuiz();
       }
     }
@@ -535,6 +581,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     const actualQuestionId = this.questions[this.currentQuestionIndex].id;
     const originalQuestionData = this.questions[this.currentQuestionIndex];
 
+
+
     this.userAnswers.push({
       questionId: actualQuestionId,
       userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
@@ -549,11 +597,21 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }
     });
 
-    if (this.quizSpecificSoundsEnabled) { // Only if sounds are enabled for this quiz
+    if (this.isReadingModeEnabled && this.currentQuestion?.explanation && this.synth) {
+      // Give a moment for UI to update (e.g., show feedback) before reading explanation
+      setTimeout(() => {
+        // Re-check conditions in case mode was toggled off quickly
+        if (this.isReadingModeEnabled && this.currentQuestion?.explanation && this.synth) {
+          this.speakExplanation();
+        }
+      }, 700); // Adjusted delay
+    }
+
+    if (!this.isReadingModeEnabled && this.quizSpecificSoundsEnabled) {
       if (isCorrect) {
         this.currentCorrectStreak++;
         // Play general correct sound (optional)
-        this.soundService.play('correct'); 
+        this.soundService.play('correct');
 
         // Check for streak thresholds
         for (let i = this.STREAK_THRESHOLDS.length - 1; i >= 0; i--) { // Check from highest streak down
@@ -584,11 +642,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   public handleAutoAdvance(): void {
     this.clearAutoAdvanceTimeout();
     if (this.isAnswerSubmitted && this.currentQuestionIndex < this.questions.length - 1 && !this.quizIsOverByTime) {
+      // If TTS is active and an explanation is likely being read, give it more time.
+      // This is a heuristic. A more robust way would be to chain auto-advance after the speak queue for explanation finishes.
+      const advanceDelay = (this.isReadingModeEnabled && this.currentQuestion?.explanation) ? 4500 : 2000;
       this.autoAdvanceTimeout = setTimeout(() => {
-        this.ngZone.run(() => { // Ensure Angular knows about changes from setTimeout
+        this.ngZone.run(() => {
           this.nextQuestion();
         });
-      }, 2000);
+      }, advanceDelay);
     }
   }
 
@@ -660,6 +721,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   async endQuiz(isTimeUp: boolean = false): Promise<void> {
+    this.stopSpeaking(); // Stop speech on quiz end
     this.soundIsPlaying = false;
     this.clearAutoAdvanceTimeout();
     if (this.quizCompleted && !isTimeUp) return; // If already completed (not by time), don't re-process
@@ -741,8 +803,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       // timeLeftOnPauseSeconds is not relevant here as quiz is ending
     };
 
-    if (this.quizSpecificSoundsEnabled){
-      if (score/this.questions.length > 75){
+    if (this.quizSpecificSoundsEnabled) {
+      if (score / this.questions.length > 75) {
         this.soundService.play('done');
       } else {
         this.soundService.play('fail');
@@ -764,12 +826,15 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   // Example of how you might add a UI toggle for sounds *during* the quiz (optional)
   toggleQuizSounds(): void {
     this.quizSpecificSoundsEnabled = !this.quizSpecificSoundsEnabled;
-    this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
-    // Persist this choice for the current quiz if desired (e.g., in QuizAttempt settings, or a local component state)
+    if (!this.isReadingModeEnabled && this.synth) { // Only affect game sounds if TTS is off
+        this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
+    }
+    // Persist this choice if desired (e.g., in localStorage or quiz settings)
   }
 
   ngOnDestroy(): void {
     this.clearAutoAdvanceTimeout();
+    this.stopSpeaking(); // Stop any TTS on component destroy
     this.destroy$.next();
     this.destroy$.complete();
     document.documentElement.style.removeProperty('--quiz-font-scale');
@@ -893,11 +958,28 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         this.currentFont = this.availableFonts[index];
       }
     }
+    // --- NEW: Load Reading Mode Preference ---
+    const savedReadingMode = localStorage.getItem('quizReadingModeEnabled');
+    this.isReadingModeEnabled = savedReadingMode === 'true';
+
+    if (!this.synth) { // If synth wasn't initialized, force reading mode off
+        this.isReadingModeEnabled = false;
+    }
+
+    if (this.isReadingModeEnabled && this.synth) {
+      this.soundService.setSoundsEnabled(false);
+    } else if (this.synth) { // synth is available, but reading mode is off
+      this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled); // Set based on quiz sounds pref
+    }
+    // --- END NEW ---
   }
 
   private saveAccessibilityPreferences(): void {
     localStorage.setItem('quizFontSizeStep', this.fontSizeStep.toString());
     localStorage.setItem('quizFontIndex', this.currentFontIndex.toString());
+    // --- NEW: Save Reading Mode Preference ---
+    localStorage.setItem('quizReadingModeEnabled', this.isReadingModeEnabled.toString());
+    // --- END NEW ---
   }
 
   increaseFontSize(): void {
@@ -966,5 +1048,186 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     }
   }
 
+  // --- NEW: TTS Methods ---
+  toggleReadingMode(): void {
+    if (!this.synth) {
+      this.isReadingModeEnabled = false; // Ensure it's off if synth not available
+      this.alertService.showAlert('Funzione non disponibile', 'La lettura vocale non è supportata dal tuo browser.');
+      this.saveAccessibilityPreferences(); // Save the "false" state
+      return;
+    }
 
+    this.isReadingModeEnabled = !this.isReadingModeEnabled;
+    this.saveAccessibilityPreferences();
+
+    if (this.isReadingModeEnabled) {
+      this.soundService.setSoundsEnabled(false);
+      if (this.currentQuestion) {
+        this.speakCurrentQuestionContent(); // Builds and starts the queue
+      }
+    } else {
+      this.stopSpeaking(); // Clears queue and stops current speech
+      this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
+    }
+    this.cdr.detectChanges();
+  }
+
+  // --- Updated TTS Methods with Queue ---
+
+  private speakText(text: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if speaking is allowed (mode enabled, synth available, text provided)
+      // and if the queue is supposed to be processed (isProcessingQueue could be false if stopSpeaking was called)
+      if (!this.isReadingModeEnabled || !text || !this.synth || this.speakQueue.length === 0 && !this.isProcessingQueue && this.currentUtterance === null) {
+        // If queue is empty and we are not in midst of processing, or mode disabled, resolve.
+        // The currentUtterance check is to prevent premature resolve if stopSpeaking cleared the queue
+        // but an utterance was already active.
+        resolve();
+        return;
+      }
+
+
+      // If synth is already speaking something *not* from our queue management (shouldn't happen if logic is correct)
+      // or if a new speakText is forced while one is active (also shouldn't happen with queue),
+      // we might need to cancel. However, queue processing should prevent overlaps.
+      // The primary concern is external calls to synth.cancel (e.g., from stopSpeaking).
+
+      let settled = false;
+      this.currentUtterance = new SpeechSynthesisUtterance(this.stripHtml(text)); // Strip HTML here
+      this.currentUtterance.lang = 'it-IT';
+
+      this.currentUtterance.onstart = () => {
+        this.isCurrentlySpeaking = true;
+        this.cdr.detectChanges();
+      };
+
+      this.currentUtterance.onend = () => {
+        if (settled) return;
+        settled = true;
+        this.isCurrentlySpeaking = false;
+        this.currentUtterance = null;
+        this.cdr.detectChanges();
+        resolve();
+      };
+
+      this.currentUtterance.onerror = (event) => {
+        if (settled) return;
+        settled = true;
+        console.error('SpeechSynthesis Error:', event);
+        this.isCurrentlySpeaking = false;
+        this.currentUtterance = null;
+        this.cdr.detectChanges();
+        reject(event);
+      };
+
+      try {
+        this.synth.speak(this.currentUtterance);
+      } catch (e) {
+        if (settled) return;
+        settled = true;
+        console.error("Error calling synth.speak:", e);
+        this.isCurrentlySpeaking = false;
+        this.currentUtterance = null;
+        this.cdr.detectChanges();
+        reject(e);
+      }
+    });
+  }
+
+  private delayPromise(ms: number): Promise<void> {
+    return new Promise(resolve => {
+      // Check if reading mode is still active before resolving the delay
+      // This allows stopSpeaking to effectively interrupt delays too.
+      const timerId = setTimeout(() => {
+        if (this.isReadingModeEnabled && (this.isProcessingQueue || this.speakQueue.length > 0)) { // Check if we should still proceed
+          resolve();
+        } else {
+          // If mode was disabled or queue cleared during delay,
+          // resolve to allow queue processing to terminate gracefully.
+          resolve();
+        }
+      }, ms);
+      // If stopSpeaking is called, we might want to clear this timeout.
+      // For now, the check inside resolve is a simpler way.
+    });
+  }
+
+  private async processSpeakQueue(): Promise<void> {
+    if (this.speakQueue.length === 0 || !this.isReadingModeEnabled || this.isProcessingQueue) {
+      this.isProcessingQueue = false; // Ensure it's false if queue is done or mode off
+      return;
+    }
+
+    this.isProcessingQueue = true;
+    const nextAction = this.speakQueue.shift();
+
+    if (nextAction) {
+      try {
+        await nextAction(); // Wait for the current speech/delay to complete
+      } catch (error) {
+        console.error("Error processing speech queue action:", error);
+        // Potentially stop further queue processing, or log and attempt to continue
+      }
+    }
+
+    this.isProcessingQueue = false;
+    // After the current action is done, recursively call to process the next item
+    if (this.isReadingModeEnabled && this.speakQueue.length > 0) {
+      this.processSpeakQueue();
+    }
+  }
+
+  // This is the main stop function
+  private stopSpeaking(): void {
+    this.speakQueue = []; // Clear the queue of pending actions
+    // isProcessingQueue will naturally become false as the current promise resolves and queue is empty.
+
+    if (this.synth && this.synth.speaking) {
+      this.synth.cancel(); // Cancel the currently speaking utterance.
+      // This will trigger its onend/onerror.
+    }
+    // this.currentUtterance is nulled by its own onend/onerror
+    this.isCurrentlySpeaking = false; // Reflect immediate state
+    this.cdr.detectChanges();
+  }
+
+  private speakCurrentQuestionContent(): void {
+    if (!this.isReadingModeEnabled || !this.currentQuestion || !this.synth) return;
+
+    this.stopSpeaking(); // Clear previous queue and stop any current speech
+
+    let initialText = `Domanda ${this.currentQuestionIndex + 1}. ${this.currentQuestion.text}. `;
+    if (this.currentQuestion.options.length > 0) {
+      initialText += "Opzioni: ";
+    }
+    this.speakQueue.push(() => this.speakText(initialText));
+
+    this.currentQuestion.options.forEach((option, index) => {
+      this.speakQueue.push(() => this.speakText(`${index + 1}.`));
+      this.speakQueue.push(() => this.delayPromise(this.OPTION_VOICE_DELAY_MS)); // Add delay
+      this.speakQueue.push(() => this.speakText(option)); // HTML is stripped in speakText
+    });
+
+    if (!this.isProcessingQueue) { // Start processing only if not already doing so
+      this.processSpeakQueue();
+    }
+  }
+
+  private speakExplanation(): void {
+    if (!this.isReadingModeEnabled || !this.currentQuestion?.explanation || !this.synth) return;
+
+    this.stopSpeaking(); // Stop previous queue and speak only explanation
+
+    this.speakQueue.push(() => this.speakText(`Spiegazione: ${this.currentQuestion!.explanation!}`));
+
+    if (!this.isProcessingQueue) {
+      this.processSpeakQueue();
+    }
+  }
+  // --- END Updated TTS Methods ---
+
+  private stripHtml(html: string): string {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  }
 }

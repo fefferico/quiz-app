@@ -1,5 +1,5 @@
 <!-- This is now the content that goes INSIDE app-simple-modal -->
- <h5 class="bg-white dark:text-gray-600">Tipologia: <strong>{{modalTitle}}</strong></h5>
+<h5 class="bg-white dark:text-gray-600">Tipologia: <strong>{{modalTitle}}</strong></h5>
 <div *ngIf="topics.length > 0" class="space-y-3 border-t pt-4 mt-4">
     <h4 class="text-md font-medium text-gray-600 mb-2">Imposta il numero di domande per argomento:</h4>
     <div *ngFor="let topic of clonedTopics; let i = index" class="p-3 border rounded-md bg-gray-50">
@@ -10,8 +10,8 @@
             <div class="w-28">
                 <div class="flex items-center space-x-2">
 
-                    <input #inputValue type="number" min="1" max="{{getMaxCountOfTopic(topic)}}" id="count-{{topic.topic}}"
-                        name="count-{{topic.topic}}-{{i}}" [value]="topic.count"
+                    <input #inputValue type="number" min="1" max="{{getMaxCountOfTopic(topic)}}"
+                        id="count-{{topic.topic}}" name="count-{{topic.topic}}-{{i}}" [value]="topic.count"
                         (change)="calculateTotalQuestionsFromTopicCounts($event, topic)"
                         class="block w-full p-1.5 text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:text-gray-600">
                 </div>
@@ -30,14 +30,19 @@
 </p>
 
 <!-- Buttons will be projected into the modal-footer -->
-<div modal-footer class="mt-2">
+<div modal-footer class="flex flex-col sm:flex-row sm:justify-center items-center gap-4 mt-4">
     <button type="submit" (click)="onInternalCancel()"
-        class="w-full sm:w-auto inline-block bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150">
+        class="w-full inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-700 dark:hover:bg-gray-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
+        <fa-icon class="ml-2 fa-lg" [icon]="faCancel"></fa-icon>
         {{ 'Annulla' }}
     </button>
 
     <button type="submit" [disabled]="!selectedNumQuestions" (click)="onInternalSubmit()"
-        class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150 ml-2">
-        {{ isLoading ? 'Caricamento in corso...' : 'Inizia quiz di ripasso' }}
+        class="w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center">
+
+        <!-- w-full inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-md hover:shadow-lg transition duration-150 sm:w-auto   -->
+        <!-- w-full inline-block bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center -->
+        <fa-icon class="ml-2 fa-lg" [icon]="military"></fa-icon>
+        {{ isLoading ? 'Caricamento in corso...' : 'Ripassa' }}
     </button>
 </div>

@@ -10,7 +10,7 @@ import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevronUp, faGears, faBook } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevronUp, faGears, faBook, faCancel } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
 
@@ -37,6 +37,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
   faGears: IconDefinition = faGears;
   faBook: IconDefinition = faBook;
+  faCancel: IconDefinition = faCancel;
 
   enableTimerInput = false;
   enableCronometerInput = false;

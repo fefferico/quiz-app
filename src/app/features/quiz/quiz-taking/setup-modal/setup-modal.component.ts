@@ -1,14 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { QuizSettings, TopicCount } from '../../../../models/quiz.model';
+import { QuizSettings } from '../../../../models/quiz.model';
 import { GenericData } from '../../../../models/statistics.model';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { IconDefinition, faPersonMilitaryRifle, faCancel } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-setup-modal', // Changed selector to avoid confusion
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule],
   templateUrl: './setup-modal.component.html', // New template name
   styleUrls: ['./setup-modal.component.scss'] // New style name
 })
@@ -20,6 +22,10 @@ export class SetupModalComponent implements OnInit {
   @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
+
+  // icons
+  military: IconDefinition = faPersonMilitaryRifle;
+  faCancel: IconDefinition = faCancel;
 
   setupQuizForm: FormGroup;
   isLoading = false;

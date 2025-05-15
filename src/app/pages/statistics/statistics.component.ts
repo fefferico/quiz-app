@@ -15,7 +15,7 @@ import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal
 import { GenericData } from '../../models/statistics.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears} from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 
 Chart.register(...registerables);
@@ -72,14 +72,20 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private alertService = inject(AlertService);
 
+  
+
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
   study: IconDefinition = faMagnifyingGlass; // This was already here, seems unused in the template you showed previously
+  military: IconDefinition = faPersonMilitaryRifle; // This was already here, seems unused in the template you showed previously
+  faGears: IconDefinition = faGears; // This was already here, seems unused in the template you showed previously
 
   quizAttempts: QuizAttempt[] = [];
   allQuestionsFromDb: Question[] = []; // Store all questions from the DB bank
 
   isLoading = true;
+  isLoadingModal = false;
+  loadingButtonIndex = -1;
   errorLoading = '';
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
@@ -577,6 +583,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
+    this.isLoadingModal = true;
     const selectedData = this.tipologiaDomande[index];
     if (!selectedData || !selectedData.questionIds || selectedData.questionIds.length === 0) {
       this.alertService.showAlert("Info",`Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
@@ -587,6 +594,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       const questionsForModal = await this.dbService.getQuestionByIds(selectedData.questionIds);
+      this.isLoadingModal = false;
       const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Uncategorized';
@@ -604,6 +612,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       }));
       this.openQuizSetupModal();
     } catch (error) {
+      this.isLoadingModal = false;
       console.error("Error fetching questions for modal setup:", error);
       this.alertService.showAlert("Attenzione","Errore nel preparare il quiz di pratica.");
     }

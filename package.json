@@ -76,7 +76,7 @@
   "type": "commonjs",
   "build": {
     "appId": "com.yourcompany.quizapp",
-    "productName": "QuizWiz App",
+    "productName": "DajeFra App",
     "directories": {
       "output": "release/",
       "buildResources": "src/assets"
