@@ -3,19 +3,20 @@
 
   <!-- NEW: Toggle Button for Accessibility Controls -->
   <div class="text-right mb-2">
-    <button (click)="toggleAccessibilityControls()" 
-            [title]="showAccessibilityControls ? 'Nascondi Controlli Accessibilità' : 'Mostra Controlli Accessibilità'"
-            class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
-      <fa-icon [icon]="faCog" class="text-lg {{ showAccessibilityControls ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400' }}"></fa-icon>
+    <button (click)="toggleAccessibilityControls()"
+      [title]="showAccessibilityControls ? 'Nascondi Controlli Accessibilità' : 'Mostra Controlli Accessibilità'"
+      class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+      <fa-icon [icon]="faCog"
+        class="text-lg {{ showAccessibilityControls ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400' }}"></fa-icon>
       {{ 'Impostazioni accessibilità'}}
     </button>
   </div>
   <!-- END NEW -->
 
   <!-- Accessibility Controls - NOW CONDITIONALLY RENDERED -->
-<div *ngIf="showAccessibilityControls"
+  <div *ngIf="showAccessibilityControls"
     class="accessibility-controls flex flex-col sm:flex-wrap sm:justify-around items-center gap-2 p-2 mb-4 border-b border-gray-200 dark:border-gray-700">
-    
+
     <div class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start">
       <span class="text-xs font-medium mr-1">Dim. Testo:</span>
       <button (click)="decreaseFontSize()" [disabled]="fontSizeStep <= minFontSizeStep"
@@ -25,20 +26,20 @@
       <button (click)="increaseFontSize()" [disabled]="fontSizeStep >= maxFontSizeStep"
         aria-label="Aumenta dimensione testo" class="p-1.5 sm:p-2 text-xs leading-none">+</button>
     </div>
-    
-    <div class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
+
+    <div
+      class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Font:</span>
       <button (click)="cycleFontFamily()" aria-label="Cambia font"
         class="p-1.5 sm:p-2 text-xs leading-none min-w-[70px]">{{ currentFont.name }}</button>
     </div>
 
-    <div class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
+    <div
+      class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Suoni Quiz:</span>
-      <button (click)="toggleQuizSounds()" 
-              [disabled]="isReadingModeEnabled" 
-              title="{{ quizSpecificSoundsEnabled ? 'Disattiva Suoni Quiz' : 'Attiva Suoni Quiz' }} {{ isReadingModeEnabled ? '(Disabilitato in modalità lettura)' : '' }}"
-              class="p-1.5 sm:p-2 text-xs leading-none"
-              [ngClass]="{'opacity-50 cursor-not-allowed': isReadingModeEnabled}">
+      <button (click)="toggleQuizSounds()" [disabled]="isReadingModeEnabled"
+        title="{{ quizSpecificSoundsEnabled ? 'Disattiva Suoni Quiz' : 'Attiva Suoni Quiz' }} {{ isReadingModeEnabled ? '(Disabilitato in modalità lettura)' : '' }}"
+        class="p-1.5 sm:p-2 text-xs leading-none" [ngClass]="{'opacity-50 cursor-not-allowed': isReadingModeEnabled}">
         <fa-icon [icon]="quizSpecificSoundsEnabled && !isReadingModeEnabled ? faSoundOn : faSoundOff"
           class="text-lg {{ quizSpecificSoundsEnabled && !isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
         </fa-icon>
@@ -46,16 +47,31 @@
     </div>
 
     <!-- NEW: Reading Mode (TTS) Toggle Button -->
-    <div class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
+    <div
+      class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Lettura Vocale:</span>
-      <button (click)="toggleReadingMode()" 
-              [title]="isReadingModeEnabled ? 'Disattiva Lettura Vocale' : 'Attiva Lettura Vocale'"
-              class="p-1.5 sm:p-2 text-xs leading-none flex items-center">
-        <fa-icon [icon]="isReadingModeEnabled ? faVolumeUp : faSoundOff" 
-                 class="text-lg mr-1 {{ isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
+      <button (click)="toggleReadingMode()"
+        [title]="isReadingModeEnabled ? 'Disattiva Lettura Vocale' : 'Attiva Lettura Vocale'"
+        class="p-1.5 sm:p-2 text-xs leading-none flex items-center">
+        <fa-icon [icon]="isReadingModeEnabled ? faVolumeUp : faSoundOff"
+          class="text-lg mr-1 {{ isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
         </fa-icon>
         <span>{{ isReadingModeEnabled ? 'On' : 'Off' }}</span>
       </button>
+    </div>
+    <!-- END NEW -->
+
+    <!-- NEW: Voice Selector Dropdown -->
+    <div *ngIf="isReadingModeEnabled && voiceSelectionAvailable && availableVoices.length > 0"
+      class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
+      <span class="text-xs font-medium mr-1">Voce:</span>
+      <select (change)="setSelectedVoice($any($event.target).value)" aria-label="Seleziona voce per lettura"
+        class="p-1.5 sm:p-2 text-xs leading-none bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+        <option *ngFor="let voice of availableVoices" [value]="voice.name"
+          [selected]="selectedVoice?.name === voice.name">
+          {{ voice.name }} ({{ voice.lang }})
+        </option>
+      </select>
     </div>
     <!-- END NEW -->
 

@@ -99,14 +99,22 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   // --- Reading Mode (TTS) Properties ---
   isReadingModeEnabled: boolean = false;
-  private synth!: SpeechSynthesis; // Definite assignment in constructor
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private synth!: SpeechSynthesis;
+  private currentUtterance: SpeechSynthesisUtterance | null = null; // Tracks the globally active utterance
   isCurrentlySpeaking: boolean = false;
-
-  // --- NEW: Speech Queue ---
   private speakQueue: Array<() => Promise<void>> = [];
   private isProcessingQueue: boolean = false;
-  private readonly OPTION_VOICE_DELAY_MS = 400; // Delay in ms between option number and text
+  private readonly OPTION_VOICE_DELAY_MS = 400;
+
+  // Store preferred voices for different languages
+  private preferredItalianVoice: SpeechSynthesisVoice | null = null;
+  private preferredEnglishVoice: SpeechSynthesisVoice | null = null;
+  // --- END NEW ---
+
+  // --- NEW: Voice Selection Properties ---
+  availableVoices: SpeechSynthesisVoice[] = [];
+  selectedVoice: SpeechSynthesisVoice | null = null;
+  public voiceSelectionAvailable: boolean = false; // To show/hide voice selector in UI
   // --- END NEW ---
 
   // Timer related properties
@@ -224,13 +232,17 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   constructor() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       this.synth = window.speechSynthesis;
+      this.synth.onvoiceschanged = () => {
+        this.loadAvailableVoices();
+      };
     } else {
       console.warn('SpeechSynthesis API not available. Reading mode will be disabled.');
-      // synth remains undefined, isReadingModeEnabled will be forced false
     }
   }
 
   ngOnInit(): void {
+    this.loadAvailableVoices(); // Attempt to load voices initially
+
     this.quizStartTime = new Date();
     this.loadAccessibilityPreferences();
 
@@ -827,7 +839,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   toggleQuizSounds(): void {
     this.quizSpecificSoundsEnabled = !this.quizSpecificSoundsEnabled;
     if (!this.isReadingModeEnabled && this.synth) { // Only affect game sounds if TTS is off
-        this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
+      this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
     }
     // Persist this choice if desired (e.g., in localStorage or quiz settings)
   }
@@ -947,31 +959,31 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   // --- Accessibility Methods ---
   private loadAccessibilityPreferences(): void {
-    const savedFontSizeStep = localStorage.getItem('quizFontSizeStep');
-    if (savedFontSizeStep) this.fontSizeStep = parseFloat(savedFontSizeStep);
+    // ... (existing font size, font family, reading mode loading)
+    const savedFontSizeStep = localStorage.getItem('quizFontSizeStep'); /* ... */
+    const savedFontIndex = localStorage.getItem('quizFontIndex'); /* ... */
+    const savedReadingMode = localStorage.getItem('quizReadingModeEnabled'); /* ... */
 
-    const savedFontIndex = localStorage.getItem('quizFontIndex');
-    if (savedFontIndex) {
-      const index = parseInt(savedFontIndex, 10);
-      if (index >= 0 && index < this.availableFonts.length) {
-        this.currentFontIndex = index;
-        this.currentFont = this.availableFonts[index];
-      }
-    }
-    // --- NEW: Load Reading Mode Preference ---
-    const savedReadingMode = localStorage.getItem('quizReadingModeEnabled');
     this.isReadingModeEnabled = savedReadingMode === 'true';
 
-    if (!this.synth) { // If synth wasn't initialized, force reading mode off
-        this.isReadingModeEnabled = false;
+    if (!this.synth) {
+      this.isReadingModeEnabled = false;
     }
 
     if (this.isReadingModeEnabled && this.synth) {
       this.soundService.setSoundsEnabled(false);
-    } else if (this.synth) { // synth is available, but reading mode is off
-      this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled); // Set based on quiz sounds pref
+    } else if (this.synth) {
+      this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled);
     }
-    // --- END NEW ---
+
+    // The actual voice selection for IT/EN happens in loadAvailableVoices
+    // and the dynamic choice in speakText.
+    // We still load the general user-selected preferred voice.
+    const preferredVoiceName = localStorage.getItem('quizPreferredVoiceName');
+    if (preferredVoiceName && this.availableVoices.length > 0) { // Check if voices are loaded
+      const voice = this.availableVoices.find(v => v.name === preferredVoiceName);
+      if (voice) this.selectedVoice = voice; // This is the general default
+    }
   }
 
   private saveAccessibilityPreferences(): void {
@@ -1074,60 +1086,93 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   // --- Updated TTS Methods with Queue ---
 
-  private speakText(text: string): Promise<void> {
+  private speakText(text: string, targetLang?: 'it-IT' | 'en-US'): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Check if speaking is allowed (mode enabled, synth available, text provided)
-      // and if the queue is supposed to be processed (isProcessingQueue could be false if stopSpeaking was called)
-      if (!this.isReadingModeEnabled || !text || !this.synth || this.speakQueue.length === 0 && !this.isProcessingQueue && this.currentUtterance === null) {
-        // If queue is empty and we are not in midst of processing, or mode disabled, resolve.
-        // The currentUtterance check is to prevent premature resolve if stopSpeaking cleared the queue
-        // but an utterance was already active.
+      // Initial checks (reading mode, synth, text, queue status)
+      if (!this.isReadingModeEnabled || !text || !this.synth || (this.speakQueue.length === 0 && !this.isProcessingQueue && this.currentUtterance === null)) {
         resolve();
         return;
       }
 
-
-      // If synth is already speaking something *not* from our queue management (shouldn't happen if logic is correct)
-      // or if a new speakText is forced while one is active (also shouldn't happen with queue),
-      // we might need to cancel. However, queue processing should prevent overlaps.
-      // The primary concern is external calls to synth.cancel (e.g., from stopSpeaking).
-
       let settled = false;
-      this.currentUtterance = new SpeechSynthesisUtterance(this.stripHtml(text)); // Strip HTML here
-      this.currentUtterance.lang = 'it-IT';
+      // Create the utterance locally within this promise's scope
+      const utterance = new SpeechSynthesisUtterance(this.stripHtml(text));
 
-      this.currentUtterance.onstart = () => {
+      // --- Voice and Language Selection Logic (as before) ---
+      let voiceToUse: SpeechSynthesisVoice | null = null;
+      let langToSet: string = 'it-IT';
+
+      if (targetLang) {
+        langToSet = targetLang;
+        if (targetLang === 'en-US') voiceToUse = this.preferredEnglishVoice;
+        else voiceToUse = this.preferredItalianVoice;
+      } else if (this.currentQuestion?.topic?.toUpperCase() === 'INGLESE') {
+        langToSet = 'en-US';
+        voiceToUse = this.preferredEnglishVoice;
+      } else {
+        langToSet = 'it-IT';
+        voiceToUse = this.preferredItalianVoice;
+      }
+
+      if (!voiceToUse && this.selectedVoice?.lang.startsWith(langToSet.split('-')[0])) {
+        voiceToUse = this.selectedVoice;
+      }
+
+      if (voiceToUse) {
+        utterance.voice = voiceToUse;
+        utterance.lang = voiceToUse.lang;
+      } else {
+        utterance.lang = langToSet;
+      }
+      // --- End Voice and Language Selection ---
+
+      utterance.onstart = () => {
+        // Set the global currentUtterance when this specific one starts
+        this.currentUtterance = utterance;
         this.isCurrentlySpeaking = true;
         this.cdr.detectChanges();
       };
 
-      this.currentUtterance.onend = () => {
+      utterance.onend = () => {
         if (settled) return;
         settled = true;
         this.isCurrentlySpeaking = false;
-        this.currentUtterance = null;
+        // Clear the global currentUtterance if this one (the one that just ended) was it
+        if (this.currentUtterance === utterance) {
+          this.currentUtterance = null;
+        }
         this.cdr.detectChanges();
         resolve();
       };
 
-      this.currentUtterance.onerror = (event) => {
+      utterance.onerror = (event) => {
         if (settled) return;
         settled = true;
         console.error('SpeechSynthesis Error:', event);
         this.isCurrentlySpeaking = false;
-        this.currentUtterance = null;
+        if (this.currentUtterance === utterance) {
+          this.currentUtterance = null;
+        }
         this.cdr.detectChanges();
         reject(event);
       };
 
       try {
-        this.synth.speak(this.currentUtterance);
+        // Before speaking, make sure to assign this new utterance
+        // as the one the synth should try to speak.
+        // The `stopSpeaking` method might have cleared the synth's internal queue.
+        // However, synth.speak() adds to its own internal queue.
+        // The main role of this.currentUtterance is for our `stopSpeaking` to know what to target.
+        // The synth itself manages its speaking queue.
+        this.synth.speak(utterance);
       } catch (e) {
         if (settled) return;
         settled = true;
         console.error("Error calling synth.speak:", e);
         this.isCurrentlySpeaking = false;
-        this.currentUtterance = null;
+        if (this.currentUtterance === utterance) { // Check if it was this one
+          this.currentUtterance = null;
+        }
         this.cdr.detectChanges();
         reject(e);
       }
@@ -1177,38 +1222,56 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     }
   }
 
-  // This is the main stop function
   private stopSpeaking(): void {
-    this.speakQueue = []; // Clear the queue of pending actions
-    // isProcessingQueue will naturally become false as the current promise resolves and queue is empty.
+    this.speakQueue = [];
+    this.isProcessingQueue = false; // Explicitly stop queue processing flag
 
     if (this.synth && this.synth.speaking) {
-      this.synth.cancel(); // Cancel the currently speaking utterance.
-      // This will trigger its onend/onerror.
+      this.synth.cancel(); // This will trigger onend/onerror of the utterance that was active
     }
-    // this.currentUtterance is nulled by its own onend/onerror
-    this.isCurrentlySpeaking = false; // Reflect immediate state
+    // `this.currentUtterance` will be set to null by the `onend` or `onerror` 
+    // handler of the utterance that was cancelled.
+    // We can also proactively set it to null here for immediate state update,
+    // though the event handlers should ideally manage it.
+    // this.currentUtterance = null; // Optional: for more immediate visual feedback if needed
+    this.isCurrentlySpeaking = false;
     this.cdr.detectChanges();
   }
 
   private speakCurrentQuestionContent(): void {
     if (!this.isReadingModeEnabled || !this.currentQuestion || !this.synth) return;
 
-    this.stopSpeaking(); // Clear previous queue and stop any current speech
+    this.stopSpeaking();
 
-    let initialText = `Domanda ${this.currentQuestionIndex + 1}. ${this.currentQuestion.text}. `;
-    if (this.currentQuestion.options.length > 0) {
-      initialText += "Opzioni: ";
+    const questionTopic = this.currentQuestion.topic?.toUpperCase();
+    const langForQuestion: 'it-IT' | 'en-US' = (questionTopic === 'INGLESE') ? 'en-US' : 'it-IT';
+
+    let initialTextParts: string[] = [];
+    if (langForQuestion === 'en-US') {
+      initialTextParts.push(`Question ${this.currentQuestionIndex + 1}.`);
+      initialTextParts.push(`${this.currentQuestion.text}.`);
+      if (this.currentQuestion.options.length > 0) {
+        initialTextParts.push("Options:");
+      }
+    } else {
+      initialTextParts.push(`Domanda ${this.currentQuestionIndex + 1}.`);
+      initialTextParts.push(`${this.currentQuestion.text}.`);
+      if (this.currentQuestion.options.length > 0) {
+        initialTextParts.push("Opzioni:");
+      }
     }
-    this.speakQueue.push(() => this.speakText(initialText));
+    this.speakQueue.push(() => this.speakText(initialTextParts.join(' '), langForQuestion));
+
 
     this.currentQuestion.options.forEach((option, index) => {
-      this.speakQueue.push(() => this.speakText(`${index + 1}.`));
-      this.speakQueue.push(() => this.delayPromise(this.OPTION_VOICE_DELAY_MS)); // Add delay
-      this.speakQueue.push(() => this.speakText(option)); // HTML is stripped in speakText
+      // Option numbers can be spoken in the primary language or the question's language
+      // For simplicity, let's use the question's language for option numbers too.
+      this.speakQueue.push(() => this.speakText(`${index + 1}.`, langForQuestion));
+      this.speakQueue.push(() => this.delayPromise(this.OPTION_VOICE_DELAY_MS));
+      this.speakQueue.push(() => this.speakText(option, langForQuestion));
     });
 
-    if (!this.isProcessingQueue) { // Start processing only if not already doing so
+    if (!this.isProcessingQueue) {
       this.processSpeakQueue();
     }
   }
@@ -1216,9 +1279,13 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private speakExplanation(): void {
     if (!this.isReadingModeEnabled || !this.currentQuestion?.explanation || !this.synth) return;
 
-    this.stopSpeaking(); // Stop previous queue and speak only explanation
+    this.stopSpeaking();
 
-    this.speakQueue.push(() => this.speakText(`Spiegazione: ${this.currentQuestion!.explanation!}`));
+    const questionTopic = this.currentQuestion.topic?.toUpperCase();
+    const langForExplanation: 'it-IT' | 'en-US' = (questionTopic === 'INGLESE') ? 'en-US' : 'it-IT';
+    const explanationPrefix = langForExplanation === 'en-US' ? "Explanation:" : "Spiegazione:";
+
+    this.speakQueue.push(() => this.speakText(`${explanationPrefix} ${this.currentQuestion!.explanation!}`, langForExplanation));
 
     if (!this.isProcessingQueue) {
       this.processSpeakQueue();
@@ -1229,5 +1296,108 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private stripHtml(html: string): string {
     const doc = new DOMParser().parseFromString(html, 'text/html');
     return doc.body.textContent || "";
+  }
+
+  // --- NEW: Voice Loading and Selection ---
+  private loadAvailableVoices(): void {
+    if (!this.synth) return;
+
+    this.availableVoices = this.synth.getVoices();
+    if (this.availableVoices.length > 0) {
+      this.voiceSelectionAvailable = true; // For UI dropdown
+
+      // Select preferred voices for IT and EN
+      this.preferredItalianVoice = this.findBestVoiceForLang('it-IT') || this.findBestVoiceForLang('it');
+      this.preferredEnglishVoice = this.findBestVoiceForLang('en-US') || this.findBestVoiceForLang('en');
+
+      // Set the default selectedVoice (could be based on browser lang or a general pref)
+      // For now, let's default to Italian if available, otherwise first available.
+      this.selectedVoice = this.preferredItalianVoice || this.availableVoices.find(v => v.default) || this.availableVoices[0] || null;
+
+      // If a voice was previously saved in localStorage, try to honor that
+      const savedVoiceName = localStorage.getItem('quizPreferredVoiceName');
+      if (savedVoiceName) {
+        const foundSaved = this.availableVoices.find(v => v.name === savedVoiceName);
+        if (foundSaved) this.selectedVoice = foundSaved;
+      }
+
+      console.log("Loaded voices. Italian pref:", this.preferredItalianVoice?.name, "English pref:", this.preferredEnglishVoice?.name);
+      this.cdr.detectChanges();
+    }
+  }
+
+  private selectPreferredVoice(lang: string): void {
+    if (this.availableVoices.length === 0) return;
+
+    // Try to find a "Google" voice first for the language, as they are often good
+    let preferred = this.availableVoices.find(voice =>
+      voice.lang.startsWith(lang) && voice.name.toLowerCase().includes('google')
+    );
+
+    if (!preferred) {
+      // Fallback: find any voice for the language, prioritizing non-local if possible
+      preferred = this.availableVoices.find(voice =>
+        voice.lang.startsWith(lang) && voice.localService === false
+      );
+    }
+
+    if (!preferred) {
+      // Fallback: find any voice for the language
+      preferred = this.availableVoices.find(voice => voice.lang.startsWith(lang));
+    }
+
+    if (!preferred && lang.includes('-')) {
+      // Fallback: try to find a voice for the base language (e.g., 'it' from 'it-IT')
+      const baseLang = lang.split('-')[0];
+      preferred = this.availableVoices.find(voice => voice.lang === baseLang);
+    }
+
+    this.selectedVoice = preferred || this.availableVoices.find(v => v.default) || this.availableVoices[0] || null;
+    console.log("Selected voice:", this.selectedVoice?.name, this.selectedVoice?.lang);
+  }
+
+  // This is called if you have a general voice selector UI
+  public setSelectedVoice(voiceName: string): void {
+    const voice = this.availableVoices.find(v => v.name === voiceName);
+    if (voice) {
+      this.selectedVoice = voice; // This becomes the general default if not overridden by topic
+      localStorage.setItem('quizPreferredVoiceName', voice.name);
+
+      // Update language-specific preferences if the selected voice matches a language
+      if (voice.lang.startsWith('it')) this.preferredItalianVoice = voice;
+      if (voice.lang.startsWith('en')) this.preferredEnglishVoice = voice;
+    }
+  }
+  // --- END NEW ---
+  private findBestVoiceForLang(lang: string): SpeechSynthesisVoice | null {
+    if (!this.availableVoices || this.availableVoices.length === 0) return null;
+
+    const langPrefix = lang.split('-')[0]; // e.g., 'it' from 'it-IT'
+
+    // Exact match with "Google" in name
+    let voice = this.availableVoices.find(v => v.lang === lang && v.name.toLowerCase().includes('google'));
+    if (voice) return voice;
+
+    // Prefix match with "Google" in name
+    voice = this.availableVoices.find(v => v.lang.startsWith(langPrefix) && v.name.toLowerCase().includes('google'));
+    if (voice) return voice;
+
+    // Exact match, non-local
+    voice = this.availableVoices.find(v => v.lang === lang && v.localService === false);
+    if (voice) return voice;
+
+    // Prefix match, non-local
+    voice = this.availableVoices.find(v => v.lang.startsWith(langPrefix) && v.localService === false);
+    if (voice) return voice;
+
+    // Exact match, any
+    voice = this.availableVoices.find(v => v.lang === lang);
+    if (voice) return voice;
+
+    // Prefix match, any
+    voice = this.availableVoices.find(v => v.lang.startsWith(langPrefix));
+    if (voice) return voice;
+
+    return null;
   }
 }

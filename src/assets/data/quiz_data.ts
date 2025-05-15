@@ -63311,7 +63311,7 @@ export const initialQuestions = [
   },
   {
     "id": "3337",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) She's definitely not coming",
+    "text": "(Complete the following sentence, select the option that make it sound correct) She's definitely not coming",
     "topic": "INGLESE",
     "options": [
       "is she?",
@@ -63326,7 +63326,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3338",
@@ -63425,7 +63425,7 @@ export const initialQuestions = [
   },
   {
     "id": "3344",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Our clients ______    to be invited to our conference.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Our clients ______    to be invited to our conference.",
     "topic": "INGLESE",
     "options": [
       "would be delighted",
@@ -63440,7 +63440,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3345",
@@ -63558,7 +63558,7 @@ export const initialQuestions = [
   },
   {
     "id": "3351",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Now I can see quite clearly that the big red car has",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Now I can see quite clearly that the big red car has",
     "topic": "INGLESE",
     "options": [
       "struck the little blue one",
@@ -63573,7 +63573,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3352",
@@ -63691,7 +63691,7 @@ export const initialQuestions = [
   },
   {
     "id": "3358",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) am an engineer",
+    "text": "(Complete the following sentence, select the option that make it sound correct) am an engineer",
     "topic": "INGLESE",
     "options": [
       "I",
@@ -63706,7 +63706,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3359",
@@ -63843,7 +63843,7 @@ export const initialQuestions = [
   },
   {
     "id": "3366",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) He must go",
+    "text": "(Complete the following sentence, select the option that make it sound correct) He must go",
     "topic": "INGLESE",
     "options": [
       "mustn't he?",
@@ -63858,7 +63858,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3367",
@@ -63976,7 +63976,7 @@ export const initialQuestions = [
   },
   {
     "id": "3373",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Sometimes I wish I ______ what the future holds.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Sometimes I wish I ______ what the future holds.",
     "topic": "INGLESE",
     "options": [
       "knew",
@@ -63991,7 +63991,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3374",
@@ -64109,7 +64109,7 @@ export const initialQuestions = [
   },
   {
     "id": "3380",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) International restaurants in Singapore are ______  adept at simultaneously perfecting both eastern and western dishes on their menues.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) International restaurants in Singapore are ______  adept at simultaneously perfecting both eastern and western dishes on their menues.",
     "topic": "INGLESE",
     "options": [
       "particularly",
@@ -64124,7 +64124,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3381",
@@ -64166,7 +64166,7 @@ export const initialQuestions = [
   },
   {
     "id": "3386",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) They are very good friends and  on well with each other.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) They are very good friends and  on well with each other.",
     "topic": "INGLESE",
     "options": [
       "get",
@@ -64181,7 +64181,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3387",
@@ -64470,7 +64470,7 @@ export const initialQuestions = [
   },
   {
     "id": "3400",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) I highly recommend this therapy as it is ______  painful of all.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) I highly recommend this therapy as it is ______  painful of all.",
     "topic": "INGLESE",
     "options": [
       "the least",
@@ -64485,7 +64485,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3401",
@@ -64603,7 +64603,7 @@ export const initialQuestions = [
   },
   {
     "id": "3407",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) I wouldn’t accept their offer    .",
+    "text": "(Complete the following sentence, select the option that make it sound correct) I wouldn’t accept their offer    .",
     "topic": "INGLESE",
     "options": [
       "in your shoes",
@@ -64618,7 +64618,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3408",
@@ -64736,7 +64736,7 @@ export const initialQuestions = [
   },
   {
     "id": "3414",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Mike: You know he failed all his examinations? Jane:",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Mike: You know he failed all his examinations? Jane:",
     "topic": "INGLESE",
     "options": [
       "I don't believe it.",
@@ -64751,7 +64751,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3415",
@@ -64869,7 +64869,7 @@ export const initialQuestions = [
   },
   {
     "id": "3421",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) My company is going to take legal                 against yours.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) My company is going to take legal                 against yours.",
     "topic": "INGLESE",
     "options": [
       "action",
@@ -64884,7 +64884,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3422",
@@ -64926,7 +64926,7 @@ export const initialQuestions = [
   },
   {
     "id": "3427",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) The place was so full of people and tables that the waiter had to ______   us through the crowds to our table.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) The place was so full of people and tables that the waiter had to ______   us through the crowds to our table.",
     "topic": "INGLESE",
     "options": [
       "guide",
@@ -64941,7 +64941,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3428",
@@ -65097,7 +65097,7 @@ export const initialQuestions = [
   },
   {
     "id": "3434",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) There are a lot of people there in the car park and they're",
+    "text": "(Complete the following sentence, select the option that make it sound correct) There are a lot of people there in the car park and they're",
     "topic": "INGLESE",
     "options": [
       "waving their arms about",
@@ -65112,7 +65112,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3435",
@@ -65230,7 +65230,7 @@ export const initialQuestions = [
   },
   {
     "id": "3441",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) The district attorney desperately tried to ______   a confession from the accused in the cross-examination.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) The district attorney desperately tried to ______   a confession from the accused in the cross-examination.",
     "topic": "INGLESE",
     "options": [
       "elicit",
@@ -65245,7 +65245,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3442",
@@ -65496,7 +65496,7 @@ export const initialQuestions = [
   },
   {
     "id": "3455",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) What I ______ and what I do are not necessarily the same.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) What I ______ and what I do are not necessarily the same.",
     "topic": "INGLESE",
     "options": [
       "say",
@@ -65511,7 +65511,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3456",
@@ -65629,7 +65629,7 @@ export const initialQuestions = [
   },
   {
     "id": "3468",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) There are different ways of dish to ______ and then it was the wrong order. ______ ______   Shakespeare's plays and each",
+    "text": "(Complete the following sentence, select the option that make it sound correct) There are different ways of dish to ______ and then it was the wrong order. ______ ______   Shakespeare's plays and each",
     "topic": "INGLESE",
     "options": [
       "arrive",
@@ -65644,7 +65644,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3463",
@@ -65838,7 +65838,7 @@ export const initialQuestions = [
   },
   {
     "id": "3474",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) There are always special  in her tragedies that move you to tears.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) There are always special  in her tragedies that move you to tears.",
     "topic": "INGLESE",
     "options": [
       "elements",
@@ -65853,7 +65853,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3475",
@@ -66465,7 +66465,7 @@ export const initialQuestions = [
   },
   {
     "id": "3512",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) After two rings of the bell she suddenly ______in the doorway.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) After two rings of the bell she suddenly ______in the doorway.",
     "topic": "INGLESE",
     "options": [
       "appeared",
@@ -66480,7 +66480,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3513",
@@ -66712,7 +66712,7 @@ export const initialQuestions = [
   },
   {
     "id": "3520",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Jennifer likes spending her money             clothes.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Jennifer likes spending her money             clothes.",
     "topic": "INGLESE",
     "options": [
       "on",
@@ -66727,7 +66727,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3521",
@@ -66845,7 +66845,7 @@ export const initialQuestions = [
   },
   {
     "id": "3527",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Years ago I ______ ______ to work because I loved doing that sport.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Years ago I ______ ______ to work because I loved doing that sport.",
     "topic": "INGLESE",
     "options": [
       "used to cycle",
@@ -66860,7 +66860,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3528",
@@ -71880,7 +71880,7 @@ export const initialQuestions = [
   },
   {
     "id": "3807",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Try ______ these irregular verbs by next week.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Try ______ these irregular verbs by next week.",
     "topic": "INGLESE",
     "options": [
       "to learn",
@@ -71895,7 +71895,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3808",
@@ -73191,7 +73191,7 @@ export const initialQuestions = [
   },
   {
     "id": "3873",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Is Jo ______ Chris?",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Is Jo ______ Chris?",
     "topic": "INGLESE",
     "options": [
       "as tall as",
@@ -73206,7 +73206,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3874",
@@ -73324,7 +73324,7 @@ export const initialQuestions = [
   },
   {
     "id": "3880",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) His office is on the second   of the building.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) His office is on the second   of the building.",
     "topic": "INGLESE",
     "options": [
       "floor",
@@ -73339,7 +73339,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3881",
@@ -73913,7 +73913,7 @@ export const initialQuestions = [
   },
   {
     "id": "3911",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) You should ______ swimming.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) You should ______ swimming.",
     "topic": "INGLESE",
     "options": [
       "take up",
@@ -73928,7 +73928,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3912",
@@ -74046,7 +74046,7 @@ export const initialQuestions = [
   },
   {
     "id": "3918",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Do you drink a ______of tea with sugar?",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Do you drink a ______of tea with sugar?",
     "topic": "INGLESE",
     "options": [
       "lot",
@@ -74061,7 +74061,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3919",
@@ -74312,7 +74312,7 @@ export const initialQuestions = [
   },
   {
     "id": "3932",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Can you hear what he is ______    ?",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Can you hear what he is ______    ?",
     "topic": "INGLESE",
     "options": [
       "saying",
@@ -74327,7 +74327,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3933",
@@ -74445,7 +74445,7 @@ export const initialQuestions = [
   },
   {
     "id": "3939",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Have you ______ made a snowman?",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Have you ______ made a snowman?",
     "topic": "INGLESE",
     "options": [
       "ever",
@@ -74460,7 +74460,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3940",
@@ -74825,7 +74825,7 @@ export const initialQuestions = [
   },
   {
     "id": "3960",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) I honestly think that the time   come when we should celebrate our success.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) I honestly think that the time   come when we should celebrate our success.",
     "topic": "INGLESE",
     "options": [
       "has",
@@ -74840,11 +74840,11 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3967",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Do you want me toit easier for you?",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Do you want me toit easier for you?",
     "topic": "INGLESE",
     "options": [
       "make",
@@ -74859,7 +74859,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3968",
@@ -75072,7 +75072,7 @@ export const initialQuestions = [
   },
   {
     "id": "3974",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Andrew’s attempts to get into the swimming team have not ______ with much success.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Andrew’s attempts to get into the swimming team have not ______ with much success.",
     "topic": "INGLESE",
     "options": [
       "met",
@@ -75087,7 +75087,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3975",
@@ -75205,7 +75205,7 @@ export const initialQuestions = [
   },
   {
     "id": "3981",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) The success of a really good meal is that not only must it taste good but it should also look good and thus ______ to your eye.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) The success of a really good meal is that not only must it taste good but it should also look good and thus ______ to your eye.",
     "topic": "INGLESE",
     "options": [
       "appeal",
@@ -75220,7 +75220,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3982",
@@ -75338,7 +75338,7 @@ export const initialQuestions = [
   },
   {
     "id": "3988",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) Excuse me I ______if you can help me.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) Excuse me I ______if you can help me.",
     "topic": "INGLESE",
     "options": [
       "wonder",
@@ -75353,7 +75353,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "3989",
@@ -75585,7 +75585,7 @@ export const initialQuestions = [
   },
   {
     "id": "4001",
-    "text": "(Completare la frase che segue, inserendol'alternativa di risposta che la rende corretta in lingua inglese) It didn't take long for the children to               off the cakes and pastries that had not been eaten at the party.",
+    "text": "(Complete the following sentence, select the option that make it sound correct) It didn't take long for the children to ______ off the cakes and pastries that had not been eaten at the party.",
     "topic": "INGLESE",
     "options": [
       "finish",
@@ -75600,7 +75600,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 8
+    "questionVersion": 14
   },
   {
     "id": "4002",
