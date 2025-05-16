@@ -1,198 +1,8 @@
 // src/app/core/services/database.service.ts
 import { Injectable } from '@angular/core';
-import Dexie, { Table } from 'dexie';
-import { Question, QuestionDifficulty } from '../../models/question.model'; // Adjust path if necessary
+import { Question } from '../../models/question.model'; // Adjust path if necessary
 import { QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
-import e from 'express';
-import { BehaviorSubject, catchError, tap, throwError } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { AuthService } from './auth.service';
-import { initialQuestions } from '../../../assets/data/quiz_data';
-
-// --- IMPORTANT: Increment this version number whenever you update initialQuestions ---
-const CURRENT_DB_SCHEMA_VERSION = 15; // Example: If previous was 5
-
-// 1. Define a class that extends Dexie
-export class AppDB extends Dexie {
-
-
-
-  // 2. Define tables as properties
-  questions!: Table<Question, string>; // string = type of the primary key (Question['id'])
-  quizAttempts!: Table<QuizAttempt, string>; // string = type of the primary key (QuizAttempt['id'])
-
-  private jsonPath = 'assets/data/quiz_data.ts';
-
-  constructor(private http: HttpClient) {
-    super('QuizAppDB');
-    this.version(CURRENT_DB_SCHEMA_VERSION).stores({
-      questions: 'id, topic, difficulty, timesCorrect, timesIncorrect, isFavorite, questionVersion, lastAnsweredTimestamp, lastAnswerCorrect, accuracy',  // Removed & for boolean indexing
-      quizAttempts: 'id, timestampEnd, status, settings.selectedTopics,timestampStart' // Status index added
-    }).upgrade(async tx => {
-
-
-      // This upgrade function runs if the database version is older than CURRENT_DB_SCHEMA_VERSION
-      console.log(`Upgrading database to version ${CURRENT_DB_SCHEMA_VERSION}`);
-
-      // Logic to update questions without losing other data
-      const questionsTable = tx.table<Question, string>('questions');
-      const currentQuestionsInDb = await questionsTable.toArray();
-      const currentQuestionsMap = new Map(currentQuestionsInDb.map(q => [q.id, q]));
-
-      const puts: Question[] = [];
-      const adds: Question[] = [];
-      const idsInNewSet = new Set<string>();
-
-      for (const newQ of initialQuestions) {
-        idsInNewSet.add(newQ.id);
-        const existingQ = currentQuestionsMap.get(newQ.id);
-
-        if (existingQ) {
-          // Question exists, check if it needs an update
-          // Compare based on questionVersion or a more complex diff if needed
-          if (!existingQ.questionVersion || (newQ.questionVersion && newQ.questionVersion > existingQ.questionVersion) ||
-            JSON.stringify(existingQ.options) !== JSON.stringify(newQ.options) || // Basic content check
-            existingQ.text !== newQ.text ||
-            existingQ.correctAnswerIndex !== newQ.correctAnswerIndex ||
-            existingQ.topic !== newQ.topic ||
-            existingQ.explanation !== newQ.explanation
-          ) {
-            console.log(`Updating question: ${newQ.id}`);
-            // Merge new data with existing isFavorite status (if you want to preserve user's favorites)
-            const questionToPut = {
-              ...newQ, // All new data
-              isFavorite: existingQ.isFavorite || 0 // Preserve existing favorite status
-            };
-            puts.push(questionToPut);
-          }
-        } else {
-          // New question, add it
-          console.log(`Adding new question: ${newQ.id}`);
-          adds.push({ ...newQ, isFavorite: newQ.isFavorite || 0 }); // Ensure isFavorite has a default
-        }
-      }
-
-      if (puts.length > 0) {
-        await questionsTable.bulkPut(puts);
-        console.log(`Updated ${puts.length} questions.`);
-      }
-      if (adds.length > 0) {
-        await questionsTable.bulkAdd(adds);
-        console.log(`Added ${adds.length} new questions.`);
-      }
-
-      // Optional: Handle questions removed from initialQuestions.ts
-      // For now, we'll keep them in the DB (soft delete would be better if actual removal is needed)
-      // If you want to hard-delete questions no longer in initialQuestions:
-      // const deletes: string[] = [];
-      // currentQuestionsInDb.forEach(dbQ => {
-      //   if (!idsInNewSet.has(dbQ.id)) {
-      //     deletes.push(dbQ.id);
-      //   }
-      // });
-      // if (deletes.length > 0) {
-      //   await questionsTable.bulkDelete(deletes);
-      //   console.log(`Deleted ${deletes.length} questions no longer in the initial set.`);
-      //   // BE CAREFUL: This will break display of old quiz attempts if they used these questions,
-      //   // unless quiz attempts store full question snapshots.
-      // }
-
-    });
-
-    // Initial population for a brand new database (version 1 or first time this version runs)
-    // This on.populate only runs if the DB is being created from scratch.
-    // The upgrade handler above deals with existing DBs.
-    this.on('populate', async () => {
-      console.log('Populating new database...');
-      const questionsWithDefaults = initialQuestions.map(q => ({
-        ...q,
-        isFavorite: q.isFavorite || 0, // Ensure default for isFavorite
-        questionVersion: q.questionVersion || 1 // Ensure default for questionVersion
-      }));
-      let currentQuestion = null;
-      try {
-        for (const quest of questionsWithDefaults) {
-          currentQuestion = quest;
-          await this.questions.add(quest);
-        }
-      } catch (error) {
-        console.error('Error populating initial questions:', currentQuestion);
-      }
-      console.log('Database populated with initial questions.');
-    });
-
-    //this.loadInitialQuestions();
-  }
-
-  public loadInitialQuestions(): void {
-    this.http.get<Question[]>(this.jsonPath).pipe(
-      tap(questions => {
-        this.allQuestionsSubject.next(questions);
-        const uniqueTopics = [...new Set(questions.map(q => q.topic))];
-        this.topicsSubject.next(uniqueTopics);
-        // Optionally load a default topic or all questions initially
-        this.currentTopicQuestionsSubject.next(questions);
-        console.log("Questions loaded and topics extracted.");
-      }),
-      catchError(this.handleError)
-    ).subscribe(questions => {
-      this.questions.bulkAdd(questions);
-    });
-  }
-
-  private handleError(error: any) {
-    console.error('An error occurred while fetching questions:', error);
-    return throwError(() => new Error('Something bad happened; please try again later.'));
-  }
-
-  // Optional: Method to populate initial data if the DB is empty
-  // src/app/core/services/database.service.ts
-
-  // ... other imports and AppDB class definition ...
-
-  // ... constructor and schema definition ...
-
-  // BehaviorSubjects to hold and broadcast data
-  private allQuestionsSubject = new BehaviorSubject<Question[]>([]);
-  allQuestions$ = this.allQuestionsSubject.asObservable();
-
-  private currentTopicQuestionsSubject = new BehaviorSubject<Question[]>([]);
-  currentTopicQuestions$ = this.currentTopicQuestionsSubject.asObservable();
-
-  private topicsSubject = new BehaviorSubject<string[]>([]);
-  topics$ = this.topicsSubject.asObservable();
-
-  async populateInitialDataIfNeeded() {
-    const questionCount = await this.questions.count();
-    if (questionCount === 0) {
-      console.log('Populating initial question data with stats fields...');
-      const sampleQuestions: any[] = initialQuestions
-        .map(q => ({
-          ...q,
-          timesCorrect: q.timesCorrect || 0, // Initialize new fields
-          timesIncorrect: q.timesIncorrect || 0, // Initialize new fields,
-          isFavorite: q.isFavorite || 0 // Initialize new field
-        }));
-      let currentQuestion = null;
-      try {
-        // FOR TESTING WRONG QUESTIONS
-        // for (const quest of sampleQuestions) {
-        //   currentQuestion = quest;
-        //           console.log('Adding quest: ',quest);
-        //   await this.questions.add(quest);
-        // }
-        await this.questions.bulkAdd(sampleQuestions);
-        console.log('Initial questions (expanded set) added successfully.');
-      } catch (error) {
-        console.error('Error populating initial questions:', error);
-      }
-    } else {
-      console.log('Question data already exists. Not repopulating.');
-    }
-  }
-  // ... rest of DatabaseService ...
-}
-
+import { AppDB } from './appDB';
 
 @Injectable({
   providedIn: 'root' // Ensures this service is a singleton
@@ -200,65 +10,58 @@ export class AppDB extends Dexie {
 export class DatabaseService {
   private db: AppDB;
 
-  constructor(private http: HttpClient, private authService: AuthService) {
-    console.log('DatabaseService constructor called.'); // <-- ADD THIS
-    this.db = new AppDB(http);
-
-    //if (!this.authService.isAuthenticated()) { // <<< CHECK AUTHENTICATION
-    //  console.log("User not authenticated. Questions not loaded.");
-    //  // You might want to listen for login events to then fetch questions
-    //  return;
-    //}
-
+  constructor() {
+    console.log('DatabaseService constructor called.');
+    this.db = new AppDB();
 
     this.db.open().then(async () => {
-      console.log('Database opened successfully.');
-      //this.db.loadInitialQuestions(); // Call populate here
-      //this.resetDatabase();
-
-      await this.db.populateInitialDataIfNeeded(); // Call populate here
+      console.log('Database opened successfully by DatabaseService.');
+      // The populateInitialDataIfNeeded from AppDB's on('populate') or the upgrade function
+      // will handle initial data or schema changes.
+      // No need for an additional populateInitialDataIfNeeded() call here from the service
+      // unless it serves a different purpose (e.g., fetching dynamic data not in initialQuestions.ts).
     }).catch(err => {
-      console.error('Failed to open database: ', err.stack || err);
+      console.error('Failed to open database from DatabaseService: ', err.stack || err);
     });
   }
 
   // --- Question Table Methods ---
-  getAllQuestions(): Promise<Question[]> {
-    return this.db.questions.toArray();
+  getAllQuestions(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId).toArray();
   }
 
-  getAllQuestionAnsweredAtLeastOnce(): Promise<Question[]> {
-    return this.db.questions
+  getAllQuestionAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && ((question?.timesCorrect ?? 0) > 0 || (question?.timesIncorrect ?? 0) > 0))
       .toArray();
   }
 
-  getAllQuestionCorrectlyAnsweredAtLeastOnce(): Promise<Question[]> {
-    return this.db.questions
+  getAllQuestionCorrectlyAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && ((question?.timesCorrect ?? 0) > 0))
       .toArray();
   }
 
-  getOnlyQuestionCorrectlyAnswered(): Promise<Question[]> {
-    return this.db.questions
+  getOnlyQuestionCorrectlyAnswered(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && ((question?.timesCorrect ?? 0) > 0 && (question?.timesIncorrect ?? 0) === 0))
       .toArray();
   }
 
-  getQuestionsByCorrectnessRange(min: number, max: number): Promise<Question[]> {
-    return this.db.questions
+  getQuestionsByCorrectnessRange(contestId: string, min: number, max: number): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min && this.rateofCorrectlyAnswered(question) >= min)
       .toArray();
   }
 
-  getAllQuestionNeverAnswered(): Promise<Question[]> {
-    return this.db.questions
+  getAllQuestionNeverAnswered(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && ((question?.timesCorrect ?? 0) === 0 && (question?.timesIncorrect ?? 0) === 0))
       .toArray();
   }
 
-  getAllQuestionWronglyAnsweredAtLeastOnce(): Promise<Question[]> {
-    return this.db.questions
+  getAllQuestionWronglyAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
       .filter(question => question !== undefined && ((question?.timesIncorrect ?? 0) > 0))
       .toArray();
   }
@@ -267,17 +70,17 @@ export class DatabaseService {
     return ((question.timesCorrect ?? 0) / ((question.timesCorrect ?? 0) + (question.timesIncorrect ?? 0))) * 100;
   }
 
-  getAllQuestionWhichYouAreQuiteGoodAt(min: number, max?: number): Promise<Question[]> {
+  getAllQuestionWhichYouAreQuiteGoodAt(contestId: string, min: number, max?: number): Promise<Question[]> {
     if (min && max) {
-      return this.db.questions
+      return this.db.questions.where('publicContest').equals(contestId)
         .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min && this.rateofCorrectlyAnswered(question) <= max)
         .toArray();
     } else if (min && !max) {
-      return this.db.questions
+      return this.db.questions.where('publicContest').equals(contestId)
         .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min)
         .toArray();
     } else if (!min && max) {
-      return this.db.questions
+      return this.db.questions.where('publicContest').equals(contestId)
         .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) <= min)
         .toArray();
     }
@@ -286,15 +89,21 @@ export class DatabaseService {
 
 
 
-  getQuestionsByTopic(topic: string): Promise<Question[]> {
-    return this.db.questions.where('topic').equalsIgnoreCase(topic).toArray();
+  getQuestionsByTopic(contestId: string, topic: string): Promise<Question[]> {
+    return this.db.questions.where('publicContest').equals(contestId)
+      .filter(question => topic.toLowerCase() === (question.topic ?? '').toLowerCase()).toArray();
   }
 
-  getQuestionsByTopics(topics: string[]): Promise<Question[]> {
+  getQuestionsByTopics(contestId: string, topics: string[]): Promise<Question[]> {
     if (!topics || topics.length === 0) {
-      return this.getAllQuestions(); // Or handle as an error/empty array
+      return this.getAllQuestions(contestId); // Or handle as an error/empty array
     }
-    return this.db.questions.where('topic').anyOfIgnoreCase(topics).toArray();
+
+    return this.db.questions.where('publicContest').equals(contestId)
+      .filter(question => {
+        return topics.some(topic => topic.toLowerCase() === (question.topic ?? '').toLowerCase());
+      })
+      .toArray();
   }
 
   // get question by id
@@ -322,6 +131,7 @@ export class DatabaseService {
 
   // Example of getting a specific number of random questions from selected topics
   async getRandomQuestions(
+    contestId: string,
     count: number, // Overall target count, or sum from distribution
     topics: string[] = [], // For simple mode or fallback
     keywords: string[] = [],
@@ -340,9 +150,14 @@ export class DatabaseService {
 
         let query = null;
         if (questiondIDs && questiondIDs.length > 0) {
-          query = this.db.questions.where('topic').equalsIgnoreCase(dist.topic).filter(qst => questiondIDs.includes(qst.id));
+          query = this.db.questions.where('publicContest').equals(contestId)
+            .filter(question => {
+              return topics.some(topic => topic.toLowerCase() === (question.topic ?? '').toLowerCase());
+            }).filter(qst => questiondIDs.includes(qst.id));
+
         } else {
-          query = this.db.questions.where('topic').equalsIgnoreCase(dist.topic);
+          query = this.db.questions.where('publicContest').equals(contestId)
+            .filter(question => dist.topic.toLowerCase() === (question.topic ?? '').toLowerCase());
         }
         let topicSpecificQuestions = await query.toArray();
 
@@ -370,7 +185,7 @@ export class DatabaseService {
         query = this.getQuestionByIds(questiondIDs);
       } else {
         console.log('[DBService] Using Simple Mode. Topics:', topics, 'Global count:', count);
-        query = this.getQuestionsByTopics(topics);
+        query = this.getQuestionsByTopics(contestId, topics);
       }
 
       let filteredQuestions = await query;
@@ -390,6 +205,7 @@ export class DatabaseService {
   }
 
   async getNeverEncounteredRandomQuestionsByParams(
+    contestId: string,
     count: number,
     topics: string[] = [],
     keywords: string[] = [],
@@ -404,12 +220,15 @@ export class DatabaseService {
 
         let query = null;
         if (questiondIDs && questiondIDs.length > 0) {
-          query = this.db.questions
-            .where('topic')
-            .equalsIgnoreCase(dist.topic)
-            .filter(q => questiondIDs.includes(q.id));
+          query = this.db.questions.where('publicContest').equals(contestId)
+            .filter(qst => questiondIDs.includes(qst.id));
+          // query = query = this.db.questions.where('publicContest').equals(contestId)
+          //   .filter(question => {
+          //     return topics.some(topic => topic.toLowerCase() === (question.topic ?? '').toLowerCase());
+          //   }).filter(qst => questiondIDs.includes(qst.id));
         } else {
-          query = this.db.questions.where('topic').equalsIgnoreCase(dist.topic);
+          query = this.db.questions.where('publicContest').equals(contestId)
+            .filter(question => dist.topic.toLowerCase() === (question.topic ?? '').toLowerCase());
         }
         let topicSpecificQuestions = await query
           .filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0)
@@ -432,9 +251,9 @@ export class DatabaseService {
       if (questiondIDs && questiondIDs.length > 0) {
         questions = await this.getQuestionByIds(questiondIDs);
       } else if (topics && topics.length > 0) {
-        questions = await this.getQuestionsByTopics(topics);
+        questions = await this.getQuestionsByTopics(contestId, topics);
       } else {
-        questions = await this.getAllQuestions();
+        questions = await this.getAllQuestions(contestId);
       }
 
       let filteredQuestions = questions.filter(
@@ -476,138 +295,110 @@ export class DatabaseService {
   }
 
   // --- QuizAttempt Table Methods ---
-  addQuizAttempt(quizAttempt: QuizAttempt): Promise<string> {
-    return this.db.quizAttempts.add(quizAttempt);
+  async addQuizAttempt(quizAttempt: QuizAttempt): Promise<string> {
+    const attemptToSave: QuizAttempt = {
+      ...quizAttempt,
+      timestampStart: new Date(quizAttempt.timestampStart),
+      timestampEnd: quizAttempt.timestampEnd ? new Date(quizAttempt.timestampEnd) : undefined
+    };
+    return this.db.quizAttempts.add(attemptToSave);
   }
 
-  getAllQuizAttempts(): Promise<QuizAttempt[]> {
+  getAllQuizAttemptsByContest(contestId: string | null): Promise<QuizAttempt[]> {
     // Order by most recent first
-    return this.db.quizAttempts.orderBy('timestampEnd').reverse().toArray();
+    if (!contestId || contestId === null) {
+      return Promise.resolve([]);
+    }
+
+    return this.db.quizAttempts.where('settings.publicContest').equals(contestId).toArray();
   }
 
-  getAllTodayQuizAttempts(): Promise<QuizAttempt[]> {
+  getAllTodayQuizAttempts(contestId: string): Promise<QuizAttempt[]> {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    return this.db.quizAttempts
-      .where('timestampStart')
-      .between(startOfDay, endOfDay)
-      .or('timestampEnd')
-      .between(startOfDay, endOfDay)
-      .toArray();
+    return this.db.quizAttempts.where('settings.publicContest').equals(contestId)
+      .filter(attempt =>
+        (attempt.timestampStart >= startOfDay && attempt.timestampStart <= endOfDay) ||
+        (attempt.timestampEnd !== undefined && attempt.timestampEnd >= startOfDay && attempt.timestampStart <= endOfDay)
+      ).toArray();
   }
 
-  getAllYesterdayQuizAttempts(): Promise<QuizAttempt[]> {
+  getAllYesterdayQuizAttempts(contestId: string): Promise<QuizAttempt[]> {
     const today = new Date();
     const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    return this.db.quizAttempts
-      .where('timestampStart')
-      .between(startOfYesterday, endOfYesterday)
-      .or('timestampEnd')
-      .between(startOfYesterday, endOfYesterday)
-      .toArray();
+    return this.db.quizAttempts.where('settings.publicContest').equals(contestId)
+      .filter(attempt =>
+        (attempt.timestampStart >= startOfYesterday && attempt.timestampStart <= endOfYesterday) ||
+        (attempt.timestampEnd !== undefined && attempt.timestampEnd >= startOfYesterday && attempt.timestampStart <= endOfYesterday)
+      ).toArray();
   }
 
-  // --- NEW METHOD: Get Yesterday's Wrong/Unanswered Question IDs ---
-  async getYesterdayProblematicQuestionIdsOld(): Promise<string[]> {
-    const yesterdayStart = new Date();
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    yesterdayStart.setHours(0, 0, 0, 0);
-
-    const yesterdayEnd = new Date();
-    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
-    yesterdayEnd.setHours(23, 59, 59, 999);
-
-    const yesterdayAttempts = await this.db.quizAttempts
-      .where('timestampEnd') // Assuming timestampEnd is set when a quiz is completed/paused
-      .between(yesterdayStart, yesterdayEnd, true, true)
-      .toArray();
-
-    const problematicQuestionIds = new Set<string>();
-
-    yesterdayAttempts.forEach(attempt => {
-      // 1. Questions answered incorrectly
-      attempt.answeredQuestions.forEach(answeredQ => {
-        if (!answeredQ.isCorrect && !problematicQuestionIds.has(answeredQ.questionId)) {
-          problematicQuestionIds.add(answeredQ.questionId);
-        }
-      });
-
-      // 2. Questions that were part of the quiz but not in answeredQuestions (i.e., unanswered)
-      //    We rely on `attempt.allQuestions` which should have all questions *in that attempt*.
-      if (attempt.allQuestions && attempt.allQuestions.length > 0) {
-        const answeredIds = new Set(attempt.answeredQuestions.map(aq => aq.questionId));
-        attempt.allQuestions.forEach(qInfoInAttempt => {
-          if (!answeredIds.has(qInfoInAttempt.questionId) && !problematicQuestionIds.has(qInfoInAttempt.questionId)) {
-            problematicQuestionIds.add(qInfoInAttempt.questionId);
-          }
-        });
-      }
-      // Fallback or alternative: if `unansweredQuestions` array is reliably populated on quiz end/pause
-      // attempt.unansweredQuestions?.forEach(unansweredQ => {
-      //   if (unansweredQ) problematicQuestionIds.add(unansweredQ.questionId);
-      // });
-    });
-
-    return Array.from(problematicQuestionIds);
+  async getYesterdayProblematicQuestion(contestId: string | null = null): Promise<Question[]> {
+    const ids = await this.getProblematicQuestionsIdsByDate('yesterday', contestId);
+    return this.getQuestionByIds(ids);
   }
 
-  async getProblematicQuestionsIdsByDate(date: string | Date = 'today'): Promise<string[]> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
 
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+  async getProblematicQuestionsIdsByDate(
+    dateSpecifier: 'today' | 'yesterday' | Date,
+    contestId: string | null = null // Optional contestId
 
-    const yesterdayStart = new Date();
-    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-    yesterdayStart.setHours(0, 0, 0, 0);
+  ): Promise<string[]> {
+    let startDate: Date;
+    let endDate: Date;
 
-    const yesterdayEnd = new Date();
-    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
-    yesterdayEnd.setHours(23, 59, 59, 999);
+    if (dateSpecifier === 'today') {
+      startDate = new Date();
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    }
+    else if (dateSpecifier === 'yesterday') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    }
+    else if (dateSpecifier instanceof Date) {
+      startDate = new Date(dateSpecifier);
+      endDate = new Date(dateSpecifier);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+    }
+    else { return []; }
 
-    const xDayStart: Date = new Date(date);
-    const xDayEnd: Date = new Date(date);
+    let query = this.db.quizAttempts
+      .where('timestampEnd')
+      .between(startDate.getTime(), endDate.getTime(), true, true);
+
+    // --- SCOPE BY CONTEST IF PROVIDED ---
+    if (contestId) {
+      // This assumes you add 'settings.publicContest' to your quizAttempts index
+      // and save it when a contest-specific quiz is taken.
+      // If not indexed, this filter will be less performant on large datasets.
+      // Alternatively, filter after fetching all attempts for the date.
+      // For now, let's assume you'll filter after fetching if not indexed.
+      // If indexed: query = query.and(attempt => attempt.settings.publicContest === contestId);
+    }
 
     let attempts: QuizAttempt[] = [];
-
     let unansweredIDs = new Set<string>();
     let answeredWronglyIDs = new Set<string>();
-
-    if (date === 'today') {
-      attempts = await this.db.quizAttempts
-        .where('timestampEnd')
-        .between(todayStart, todayEnd, true, true)
-        .toArray();
-    } else if (date === 'yesterday') {
-      attempts = await this.db.quizAttempts
-        .where('timestampEnd')
-        .between(yesterdayStart, yesterdayEnd, true, true)
-        .toArray();
-    } else {
-      if (!date) {
-        return Promise.resolve([]);
-      }
-      if (typeof date === 'object') {
-        xDayStart.setHours(0, 0, 0, 0);
-        xDayEnd.setHours(23, 59, 59, 999);
-
-        attempts = await this.db.quizAttempts
-          .where('timestampEnd')
-          .between(xDayStart, xDayEnd, true, true)
-          .toArray();
-      } else {
-        attempts = [];
-      }
-    }
 
     const problematicIds = new Set<string>();
     if (!attempts || attempts.length === 0) {
       return Array.from(problematicIds);
     } else {
       for (const attempt of attempts) {
+
+        // --- If contestId is provided, only process attempts matching that contest ---
+        if (contestId && attempt.settings.publicContest !== contestId) {
+          continue;
+        }
+
         if (attempt.answeredQuestions && attempt.answeredQuestions.length > 0) {
           for (const aq of attempt.allQuestions) {
             const qst = await this.getQuestionById(aq.questionId);
@@ -617,13 +408,7 @@ export class DatabaseService {
             const isQstNeverBeenAnswered = (qst?.lastAnsweredTimestamp ?? 0) === 0;
 
             let isWrongInsideQst: boolean | undefined = true;
-            if (date === 'today') {
-              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= todayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= todayEnd.getTime() && !qst?.lastAnswerCorrect));
-            } else if (date === 'yesterday') {
-              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= yesterdayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= yesterdayEnd.getTime() && !qst?.lastAnswerCorrect));
-            } else {
-              isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= xDayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= xDayEnd.getTime() && !qst?.lastAnswerCorrect));
-            }
+            isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= startDate.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= endDate.getTime() && !qst?.lastAnswerCorrect));
             if (((isWrongInsideAttempt || isUnanswerInsideAttemp) && (!isWrongInsideQst && isQstNeverBeenAnswered)) || isWrongInsideQst) {
               problematicIds.add(aq.questionId);
               answeredWronglyIDs.add(aq.questionId);
@@ -645,11 +430,7 @@ export class DatabaseService {
       for (const id of unansweredIDs) {
         const qst = await this.getQuestionById(id);
         let isCorrectInsideQst: boolean | undefined = false;
-        if (date === 'today') {
-          isCorrectInsideQst = qst && (qst?.lastAnsweredTimestamp ?? 0) > 0 && (((qst?.lastAnsweredTimestamp ?? 0) >= todayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= todayEnd.getTime() && qst?.lastAnswerCorrect));
-        } else {
-          isCorrectInsideQst = qst && (qst?.lastAnsweredTimestamp ?? 0) > 0 && (((qst?.lastAnsweredTimestamp ?? 0) >= yesterdayStart.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= yesterdayEnd.getTime() && qst?.lastAnswerCorrect));
-        }
+        isCorrectInsideQst = qst && (qst?.lastAnsweredTimestamp ?? 0) > 0 && (((qst?.lastAnsweredTimestamp ?? 0) >= startDate.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= endDate.getTime() && qst?.lastAnswerCorrect));
         if (isCorrectInsideQst) {
           unansweredIDs.delete(id);
         }
@@ -660,62 +441,22 @@ export class DatabaseService {
     }
   }
 
-  async getTodayProblematicQuestion(): Promise<Question[]> {
-
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate('today');
-    const problematicQuestion = new Set<Question>();
-
-    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
-      return [];
-    }
-
-    const questions = await this.getQuestionByIds(problematicQuestionIds);
-    for (const qst of questions) {
-      problematicQuestion.add(qst);
-    }
-    return Array.from(problematicQuestion.values());
+  async getTodayProblematicQuestion(contestId: string | null = null): Promise<Question[]> {
+    const ids = await this.getProblematicQuestionsIdsByDate('today', contestId);
+    return this.getQuestionByIds(ids);
   }
 
-  async getYesterdayProblematicQuestion(): Promise<Question[]> {
-
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate('yesterday');
-    const problematicQuestion = new Set<Question>();
-
-    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
-      return [];
-    }
-
-    const questions = await this.getQuestionByIds(problematicQuestionIds);
-    for (const qst of questions) {
-      if (!qst.lastAnswerCorrect) {
-        problematicQuestion.add(qst);
-      }
-    }
-    return Array.from(problematicQuestion.values());
+  async getXDayProblematicQuestion(date: Date, contestId: string | null = null): Promise<Question[]> {
+    const ids = await this.getProblematicQuestionsIdsByDate(date, contestId);
+    return this.getQuestionByIds(ids);
   }
 
-  async getXDayProblematicQuestion(date: Date): Promise<Question[]> {
-
-    const problematicQuestionIds = await this.getProblematicQuestionsIdsByDate(date);
-    const problematicQuestion = new Set<Question>();
-
-    if (!problematicQuestionIds || problematicQuestionIds.length === 0) {
-      return [];
+  async getNeverAnsweredQuestionIds(contestId: string | null = null): Promise<string[]> {
+    let query = this.db.questions.filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
+    if (contestId) {
+      query = query.and(q => q.publicContest === contestId);
     }
-
-    const questions = await this.getQuestionByIds(problematicQuestionIds);
-    for (const qst of questions) {
-      if (!qst.lastAnswerCorrect) {
-        problematicQuestion.add(qst);
-      }
-    }
-    return Array.from(problematicQuestion.values());
-  }
-
-  async getNeverAnsweredQuestionIds(): Promise<string[]> {
-    const questions = await this.db.questions
-      .filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0)
-      .toArray();
+    const questions = await query.toArray();
     return questions.map(q => q.id);
   }
 
@@ -728,27 +469,86 @@ export class DatabaseService {
     return this.db.quizAttempts.delete(id);
   }
 
-  clearAllQuizAttempts(): Promise<void> {
-    return this.db.quizAttempts.clear();
+  async clearAllQuizAttempts(contestId: string): Promise<void> {
+    try {
+      // Step 1: Find the primary keys of the items to delete
+      const questionKeysToDelete = await this.db.quizAttempts
+        .where('settings.publicContest') // Assuming 'publicContest' is an indexed field
+        .equals(contestId)
+        .primaryKeys(); // Gets an array of primary keys
+
+      if (questionKeysToDelete.length > 0) {
+        // Step 2: Delete the items by their primary keys
+        await this.db.quizAttempts.bulkDelete(questionKeysToDelete);
+        console.log(`Successfully deleted ${questionKeysToDelete.length} attempts for contest ${contestId}`);
+      } else {
+        console.log(`No questions found for contest ${contestId} to delete.`);
+      }
+    } catch (error) {
+      console.error(`Error deleting questions for contest ${contestId}:`, error);
+      // Handle the error appropriately
+    }
   }
 
-  clearAllQuestions(): Promise<void> {
-    return this.db.questions.clear();
+  async clearAllQuestions(contestId: string): Promise<void> {
+    try {
+      // Step 1: Find the primary keys of the items to delete
+      const questionKeysToReset = await this.db.questions
+        .where('publicContest') // Assuming 'publicContest' is an indexed field
+        .equals(contestId).toArray();
+
+      if (questionKeysToReset.length > 0) {
+        // Reset fields for each question to initial values
+        await this.db.questions.bulkPut(
+          questionKeysToReset.map(q => ({
+            ...q,
+            timesCorrect: 0,
+            timesIncorrect: 0,
+            lastAnsweredTimestamp: 0,
+            lastAnswerCorrect: false,
+            isFavorite: 0,
+            accuracy: 0
+          }))
+        );
+        console.log(`Successfully reset ${questionKeysToReset.length} questions for contest ${contestId}`);
+
+        // Verification step:
+        if (questionKeysToReset[0] && questionKeysToReset[0].id) { // Assuming 'id' is the primary key
+          const firstUpdatedQuestionFromDB = await this.db.questions.get(questionKeysToReset[0].id);
+          console.log("First question after bulkPut (from DB):", firstUpdatedQuestionFromDB);
+          // Check if firstUpdatedQuestionFromDB.timesCorrect is 0, etc.
+        }
+      }
+      else {
+        console.log(`No questions found for contest ${contestId} to delete.`);
+      }
+    } catch (error) {
+      console.error(`Error deleting questions for contest ${contestId}:`, error);
+      // Handle the error appropriately
+    }
   }
 
   // --- General DB Methods ---
-  async resetDatabase(): Promise<void> {
-    await this.clearAllQuestions();
-    await this.clearAllQuizAttempts();
-    // Optionally re-populate initial questions or leave it empty
-    await this.db.populateInitialDataIfNeeded();
-    //this.db.loadInitialQuestions();
+  async resetContest(contestId: string): Promise<void> {
+    await this.clearAllQuestions(contestId);
+    await this.clearAllQuizAttempts(contestId);
     console.log('Database has been reset.');
   }
 
-  saveQuizAttempt(quizAttempt: QuizAttempt): Promise<string> {
+  // IMPORTANT: WHEN SAVING A QUIZ ATTEMPT THAT WAS CONTEST-SPECIFIC
+  async saveQuizAttempt(quizAttempt: QuizAttempt): Promise<string> {
     console.log('[DBService] Saving/Updating Quiz Attempt:', quizAttempt.id, 'Status:', quizAttempt.status);
-    return this.db.quizAttempts.put(quizAttempt); // put will add if new, update if exists
+    const attemptToSave: QuizAttempt = {
+      ...quizAttempt,
+      timestampStart: new Date(quizAttempt.timestampStart),
+      timestampEnd: quizAttempt.timestampEnd ? new Date(quizAttempt.timestampEnd) : undefined,
+      // Ensure settings.publicContest is saved if the quiz was from a contest
+      settings: {
+        ...quizAttempt.settings,
+        // publicContest should be passed from QuizTakingComponent based on queryParams
+      }
+    };
+    return this.db.quizAttempts.put(attemptToSave);
   }
 
   async getPausedQuiz(): Promise<QuizAttempt | undefined> {
@@ -781,96 +581,90 @@ export class DatabaseService {
 
   // Call this method after successful login
   public async onUserLoggedIn(): Promise<void> {
-    await this.db.populateInitialDataIfNeeded(); // Call populate here
+    // await this.db.populateInitialDataIfNeeded(); // Call populate here
   }
 
-  async getAllQuestionsNew(): Promise<Question[]> {
-    // Implement logic to fetch every single question from your database
-    // Example using Dexie:
-    // return this.db.questions.toArray();
-    // This is highly dependent on your actual database implementation.
-    // For now, a placeholder:
-    console.warn("DatabaseService.getAllQuestions() needs to be implemented fully.");
-    const allAttempts = await this.getAllQuizAttempts();
-    const questionMap = new Map<string, Question>();
-    allAttempts.forEach(attempt => {
-      attempt.allQuestions.forEach(qInfo => {
-        if (!questionMap.has(qInfo.questionId)) {
-          questionMap.set(qInfo.questionId, {
-            id: qInfo.questionId,
-            text: qInfo.questionSnapshot.text,
-            options: qInfo.questionSnapshot.options,
-            correctAnswerIndex: qInfo.questionSnapshot.correctAnswerIndex,
-            topic: qInfo.questionSnapshot.topic,
-            explanation: qInfo.questionSnapshot.explanation,
-            // isFavorite might not be in snapshot or needs to be fetched separately
-          });
-        }
-      });
-    });
-    return Array.from(questionMap.values());
-    // return Promise.resolve([]); // Replace with actual implementation
-  }
-
-  //   // Method to update question stats
-  // async updateQuestionStats(questionId: string, wasCorrect: boolean): Promise<void> {
-  //   try {
-  //     const question = await this.db.questions.get(questionId);
-  //     if (question) {
-  //       question.timesCorrect = question.timesCorrect || 0;
-  //       question.timesIncorrect = question.timesIncorrect || 0;
-  //       if (wasCorrect) {
-  //         question.timesCorrect++;
-  //       } else {
-  //         question.timesIncorrect++;
+  // async getAllQuestionsNew(): Promise<Question[]> {
+  //   // Implement logic to fetch every single question from your database
+  //   // Example using Dexie:
+  //   // return this.db.questions.toArray();
+  //   // This is highly dependent on your actual database implementation.
+  //   // For now, a placeholder:
+  //   console.warn("DatabaseService.getAllQuestions() needs to be implemented fully.");
+  //   const allAttempts = await this.getAllQuizAttempts();
+  //   const questionMap = new Map<string, Question>();
+  //   allAttempts.forEach(attempt => {
+  //     attempt.allQuestions.forEach(qInfo => {
+  //       if (!questionMap.has(qInfo.questionId)) {
+  //         questionMap.set(qInfo.questionId, {
+  //           id: qInfo.questionId,
+  //           text: qInfo.questionSnapshot.text,
+  //           options: qInfo.questionSnapshot.options,
+  //           correctAnswerIndex: qInfo.questionSnapshot.correctAnswerIndex,
+  //           topic: qInfo.questionSnapshot.topic,
+  //           explanation: qInfo.questionSnapshot.explanation,
+  //           // isFavorite might not be in snapshot or needs to be fetched separately
+  //         });
   //       }
-  //       await this.db.questions.put(question); // Update the question
-  //       // console.log(`Stats updated for question ${questionId}: C=${question.timesCorrect}, I=${question.timesIncorrect}`);
-  //     }
-  //   } catch (error) {
-  //     console.error(`Error updating stats for question ${questionId}:`, error);
-  //   }
+  //     });
+  //   });
+  //   return Array.from(questionMap.values());
   // }
 
   // IMPORTANT: Ensure your updateQuestionStats correctly updates whatever fields
   // getNeverAnsweredQuestionIds relies on (e.g., a 'answeredCount' or 'lastAnsweredDate' on the question or its stats)
   async updateQuestionStats(questionId: string, isCorrect: boolean): Promise<void> {
     try {
-      const stats = await this.db.questions.get(questionId);
-      const now = new Date().getTime();
-      if (stats) {
-        await this.db.questions.update(questionId, {
-          timesCorrect: (stats.timesCorrect ?? 0) + (isCorrect ? 1 : 0),
-          timesIncorrect: (stats.timesIncorrect ?? 0) + (isCorrect ? 0 : 1),
-          lastAnsweredTimestamp: now,
-          lastAnswerCorrect: isCorrect
-        });
-      }
-      // Update accuracy
-      const updatedStats = await this.db.questions.get(questionId);
-      const timesAnswered = (updatedStats?.timesCorrect ?? 0) + (updatedStats?.timesIncorrect ?? 0);
-      if (updatedStats && timesAnswered > 0) {
-        const accuracy = ((updatedStats.timesCorrect ?? 0) / timesAnswered) * 100;
-        await this.db.questions.update(questionId, { accuracy: parseFloat(accuracy.toFixed(2)) });
-      }
+      // Dexie's update method can take a function to modify the object
+      await this.db.questions.where({ id: questionId }).modify(question => {
+        question.timesCorrect = (question.timesCorrect || 0) + (isCorrect ? 1 : 0);
+        question.timesIncorrect = (question.timesIncorrect || 0) + (isCorrect ? 0 : 1);
+        question.lastAnsweredTimestamp = new Date().getTime();
+        question.lastAnswerCorrect = isCorrect;
 
+        const timesAnswered = question.timesCorrect + question.timesIncorrect;
+        if (timesAnswered > 0) {
+          question.accuracy = parseFloat(((question.timesCorrect / timesAnswered) * 100).toFixed(2));
+        } else {
+          question.accuracy = undefined; // Or 0, depending on preference
+        }
+      });
     } catch (error) {
       console.error(`Error updating stats for question ${questionId}:`, error);
     }
   }
 
-  async getQuizAttemptsBySpecificDate(date: Date): Promise<QuizAttempt[]> {
+  async getQuizAttemptsBySpecificDate(contestId: string, date: Date): Promise<QuizAttempt[]> {
     const xDayStart: Date = new Date(date);
     const xDayEnd: Date = new Date(date);
 
     xDayStart.setHours(0, 0, 0, 0);
     xDayEnd.setHours(23, 59, 59, 999);
 
-    const attempts = await this.db.quizAttempts
-      .where('timestampEnd')
-      .between(xDayStart, xDayEnd, true, true)
-      .toArray();
+    const attempts = this.db.quizAttempts.where('settings.publicContest').equals(contestId)
+      .filter(attempt =>
+        (attempt.timestampStart >= xDayStart && attempt.timestampStart <= xDayEnd) ||
+        (attempt.timestampEnd !== undefined && attempt.timestampEnd >= xDayStart && attempt.timestampStart <= xDayEnd)
+      ).toArray();
     return attempts;
+  }
+
+  async getAvailablePublicContests(): Promise<string[]> {
+    const allQuestions = await this.db.questions.toArray();
+    const contestSet = new Set<string>();
+    allQuestions.forEach(q => {
+      if (q.publicContest && q.publicContest.trim() !== '') {
+        contestSet.add(q.publicContest);
+      }
+    });
+    return Array.from(contestSet).sort(); // Sort them alphabetically
+  }
+
+  async getQuestionsByPublicContest(contestIdentifier: string): Promise<Question[]> {
+    if (!contestIdentifier) {
+      return Promise.resolve([]);
+    }
+    return this.db.questions.where('publicContest').equalsIgnoreCase(contestIdentifier).toArray();
   }
 
 

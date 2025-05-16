@@ -60,8 +60,10 @@ export interface QuizSettings {
   topicDistribution?: TopicCount[];
   enableTimer?: boolean;      // <-- NEW
   enableCronometer?: boolean;      // <-- NEW
+  enableStreakSounds?: boolean;      // <-- NEW
   timerDurationSeconds?: number; // <-- NEW (total duration in seconds
-  questionIDs?: string[]
+  questionIDs?: string[];
+  publicContest: string;
 }
 
 export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out';

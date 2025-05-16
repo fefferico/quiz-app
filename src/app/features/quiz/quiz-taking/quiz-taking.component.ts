@@ -1,9 +1,9 @@
 // src/app/features/quiz/quiz-taking/quiz-taking.component.ts
 import { Component, OnInit, OnDestroy, inject, HostListener, Renderer2, ElementRef, ChangeDetectorRef, NgZone } from '@angular/core'; // Added NgZone
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, timer, Observable, Subject } from 'rxjs';
-import { map, takeWhile, finalize, takeUntil, delay } from 'rxjs/operators';
+import { map, takeWhile, finalize, takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
 import { QuestionFeedbackComponent } from '../../../question-feedback/question-feedback.component';
@@ -13,12 +13,12 @@ import { Question } from '../../../models/question.model';
 import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 // IMPORT faCog for the new button
-import { IconDefinition, faArrowLeft, faArrowRight, faBackward, faCircle, faCircleCheck, faCircleExclamation, faForward, faHome, faPause, faRepeat, faMusic, faVolumeMute, faCog, faVolumeUp } from '@fortawesome/free-solid-svg-icons'; // Added faCog
+import { IconDefinition, faArrowLeft, faArrowRight, faCircleCheck, faCircleExclamation, faHome, faPause, faMusic, faVolumeMute, faCog, faVolumeUp } from '@fortawesome/free-solid-svg-icons'; // Added faCog
 import { AlertService } from '../../../services/alert.service';
-import { AlertButton, AlertOptions } from '../../../models/alert.model';
-import { AlertComponent } from '../../../shared/alert/alert.component';
+import { AlertButton } from '../../../models/alert.model';
 import { SoundService } from '../../../core/services/sound.service';
 import { GenericData } from '../../../models/statistics.model';
+import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -51,6 +51,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone); // Inject NgZone
   private soundService = inject(SoundService);
+  private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
 
   private soundIsPlaying: boolean = false;
 
@@ -68,7 +69,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
 
 
-  neverEncounteredQuestions: Question[] = []; 
+  neverEncounteredQuestions: Question[] = [];
   neverEncounteredQuestionIds: string[] = []; // NEW: Store IDs for never encountered
 
   topics: GenericData[] = [];
@@ -247,7 +248,25 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     }
   }
 
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
+  forceExit: boolean = false;
+
+  private chckForContest(): void {
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.forceExit = true;
+        this.router.navigate(['/home']);
+      })
+    } else {
+      this.forceExit = false;
+    }
+  }
+
   ngOnInit(): void {
+    this.chckForContest();
     this.loadAvailableVoices(); // Attempt to load voices initially
 
     this.quizStartTime = new Date();
@@ -257,6 +276,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       .pipe(takeUntil(this.destroy$))
       .subscribe(async params => {
         const resumeAttemptId = params['resumeAttemptId'];
+        const randomQuestions = params['randomQuestions'];
         const fixedQuestionIds = params['fixedQuestionIds'] ? params['fixedQuestionIds'].toString().split(',') : [];
         this.quizTitle = params['quizTitle'] || 'Quiz';
 
@@ -277,6 +297,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this.currentQuizAttemptId = uuidv4();
           this.quizStatus = 'in-progress';
 
+          const publicContest = params['publicContest'] ? params['publicContest'] : '';
           const numQuestions = params['numQuestions'] ? +params['numQuestions'] : 10;
           const topicsParam = params['topics'] || '';
           const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
@@ -292,6 +313,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this._timeLeftSeconds = this.timerDuration;
 
           this.quizSettings = {
+            publicContest,
             numQuestions,
             selectedTopics,
             keywords: selectedKeywords,
@@ -301,9 +323,15 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             timerDurationSeconds: this.timerDuration,
             questionIDs: fixedQuestionIds
           };
-          await this.startNeverEncounteredQuiz();
-          // OLD METHOD
-          //await this.loadQuestions(false); // Ensure questions are loaded before potential initial speak
+          if (fixedQuestionIds && fixedQuestionIds.length > 0) {
+            this.startSpecificSetOfQuestions(fixedQuestionIds) // Ensure questions are loaded before potential initial speak
+          } else {
+            if (!randomQuestions || randomQuestions === 'false' || randomQuestions === false) {
+              await this.startNeverEncounteredQuiz();
+            } else {
+              this.loadQuestions(false);
+            }
+          }
         }
       });
     this.applyFontSettingsToWrapper();
@@ -325,6 +353,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     try {
       if (!isResumeLoad) {
         this.questions = await this.dbService.getRandomQuestions(
+          this.quizSettings.publicContest,
           this.quizSettings.numQuestions,
           this.quizSettings.selectedTopics,
           this.quizSettings.keywords,
@@ -885,12 +914,18 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       role: 'confirm',
       data: 'ok_confirmed'
     } as AlertButton];
-    return this.alertService.showConfirmationDialog("Si è sicuri di voler abbandonare il quiz?", "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa.", customBtns).then(result => {
-      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
-        return false;
-      }
+
+    if (!this.forceExit) {
+      return this.alertService.showConfirmationDialog("Si è sicuri di voler abbandonare il quiz?", "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa.", customBtns).then(result => {
+        if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+          return false;
+        }
+        return true;
+      });
+    } else {
       return true;
-    });
+    }
+
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -1411,11 +1446,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   async loadNeverEncounteredQuestionIds(): Promise<void> {
-    this.neverEncounteredQuestions = await this.dbService.getNeverEncounteredRandomQuestionsByParams(this.quizSettings.numQuestions,
+    this.neverEncounteredQuestions = await this.dbService.getNeverEncounteredRandomQuestionsByParams(
+      this.quizSettings.publicContest ?? '',
+      this.quizSettings.numQuestions,
       this.quizSettings.selectedTopics,
       this.quizSettings.keywords,
       this.quizSettings.questionIDs,
-      this.quizSettings.topicDistribution); // Assuming this method exists
+      this.quizSettings.topicDistribution,
+    ); // Assuming this method exists
   }
 
   async startNeverEncounteredQuiz(): Promise<void> {
@@ -1437,7 +1475,32 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       this.setCurrentQuestion();
     } else {
       this.isLoading = false;
-      this.alertService.showAlert("Info", "Congratulazioni! Hai risposto a tutte le domande disponibili almeno una volta.");
+      this.alertService.showAlert("Info", "Congratulazioni! Hai risposto a tutte le domande disponibili almeno una volta: prova a esercitarti su alcuni argomenti specifici usando dei filtri particolari o ripassando le domande più difficili");
+    }
+  }
+
+  async startSpecificSetOfQuestions(questionIDs: string[]): Promise<void> {
+    if (!questionIDs || questionIDs.length === 0) {
+      // as a fallback
+      this.startNeverEncounteredQuiz();
+    } else {
+      this.questions = await this.dbService.getQuestionByIds(questionIDs);
+
+      if (!this.questions || this.questions.length === 0) {
+        this.isLoading = false;
+        this.alertService.showAlert("Info", "Non sono state trovate le domande con gli identificativi forniti.");
+        return;
+      }
+
+      if (this.questions.length > 0 && this.isTimerEnabled) {
+        // Only start new timer if not resuming OR if resuming and there's time left
+        this.startTimer();
+      }
+      if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
+        this.startCronometer();
+      }
+      this.isLoading = false;
+      this.setCurrentQuestion();
     }
   }
 }

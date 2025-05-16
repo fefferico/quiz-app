@@ -6,10 +6,9 @@ import { Subscription } from 'rxjs';
 import jsPDF from 'jspdf';
 
 import { DatabaseService } from '../../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion, QuizSettings } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
+import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faThumbsUp, faThumbsDown, faFaceSmileBeam } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
-import { Question } from '../../../models/question.model';
+import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faFaceSmileBeam } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -394,31 +393,31 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getTotalStringByGroup(group: GroupedQuestionDisplay): string{
-    if (group && group.questions){
-      return ' - Corrette ' + (this.getCorrectnessByGroup(group)*100).toFixed(2) + '% ('+this.getCorrectByGroup(group).toString().concat('/',this.getGroupLength(group).toString(),')');
-    } 
+  getTotalStringByGroup(group: GroupedQuestionDisplay): string {
+    if (group && group.questions) {
+      return ' - Corrette ' + (this.getCorrectnessByGroup(group) * 100).toFixed(2) + '% (' + this.getCorrectByGroup(group).toString().concat('/', this.getGroupLength(group).toString(), ')');
+    }
     return '';
   }
 
-  getCorrectnessByGroup(group: GroupedQuestionDisplay): number{
-    if (group && group.questions){
-      return group.questions.filter(qst=> qst.isCorrect).length/this.getGroupLength(group);
-    } 
+  getCorrectnessByGroup(group: GroupedQuestionDisplay): number {
+    if (group && group.questions) {
+      return group.questions.filter(qst => qst.isCorrect).length / this.getGroupLength(group);
+    }
     return 1;
   }
 
-  getCorrectByGroup(group: GroupedQuestionDisplay): number{
-    if (group && group.questions){
-      return group.questions.filter(qst=> qst.isCorrect).length;
-    } 
+  getCorrectByGroup(group: GroupedQuestionDisplay): number {
+    if (group && group.questions) {
+      return group.questions.filter(qst => qst.isCorrect).length;
+    }
     return 1;
   }
 
-  getGroupLength(group: GroupedQuestionDisplay): number{
-    if (group && group.questions){
+  getGroupLength(group: GroupedQuestionDisplay): number {
+    if (group && group.questions) {
       return group.questions.length;
-    } 
+    }
     return 1;
   }
 
@@ -430,9 +429,9 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     // bg-green-100 border-green-500 border-t-4 p-4 rounded-lg shadow-lg sm:p-6 mb-4
 
     const totQuestions = group.questions.length || 1;
-    const resultsPercentage = group.questions.reduce((sum, tc) => sum + Number((tc.isCorrect ? 1 : 0) || 0), 0)/totQuestions*100;
+    const resultsPercentage = group.questions.reduce((sum, tc) => sum + Number((tc.isCorrect ? 1 : 0) || 0), 0) / totQuestions * 100;
 
-    if (resultsPercentage >= 75){
+    if (resultsPercentage >= 75) {
       classes = 'bg-green-200 border-green-500 border-t-4 dark:bg-green-800 dark:border-green-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';
     } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
       classes = 'bg-yellow-200 border-yellow-500 border-t-4 dark:bg-yellow-800 dark:border-yellow-700 p-4 rounded-lg shadow-lg sm:p-6 mb-6';

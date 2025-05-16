@@ -7,9 +7,10 @@ import { Subscription } from 'rxjs';
 import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
 // QuizSettings and TopicCount might be needed if complex filtering is passed
-import { QuizSettings, TopicCount } from '../../../models/quiz.model';
+import { QuizSettings } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 
 @Component({
   selector: 'app-quiz-study',
@@ -23,6 +24,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private dbService = inject(DatabaseService);
   private routeSub!: Subscription;
+  private contestSelectionService = inject(ContestSelectionService); // Inject the new service
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -35,6 +37,11 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   errorLoading = '';
+
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -64,6 +71,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       // Use getRandomQuestions, but 'count' might be very high to fetch all matching
       // Or create a new DB method: getFilteredQuestions(topics, keywords) that returns all matches
       let fetchedQuestions = await this.dbService.getRandomQuestions(
+        this.selectedPublicContest,
         quizSettings.numQuestions!, // Non-null assertion as we set a default
         quizSettings.selectedTopics,
         quizSettings.keywords,

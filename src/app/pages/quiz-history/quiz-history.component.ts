@@ -1,18 +1,18 @@
 // src/app/pages/quiz-history/quiz-history.component.ts
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common'; // DatePipe if using it in template
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
 import { FormsModule } from '@angular/forms'; // <-- IMPORT FormsModule for ngModel
 import { Subscription } from 'rxjs';
 
 import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt } from '../../models/quiz.model';
-import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faTrashCan } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faTrashCan, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 import { AlertButton } from '../../models/alert.model';
+import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
 
 @Component({
   selector: 'app-quiz-history',
@@ -26,12 +26,19 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   private dbService = inject(DatabaseService);
   private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef); // For triggering change detection if needed
+  private route = inject(ActivatedRoute); // Inject ActivatedRoute
+  private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
   faDelete: IconDefinition = faTrashCan; // This was already here, seems unused in the template you showed previously
+  faLandmark: IconDefinition = faLandmark; // This was already here, seems unused in the template you showed previously
 
   private attemptsSub!: Subscription;
+
+  private routeSub!: Subscription;
+  private contestSub!: Subscription;
+
   allQuizAttempts: QuizAttempt[] = []; // Store all attempts fetched from DB
   quizAttempts: QuizAttempt[] = [];   // Attempts displayed after filtering
 
@@ -47,49 +54,75 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   availableTopics: string[] = [];   // To populate topic dropdown
   // --- End Filter Properties ---
 
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
+
+
   ngOnInit(): void {
-    this.loadQuizHistory();
-    this.loadAvailableTopics();
+
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      })
+    }
+
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const contestFromQuery = params.get('contest') || '';
+      this.loadQuizHistory();
+      this.loadAvailableTopics();
+    });
+
+    // Subscribe to changes from the service if not driven by query param
+    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(contestId => {
+      // Only update if there's no contest in query param and the service value changes
+      if (!this.route.snapshot.queryParamMap.has('contest') && this.selectedPublicContest !== contestId) {
+        this.loadQuizHistory();
+        this.loadAvailableTopics();
+      }
+    });
   }
 
   async loadQuizHistory(): Promise<void> {
     this.isLoading = true;
     this.errorLoading = null;
     try {
-      this.allQuizAttempts = await this.dbService.getAllQuizAttempts();
-      this.applyFilters(); // Apply initial (empty) filters
+      // Pass currentContestId to filter attempts if a contest is selected
+      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(this.selectedPublicContest);
+      this.applyFilters();
     } catch (error) {
       console.error('Error loading quiz history:', error);
       this.errorLoading = 'Failed to load quiz history.';
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges(); // Ensure view updates if loading was quick
     }
   }
 
   async loadAvailableTopics(): Promise<void> {
     try {
-      // Assuming dbService has a method to get all unique topics from questions or attempts
-      // This is a placeholder; implement according to your DatabaseService
-      const questions = await this.dbService.getAllQuestions();
-      const topicsFromQuestions = new Set(questions.map(q => q.topic)); // Example method
-      const topicsFromAttempts = this.allQuizAttempts
+      // Filter questions by contest before extracting topics
+      const questions = await this.dbService.getAllQuestions(this.selectedPublicContest);
+      const topicsFromQuestions = new Set(questions.map(q => q.topic).filter(t => !!t) as string[]);
+
+      const topicsFromAttempts = this.allQuizAttempts // allQuizAttempts is already contest-filtered
         .flatMap(attempt => attempt.settings.selectedTopics || [])
         .filter(topic => topic && topic.trim() !== '');
 
       this.availableTopics = [...new Set([...topicsFromQuestions, ...topicsFromAttempts])].sort();
     } catch (error) {
       console.error('Error loading available topics:', error);
-      // Handle error, maybe set availableTopics to an empty array or show a message
+      this.availableTopics = [];
     }
   }
 
   applyFilters(): void {
-    let filtered = [...this.allQuizAttempts];
+    let filtered = [...this.allQuizAttempts]; // allQuizAttempts is now pre-filtered by contest if one is active
 
     // 1. Filter by Date Range
     if (this.filterDateStart) {
       const startDate = new Date(this.filterDateStart);
-      // To include the whole start day, set time to 00:00:00
       startDate.setHours(0, 0, 0, 0);
       filtered = filtered.filter(attempt => {
         const attemptDate = new Date(attempt.timestampEnd || attempt.timestampStart);
@@ -98,7 +131,6 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     }
     if (this.filterDateEnd) {
       const endDate = new Date(this.filterDateEnd);
-      // To include the whole end day, set time to 23:59:59
       endDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter(attempt => {
         const attemptDate = new Date(attempt.timestampEnd || attempt.timestampStart);
@@ -125,16 +157,14 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     // 4. Filter by Topic
     if (this.filterSelectedTopic && this.filterSelectedTopic !== '') {
       filtered = filtered.filter(attempt =>
-        attempt.settings.selectedTopics?.includes(this.filterSelectedTopic) ||
-        (this.filterSelectedTopic === 'All Topics' && (attempt.settings.selectedTopics || []).length === 0) // Crude way to handle "All Topics" if it was an explicit choice
-        // A better way for "All Topics" might be if selectedTopics is empty or a specific flag
+        attempt.settings.selectedTopics?.includes(this.filterSelectedTopic)
       );
     }
 
     this.quizAttempts = filtered.sort((a, b) =>
       new Date(b.timestampEnd || b.timestampStart).getTime() - new Date(a.timestampEnd || a.timestampStart).getTime()
-    ); // Sort by most recent
-    this.cdr.detectChanges(); // Manually trigger change detection if needed
+    );
+    this.cdr.detectChanges();
   }
 
   resetFilters(): void {
@@ -149,7 +179,8 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   // --- Helper and existing methods ---
   getTopicsSummary(topics: string[] | undefined): string {
     if (!topics || topics.length === 0) {
-      return 'Tutti gli argomenti';
+      // If a contest is selected and no specific topics, it implies all topics of that contest
+      return this.selectedPublicContest ? `Tutti (Concorso: ${this.selectedPublicContest})` : 'Tutti gli argomenti';
     }
     const MAX_DISPLAY_TOPICS = 2;
     if (topics.length > MAX_DISPLAY_TOPICS) {
@@ -159,15 +190,18 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   async deleteAttempt(attemptId: string, event: MouseEvent): Promise<void> {
-    event.stopPropagation(); // Prevent navigation
-    if (confirm('Sei sicuro di voler eliminare questo tentativo?')) {
+    event.stopPropagation();
+    // ... (rest of the method is fine)
+    const confirmed = await this.alertService.showConfirmationDialog('Conferma Eliminazione', 'Sei sicuro di voler eliminare questo tentativo?');
+    if (confirmed && confirmed.role !== 'cancel') {
       try {
         await this.dbService.deleteQuizAttempt(attemptId);
         this.allQuizAttempts = this.allQuizAttempts.filter(attempt => attempt.id !== attemptId);
         this.applyFilters(); // Re-apply filters to update displayed list
+        this.alertService.showAlert("Info", "Tentativo quiz eliminato con successo.");
       } catch (error) {
         console.error('Error deleting quiz attempt:', error);
-        this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la rimozione del tentativo del quiz. Riprova più tardi.");
+        this.alertService.showAlert("Errore", "Impossibile eliminare il tentativo del quiz. Riprova più tardi.");
       }
     }
   }
@@ -176,30 +210,33 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     const customBtns: AlertButton[] = [{
       text: 'Annulla',
       role: 'cancel',
-      cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
+      cssClass: 'bg-gray-300 hover:bg-gray-500'
     } as AlertButton,
     {
-      text: 'CANCELLA',
+      text: 'CANCELLA TUTTO',
       role: 'confirm',
+      cssClass: 'bg-red-500 hover:bg-red-700 text-white', // Make delete more prominent
       data: 'ok_confirmed'
     } as AlertButton];
-    this.alertService.showConfirmationDialog("Attenzione", "Sei SICURO di voler cancellare TUTTO lo storico dei quiz? QUESTA AZIONE È IRREVERSIBILE.", customBtns).then(result => {
-      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+
+    this.alertService.showConfirmationDialog(
+      "Attenzione Massima!",
+      `Sei SICURO di voler cancellare TUTTO lo storico dei quiz ${this.selectedPublicContest ? `per il concorso '${this.selectedPublicContest}'` : ''}? QUESTA AZIONE È IRREVERSIBILE.`,
+      customBtns
+    ).then(async result => {
+      if (!result || result.role === 'cancel' || result.data !== 'ok_confirmed') {
         return;
       }
       try {
-        this.dbService.clearAllQuizAttempts().catch(err => {
-          console.error('Error clearing quiz history:', err);
-          this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la cancellazione dello Storico. Riprovare più tardi");
-        }).then(res => {
-          this.allQuizAttempts = [];
-          this.quizAttempts = [];
-          this.alertService.showAlert("Info", "Storico quiz cancellato.");
-        }); // You'll need to implement this in DatabaseService
-
+        // Pass currentContestId to clear history only for that contest
+        await this.dbService.clearAllQuizAttempts(this.selectedPublicContest);
+        this.allQuizAttempts = []; // Or reload: await this.loadQuizHistory();
+        this.quizAttempts = [];
+        this.applyFilters();
+        this.alertService.showAlert("Info", `Storico quiz ${this.selectedPublicContest ? `per '${this.selectedPublicContest}'` : ''} cancellato con successo.`);
       } catch (error) {
         console.error('Error clearing quiz history:', error);
-        this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante la cancellazione dello Storico. Riprovare più tardi");
+        this.alertService.showAlert("Errore", `Impossibile cancellare lo storico quiz. Riprova più tardi.`);
       }
     });
   }
@@ -208,29 +245,37 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     this.router.navigate(['/quiz/results', attemptId]);
   }
 
-  
+
   getResultClass(attempt: QuizAttempt): string {
+    // ... (rest of the method is fine)
+    let classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow duration-200'; // Added hover effect and sm:items-center
 
-    let classes = 'flex justify-between items-center mb-6 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg border border-gray-200 dark:border-gray-700';
+    const totQuestions = attempt.totalQuestionsInQuiz || 1; // Use totalQuestionsInQuiz from attempt
+    const score = attempt.score || 0;
+    const resultsPercentage = (score / totQuestions) * 100;
 
-    const totQuestions = attempt.allQuestions.length || 1;
-    const resultsPercentage = attempt.answeredQuestions.reduce((sum, tc) => sum + Number((tc.isCorrect ? 1 : 0) || 0), 0)/totQuestions*100;
 
-    if (resultsPercentage >= 75){
-      classes = 'flex justify-between items-center mb-6 p-4 bg-green-100 dark:bg-green-800 shadow-md rounded-lg border border-green-200 dark:border-green-700';
+    if (resultsPercentage >= 75) {
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg transition-shadow duration-200';
     } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
-      classes = 'flex justify-between items-center mb-6 p-4 bg-yellow-100 dark:bg-yellow-800 shadow-md rounded-lg border border-yellow-200 dark:border-yellow-700';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg transition-shadow duration-200';
     } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
-      classes = 'flex justify-between items-center mb-6 p-4 bg-orange-100 dark:bg-orange-800 shadow-md rounded-lg border border-orange-200 dark:border-orange-700';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg transition-shadow duration-200';
     } else {
-      classes = 'flex justify-between items-center mb-6 p-4 bg-red-100 dark:bg-red-800 shadow-md rounded-lg border border-red-200 dark:border-red-700';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg transition-shadow duration-200';
     }
     return classes;
   }
 
   ngOnDestroy(): void {
-    if (this.attemptsSub) {
-      this.attemptsSub.unsubscribe();
+    if (this.routeSub) {
+      this.routeSub.unsubscribe();
     }
+    if (this.contestSub) {
+      this.contestSub.unsubscribe();
+    }
+    // if (this.attemptsSub) { // attemptsSub was declared but not used
+    //   this.attemptsSub.unsubscribe();
+    // }
   }
 }

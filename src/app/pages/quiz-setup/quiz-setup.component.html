@@ -30,35 +30,24 @@
     <!-- Topic Selection (disabled if fixed IDs are set) -->
     <div class="mb-6"
       [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
-      <!-- <div class="flex items-center">
-        <input id="selectAllTopics" name="selectAllTopics" type="checkbox" [(ngModel)]="selectAllTopics"
-          (ngModelChange)="onSelectAllTopicsChange()"
-          [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
-          class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
-        <label for="selectAllTopics" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Tutti gli argomenti
-          <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(modalità
-            semplificata)</span>
-          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400">(studia tutte le
-            domande)</span>
-        </label>
-      </div> -->
       <div class="flex items-center justify-center h-full">
         <label for="allTopicsToggle" class="relative flex-shrink-0 ml-2 cursor-pointer">
           <input type="checkbox" id="allTopicsToggle" class="sr-only" [(ngModel)]="selectAllTopics"
-        (ngModelChange)="onSelectAllTopicsChange()" name="allTopicsToggle"
-        [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''">
+            (ngModelChange)="onSelectAllTopicsChange()" name="allTopicsToggle"
+            [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''">
           <div class="block bg-gray-200 dark:bg-gray-600 w-14 h-8 rounded-full"></div>
           <div
-        class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
-        [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': selectAllTopics}"></div>
+            class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
+            [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': selectAllTopics}"></div>
         </label>
-        <label for="selectAllTopics" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+        <label for="selectAllTopics"
+          class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
           Tutti gli argomenti
           <span *ngIf="!isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400 ml-2">(modalità
-        semplificata)</span>
-          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400 ml-2">(studia tutte le
-        domande)</span>
+            semplificata)</span>
+          <span *ngIf="isStudyMode" class="block sm:inline text-xs text-gray-500 dark:text-gray-400 ml-2">(studia tutte
+            le
+            domande)</span>
         </label>
       </div>
     </div>
@@ -112,15 +101,15 @@
       [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
       <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-      <div *ngFor="let topic of availableTopics" class="flex items-center">
-        <input id="study-topic-cb-{{topic}}" name="study-topic-cb-{{topic}}" type="checkbox"
-        [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
-        [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
-        class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
-        <label for="study-topic-cb-{{topic}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-200 break-words">
-        {{ topic }}
-        </label>
-      </div>
+        <div *ngFor="let topic of availableTopics" class="flex items-center">
+          <input id="study-topic-cb-{{topic}}" name="study-topic-cb-{{topic}}" type="checkbox"
+            [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
+            [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
+            class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
+          <label for="study-topic-cb-{{topic}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-200 break-words">
+            {{ topic }}
+          </label>
+        </div>
       </div>
     </div>
 
@@ -136,6 +125,29 @@
       </button>
       <div *ngIf="accordionState.get('main')"
         class="p-3 sm:p-4 border-t border-gray-200 bg-gray-100 dark:border-gray-400 rounded mb-4">
+
+        <!--  Domande casuali  -->
+        <div class="mb-6"
+          [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
+          <div class="flex items-left h-full bg-indigo-200 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow p-4">
+            <label for="randomQuestionsToggle" class="relative flex-shrink-0 ml-2 cursor-pointer">
+              <input type="checkbox" id="randomQuestionsToggle" class="sr-only" [(ngModel)]="randomQuestions"
+                name="randomQuestionsToggle"
+                [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''">
+              <div class="block bg-gray-200 dark:bg-gray-600 w-14 h-8 rounded-full"></div>
+              <div
+                class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
+                [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': randomQuestions}"></div>
+            </label>
+            <label for="randomQuestionsToggle"
+              class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+              Domande casuali
+              <span class="block sm:inline text-xs text-gray-500 dark:text-gray-400 ml-2">(potrebbero capitarne di già
+                fatte)</span>
+            </label>
+          </div>
+        </div>
+
         <!-- Study Mode Toggle -->
         <div class="mb-6 p-4 bg-indigo-200 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow">
           <label class="flex items-center justify-between cursor-pointer">

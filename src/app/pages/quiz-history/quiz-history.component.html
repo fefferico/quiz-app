@@ -1,6 +1,11 @@
 <div class="max-w-4xl mx-auto p-4 sm:p-6 dark:text-gray-200">
   <header class="mb-8 text-center">
-    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700 dark:text-indigo-400">Storico Quiz</h1>
+    <h1 class="text-3xl sm:text-4xl font-bold text-indigo-700 dark:text-indigo-400">Storico Quiz
+      <span *ngIf="selectedPublicContest"
+        class="block sm:inline text-xl text-gray-500 dark:text-gray-400 mt-1 sm:mt-0 sm:ml-2">
+        (Concorso: {{ selectedPublicContest }})
+      </span>
+    </h1>
     <p class="text-gray-600 dark:text-gray-400 mt-1">Rivedi le tue prestazioni passate.</p>
   </header>
 
@@ -102,7 +107,8 @@
           </div>
 
           <div class="flex-shrink-0 mt-2 sm:mt-0 text-center">
-            <button (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz" title="Elimina questo tentativo quiz"
+            <button (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
+              title="Elimina questo tentativo quiz"
               class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-700 dark:hover:bg-opacity-30 transition-colors">
               <fa-icon class="px-2 fa-lg" [icon]="faDelete" aria-label="Elimina questo tentativo quiz"></fa-icon>
             </button>
@@ -135,6 +141,7 @@
         <div class="mt-6">
           <a routerLink="/quiz/setup"
             class="w-full sm:w-auto inline-block bg-green-500 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-2 px-4 rounded-md shadow-sm">
+            <fa-icon class="fa-lg" [icon]="faLandmark"></fa-icon>
             Fai il tuo primo quiz!
           </a>
         </div>

@@ -5,10 +5,10 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import {
   faSun, faMoon, faAdjust, faHome, IconDefinition,
-  faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar,
+  faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faLandmark,
   faBars, faTimes // Import hamburger and close icons
 } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService, Theme } from './services/theme.service';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -26,12 +26,13 @@ export class AppComponent {
   currentYear: number = new Date().getFullYear();
   homeIcon: IconDefinition = faHome;
   faAdd: IconDefinition = faAdd;
+  faLandmark: IconDefinition = faLandmark;
   faHistory: IconDefinition = faHistory;
   faBarChart: IconDefinition = faBarChart;
   faBars: IconDefinition = faBars; // Hamburger icon
   faTimes: IconDefinition = faTimes; // Close (X) icon for menu
-  faMagnifyingGlass: IconDefinition = faMagnifyingGlass; 
-  faStar: IconDefinition = faStar; 
+  faMagnifyingGlass: IconDefinition = faMagnifyingGlass;
+  faStar: IconDefinition = faStar;
 
   public isMenuOpen: boolean = false; // State for hamburger menu
 

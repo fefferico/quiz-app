@@ -1,5 +1,5 @@
 // src/app/pages/quiz-setup/quiz-setup.component.ts
-import { Component, OnInit, inject, DoCheck, Input } from '@angular/core'; // Added Input for potential direct ID passing
+import { Component, OnInit, inject, DoCheck } from '@angular/core'; // Added Input for potential direct ID passing
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Added ActivatedRoute
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevronUp, faGears, faBook, faCancel } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
+import { ContestSelectionService } from '../../core/services/contest-selection.service';
 
 @Component({
   selector: 'app-quiz-setup',
@@ -28,6 +29,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private activatedRoute = inject(ActivatedRoute); // Inject ActivatedRoute
   private routeSub!: Subscription;
   accordionState = new Map<string, boolean>(); // Map: topicName -> isOpen
+  private contestSelectionService = inject(ContestSelectionService); // Inject the new service
 
   isExportingPDF = false;
 
@@ -55,6 +57,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   selectedNumQuestions: number = 100;
 
   selectAllTopics = true;
+  randomQuestions = false;
   useDetailedTopicCounts = false;
 
   keywordsInput = '';
@@ -68,7 +71,19 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private previousSelectedTopicsLength = 0;
   private previousUseDetailedTopicCounts = false;
 
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
+
   ngOnInit(): void {
+
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      })
+    }
+
     this.accordionState.clear();
     this.accordionState.set("main", false); // Open the first group by default
 
@@ -115,7 +130,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
 
   async loadTopics(): Promise<void> {
     try {
-      const questions = await this.dbService.getAllQuestions();
+      const questions = await this.dbService.getAllQuestions(this.selectedPublicContest);
       const topics = new Set(questions.map(q => q.topic || 'Uncategorized')); // Ensure topic is string
       this.availableTopics = Array.from(topics).sort();
       if (this.preloadedFixedQuestionIds.length === 0) { // Only update if not in fixed ID mode
@@ -322,11 +337,12 @@ export class QuizSetupComponent implements OnInit, DoCheck {
           }
         }
         queryParams.enableTimer = this.enableTimerInput;
+        queryParams.randomQuestions = this.randomQuestions;
         queryParams.enableCronometer = this.enableCronometerInput;
         queryParams.timerDuration = timerDurationSeconds || 0;
         queryParams.keywords = keywords.join(',');
         queryParams.enableStreakSounds = this.enableStreakSoundsInput; // Add sound setting
-
+        queryParams.publicContest = this.selectedPublicContest;
 
         if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
           queryParams.numQuestions = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);
@@ -338,17 +354,11 @@ export class QuizSetupComponent implements OnInit, DoCheck {
           queryParams.topicDistribution = '';
         }
       }
-
-      Object.keys(queryParams).forEach(key => {
-        if (queryParams[key] === undefined) {
-          delete queryParams[key];
-        }
-      });
     }
 
     // Clean up undefined or empty queryParams
     Object.keys(queryParams).forEach(key => {
-      if (queryParams[key] === undefined || queryParams[key] === '') {
+      if (queryParams[key] === undefined) {
         delete queryParams[key];
       }
     });
@@ -392,7 +402,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         }
         if (this.isStudyMode && this.selectAllTopics && !keywords.length) numQuestionsForFetch = 9999;
 
-        questionsToFetch = await this.dbService.getRandomQuestions(
+        questionsToFetch = await this.dbService.getRandomQuestions(this.selectedPublicContest,
           numQuestionsForFetch, topicsForFetch, keywords, qstIDs, topicDistributionForFetch
         );
       }

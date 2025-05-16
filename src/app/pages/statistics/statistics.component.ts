@@ -1,13 +1,13 @@
 // src/app/pages/statistics/statistics.component.ts
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, DecimalPipe, PercentPipe, DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { CommonModule, DatePipe, PercentPipe } from '@angular/common'; // DecimalPipe removed as not directly used in template
+import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
 import { Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement } from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import 'chartjs-adapter-date-fns';
 import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 
 import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, QuizSettings, QuestionSnapshotInfo } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
+import { QuizAttempt, QuizSettings } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
 import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -16,8 +16,10 @@ import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal
 import { GenericData } from '../../models/statistics.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears, faLandmark, faTrashCan } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
+import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
+import { Subscription } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -67,7 +69,7 @@ interface TopicCoverageData {
 @Component({
   selector: 'app-statistics',
   standalone: true,
-  providers: [DatePipe], // Add DatePipe to providers if not already global
+  providers: [DatePipe, PercentPipe], // Add DatePipe to providers if not already global
   imports: [CommonModule, RouterLink, PercentPipe, SimpleModalComponent,
     SetupModalComponent, FontAwesomeModule, FormsModule],
   templateUrl: './statistics.component.html',
@@ -79,12 +81,17 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private alertService = inject(AlertService);
   private datePipe = inject(DatePipe); // Inject DatePipe
+  private route = inject(ActivatedRoute); // Inject ActivatedRoute
+  private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
+  private percentPipe = inject(PercentPipe); // For PDF export
 
   // -- icons
-  homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
-  study: IconDefinition = faMagnifyingGlass; // This was already here, seems unused in the template you showed previously
-  military: IconDefinition = faPersonMilitaryRifle; // This was already here, seems unused in the template you showed previously
-  faGears: IconDefinition = faGears; // This was already here, seems unused in the template you showed previously
+  homeIcon: IconDefinition = faHome;
+  study: IconDefinition = faMagnifyingGlass;
+  military: IconDefinition = faPersonMilitaryRifle;
+  faGears: IconDefinition = faGears;
+  faLandmark: IconDefinition = faLandmark;
+  faTrashCan: IconDefinition = faTrashCan;
 
   quizAttempts: QuizAttempt[] = [];
   allQuestionsFromDb: Question[] = []; // Store all questions from the DB bank
@@ -104,7 +111,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   topicPerformance: TopicPerformanceData[] = [];
   tipologiaDomande: TopicPerformanceData[] = [];
-  tipologiaSelected: TopicPerformanceData = { topic: '', correct: 0, total: 0, accuracy: 0, questionIds: [] };
   topics: GenericData[] = [];
   @ViewChild('topicPerformanceChart') topicPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   topicChart: Chart | undefined;
@@ -112,10 +118,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   dailyPerformance: DailyPerformanceData[] = [];
   // We will use a single object for today's detailed data for simplicity
   todayDetailedPerformance: DailyPerformanceDataDetailed | null = null;
-  dailyPerformanceDetailed: DailyPerformanceDataDetailed[] = [];
   @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('todayPerformanceChartOld') todayPerformanceChartRefOld!: ElementRef<HTMLCanvasElement>;
   @ViewChild('todayPerformanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+
+  dailyPerformanceDetailed: DailyPerformanceDataDetailed[] = [];
+
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
 
@@ -132,48 +139,91 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedDateChart: Chart | undefined;
   // --- END NEW ---
 
+  activeContestId: string = ''; // To store the active contest for statistics
+
+  private routeSub!: Subscription;
+  private contestSub!: Subscription;
+
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
+
+  private chckForContest(): void {
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      })
+    }
+  }
 
   ngOnInit(): void {
-    this.loadAndProcessStatistics();
+    this.chckForContest();
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const contestFromQuery = params.get('contest');
+      if (contestFromQuery) {
+        this.activeContestId = contestFromQuery;
+        if (this.contestSelectionService.getCurrentSelectedContest() !== this.activeContestId) {
+          this.contestSelectionService.setSelectedContest(this.activeContestId);
+        }
+      } else {
+        this.activeContestId = this.contestSelectionService.getCurrentSelectedContest();
+      }
+      this.loadAndProcessStatistics();
+    });
+
+    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(contestId => {
+      if (!this.route.snapshot.queryParamMap.has('contest') && this.activeContestId !== contestId) {
+        this.activeContestId = contestId || '';
+        this.loadAndProcessStatistics(); // Reload stats if service changes contest
+      }
+    });
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     this.selectedDateForChart = this.datePipe.transform(yesterday, 'yyyy-MM-dd');
   }
 
   ngAfterViewInit(): void {
-    Promise.resolve().then(() => this.createChartsIfReady());
+    // Promise.resolve().then(() => this.createChartsIfReady());
   }
 
   private createChartsIfReady(): void {
     if (this.isLoading || this.errorLoading) return;
 
+    // Destroy existing charts before recreating
+    if (this.topicChart) { this.topicChart.destroy(); this.topicChart = undefined; }
+    if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; }
+    if (this.todayChart) { this.todayChart.destroy(); this.todayChart = undefined; }
+    if (this.selectedDateChart) { this.selectedDateChart.destroy(); this.selectedDateChart = undefined; }
+
     // Topic Performance Chart
     if (this.topicPerformanceChartRef?.nativeElement && this.topicPerformance.length > 0) {
       this.createTopicPerformanceChart();
-    } else if (this.topicChart) {
-      this.topicChart.destroy(); this.topicChart = undefined;
+    } else {
+      this.clearCanvasOrShowMessage(this.topicPerformanceChartRef, 'Nessun dato sulla performance per argomento.');
     }
 
     // Daily Trend Chart
     if (this.dailyPerformanceChartRef?.nativeElement && this.dailyPerformance.length > 0) {
       this.createDailyPerformanceChart();
-    } else if (this.dailyChart) {
-      this.dailyChart.destroy(); this.dailyChart = undefined;
+    } else {
+      this.clearCanvasOrShowMessage(this.dailyPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
     }
 
     // Today's Detailed Chart
-    if (this.todayPerformanceChartRef?.nativeElement && this.todayDetailedPerformance) {
+    if (this.todayPerformanceChartRef?.nativeElement && this.todayDetailedPerformance && (this.todayDetailedPerformance.quizzesTaken > 0 || (this.todayDetailedPerformance.correctAnswerCount ?? 0) > 0 || (this.todayDetailedPerformance.wrongAnswerCount ?? 0) > 0 || (this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0)) {
       this.createTodayPerformanceChart();
-    } else if (this.todayChart) {
-      this.todayChart.destroy(); this.todayChart = undefined;
-      this.clearCanvasOrShowMessage(this.todayPerformanceChartRef, 'Nessun dato per oggi.');
+    } else {
+      this.clearCanvasOrShowMessage(this.todayPerformanceChartRef, 'Nessun quiz completato oggi.');
     }
 
     // Selected Date Detailed Chart
-    if (this.selectedDatePerformanceChartRef?.nativeElement && this.selectedDateDetailedPerformance) {
+    if (this.selectedDatePerformanceChartRef?.nativeElement && this.selectedDateDetailedPerformance && (this.selectedDateDetailedPerformance.quizzesTaken > 0 || (this.selectedDateDetailedPerformance.correctAnswerCount ?? 0) > 0 || (this.selectedDateDetailedPerformance.wrongAnswerCount ?? 0) > 0 || (this.selectedDateDetailedPerformance.skippedAnswerCount ?? 0) > 0)) {
       this.createSelectedDatePerformanceChart();
-    } else if (this.selectedDateChart) {
-      this.selectedDateChart.destroy(); this.selectedDateChart = undefined;
+    } else if (this.selectedDateForChart) {
+      this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Nessun quiz per la data selezionata o dati non ancora caricati.');
+    } else {
       this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Seleziona una data e carica i dati.');
     }
   }
@@ -181,13 +231,19 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private clearCanvasOrShowMessage(chartRef: ElementRef<HTMLCanvasElement> | undefined, message: string): void {
     const canvas = chartRef?.nativeElement;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = 'center';
-        ctx.font = '14px Arial';
-        ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568';
-        ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+      const canvas = chartRef?.nativeElement;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save(); // Save state
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '14px Arial';
+          ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#a0aec0' : '#4a5568'; // Tailwind gray-500/gray-600
+          ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+          ctx.restore(); // Restore state
+        }
       }
     }
   }
@@ -197,22 +253,29 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.errorLoading = '';
     try {
+      // Pass activeContestId to filter data at source
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
-        this.dbService.getAllQuizAttempts(),
-        this.dbService.getAllQuestions()
+        this.dbService.getAllQuizAttemptsByContest(this.activeContestId),
+        this.dbService.getAllQuestions(this.activeContestId) // Assumes this method filters by publicContest
       ]);
 
       this.quizAttempts = quizAttempts;
       this.allQuestionsFromDb = allQuestionsFromDb;
 
-      if (this.quizAttempts.length > 0) {
-        await this.calculateOverallStats();
-        await this.calculateTopicPerformance();
-        await this.calculateDailyPerformance();
-        await this.calculateTodayDetailedPerformance();
-        await this.calculateWrongAnswerBreakdown();
-        await this.calculateTopicCoverage();
-        await this.getGenericData();
+      if (this.quizAttempts.length > 0 || (this.activeContestId && this.allQuestionsFromDb.length > 0)) {
+        this.calculateOverallStats(); // Uses this.quizAttempts
+        this.calculateTopicPerformance(); // Uses this.quizAttempts and this.allQuestionsFromDb
+        this.calculateDailyPerformance(); // Uses this.quizAttempts
+        await this.calculateTodayDetailedPerformance(); // Uses dbService call with activeContestId
+        this.calculateWrongAnswerBreakdown(); // Uses this.quizAttempts
+        this.calculateTopicCoverage(); // Uses this.quizAttempts and this.allQuestionsFromDb
+        await this.getGenericData(); // Uses dbService calls with activeContestId
+
+        // if a date is selected and it's not today, try to load its data
+        if (this.selectedDateForChart && this.datePipe.transform(new Date(), 'yyyy-MM-dd') !== this.selectedDateForChart) {
+          await this.loadDataForSelectedDate(false); // false to not reset charts immediately
+        }
+
       } else {
         this.resetAllStatsToZero();
       }
@@ -223,12 +286,14 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     } finally {
       this.isLoading = false;
       this.cdr.detectChanges();
+      // Use a microtask to ensure DOM is updated before creating charts
       Promise.resolve().then(() => this.createChartsIfReady());
     }
   }
 
 
   private resetAllStatsToZero(): void {
+    // ... (implementation as provided)
     this.totalQuizzesTaken = 0;
     this.totalQuestionsAttempted = 0;
     this.totalCorrectAnswers = 0;
@@ -242,10 +307,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.topicCoverage = [];
     this.tipologiaDomande = [];
 
-    if (this.topicChart) { this.topicChart.destroy(); this.topicChart = undefined; }
-    if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; }
-    if (this.todayChart) { this.todayChart.destroy(); this.todayChart = undefined; }
-    if (this.selectedDateChart) { this.selectedDateChart.destroy(); this.selectedDateChart = undefined; }
+    // Charts will be cleared/handled by createChartsIfReady
   }
 
 
@@ -273,7 +335,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async calculateDailyPerformanceWithDetails(): Promise<void> {
-    const todayAttempts = await this.dbService.getAllTodayQuizAttempts();
+    const todayAttempts = await this.dbService.getAllTodayQuizAttempts(this.activeContestId);
     if (todayAttempts.length > 0) {
       const todayDateStr = new DatePipe('it-IT').transform(new Date(), 'yyyy-MM-dd')!;
       const wrongIdsSet = new Set<string>();
@@ -487,11 +549,17 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async resetStatistics(): Promise<void> {
-    if (confirm('Sei sicuro di voler cancellare tutte le tue statistiche? Questo cancellerà tutto lo storico dei tuoi quiz.')) {
+    const confirmationMessage = `Sei sicuro di voler cancellare tutte le statistiche ${this.activeContestId ? `relative al concorso '${this.activeContestId}'` : ''}? Questo cancellerà lo storico dei quiz ${this.activeContestId ? `per questo concorso` : '(globali se nessun concorso è selezionato)'}.`;
+    if (confirm(confirmationMessage)) {
       try {
-        await this.dbService.resetDatabase();
-        await this.loadAndProcessStatistics(); // Reload to show empty state and re-initialize
-        this.alertService.showAlert("Info", 'Statistiche resettate con successo.');
+        // Pass activeContestId to dbService.resetDatabase if it's meant to be contest-specific
+        // Or, if resetDatabase is global, clear attempts for contest then reload.
+        // Assuming resetDatabase might be global, safer to clear attempts by contest:
+        await this.dbService.resetContest(this.activeContestId);
+        // If questions statistics (like 'never answered') are also contest-specific and stored, they'd need clearing too.
+        // For now, just reloading will show empty state for attempts.
+        await this.loadAndProcessStatistics();
+        this.alertService.showAlert("Info", `Statistiche ${this.activeContestId ? `per '${this.activeContestId}'` : ''} resettate.`);
       } catch (error) {
         console.error('Error resetting statistics:', error);
         this.alertService.showAlert("Attenzione", "Errore durante il reset delle statistiche.");
@@ -500,11 +568,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startPracticeQuizForTopic(topic: string): void {
+    // allQuestionsFromDb is already filtered by contest.
+    // quizAttempts is also already filtered by contest.
+    // Logic should be fine.
+    // ... (implementation as provided)
     const practiceQuestionIds = new Set<string>();
-    this.quizAttempts.forEach(attempt => {
+    this.quizAttempts.forEach(attempt => { // these attempts are for the current contest
       attempt.allQuestions.forEach(qInfo => {
         if (qInfo.questionSnapshot.topic === topic) {
           const answeredVersion = attempt.answeredQuestions.find(aq => aq.questionId === qInfo.questionId);
+          // Only add if not correct, or if it's a question from the correct contest that was part of a non-contest quiz (less likely scenario)
           if (!answeredVersion || !answeredVersion.isCorrect) {
             practiceQuestionIds.add(qInfo.questionId);
           }
@@ -513,16 +586,15 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     if (practiceQuestionIds.size === 0) {
-      // If no wrong/unanswered, offer to practice all questions from the topic
-      const allTopicQuestions = this.allQuestionsFromDb.filter(q => (q.topic || 'Uncategorized') === topic);
+      const allTopicQuestions = this.allQuestionsFromDb.filter(q => (q.topic || 'Uncategorized') === topic); // allQuestionsFromDb is contest-specific
       if (allTopicQuestions.length > 0) {
-        if (confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}". Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
+        if (confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}"${this.activeContestId ? ` nel concorso '${this.activeContestId}'` : ''}. Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
           allTopicQuestions.forEach(q => practiceQuestionIds.add(q.id));
         } else {
           return;
         }
       } else {
-        this.alertService.showAlert("Attenzione", `Nessuna domanda disponibile per l'argomento: ${topic}.`);
+        this.alertService.showAlert("Info", `Nessuna domanda disponibile per l'argomento: ${topic}${this.activeContestId ? ` nel concorso '${this.activeContestId}'` : ''}.`);
         return;
       }
     }
@@ -530,9 +602,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const finalQuestionIds = Array.from(practiceQuestionIds);
     this.router.navigate(['/quiz/take'], {
       queryParams: {
-        quizTitle: `Pratica: ${topic}`,
-        question_ids: finalQuestionIds.join(','),
+        quizTitle: `Pratica: ${topic}${this.activeContestId ? ` (${this.activeContestId})` : ''}`,
+        fixedQuestionIds: finalQuestionIds.join(','), // Use fixedQuestionIds
         numQuestions: finalQuestionIds.length,
+        publicContest: this.activeContestId // Pass contest context
       }
     });
   }
@@ -576,6 +649,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.routeSub) this.routeSub.unsubscribe();
+    if (this.contestSub) this.contestSub.unsubscribe();
     if (this.topicChart) this.topicChart.destroy();
     if (this.dailyChart) this.dailyChart.destroy();
     if (this.todayChart) this.todayChart.destroy();
@@ -615,7 +690,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
     doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-    doc.text('Report Statistiche Quiz', pageWidth / 2, yPos, { align: 'center' });
+    const mainTitle = `Report Statistiche Quiz${this.activeContestId ? ` - ${this.activeContestId}` : ''}`;
+    doc.text(mainTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
     yPos += lineHeight * 3;
 
     if (this.quizAttempts.length > 0) {
@@ -635,7 +711,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.topicCoverage.length > 0) {
       checkYPos(lineHeight * 3);
       doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text('Copertura Argomenti', margin, yPos); yPos += lineHeight * 1.5;
+      doc.text(`Copertura Argomenti ${this.activeContestId ? `(${this.activeContestId})` : ''}`, 10, yPos); yPos += 7;
       (doc as any).autoTable({
         startY: yPos,
         head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
@@ -655,7 +731,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.topicChart && this.topicPerformance.length > 0) {
       checkYPos(80); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text('Precisione per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+      doc.text(`Precisione per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
       try {
         const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
         const imgProps = this.topicChart.canvas;
@@ -671,7 +747,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.dailyChart && this.dailyPerformance.length > 0) {
       checkYPos(100); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text('Andamento Giornaliero', margin, yPos); yPos += lineHeight * 1.5;
+      doc.text(`Andamento Giornaliero ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
       try {
         const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
         const imgProps = this.dailyChart.canvas;
@@ -688,7 +764,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.wrongAnswerBreakdown.length > 0) {
       checkYPos(lineHeight * 3);
       doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text('Focus Errori per Argomento', margin, yPos); yPos += lineHeight * 1.5;
+      doc.text(`Focus Errori per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
       (doc as any).autoTable({
         startY: yPos,
         head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
@@ -707,37 +783,38 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     addPageNumbers(); // Add page numbers at the end
-    doc.save(`report-statistiche-quiz-${new DatePipe('en-US').transform(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+    const dateSuffix = this.datePipe.transform(new Date(), 'yyyyMMdd_HHmm');
+    const contestSuffix = this.activeContestId ? `_${this.activeContestId.replace(/\s+/g, '_')}` : '';
+    doc.save(`report-statistiche${contestSuffix}-${dateSuffix}.pdf`);
   }
 
 
   async getGenericData(): Promise<void> {
+    // All these dbService calls need to be contest-aware.
+    // They should accept this.activeContestId.
     const [
-      // allQuestions // Already fetched in this.allQuestionsFromDb
-      uniqueCorrectOnce,
-      uniqueWrongOnce,
-      uniqueNeverAnswered,
-      uniqueAnsweredOnce,
-      onlyCorrectlyAnswered,
-      domandeDaRafforzare,
-      domandeInCuiVaiMalino,
-      domandeInCuiVaiMoltoMale,
-      domandeDisastro
+      uniqueCorrectOnce, uniqueWrongOnce, uniqueNeverAnswered,
+      uniqueAnsweredOnce, onlyCorrectlyAnswered, domandeDaRafforzare,
+      domandeInCuiVaiMalino, domandeInCuiVaiMoltoMale, domandeDisastro
     ] = await Promise.all([
-      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(),
-      this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(),
-      this.dbService.getAllQuestionNeverAnswered(),
-      this.dbService.getAllQuestionAnsweredAtLeastOnce(),
-      this.dbService.getOnlyQuestionCorrectlyAnswered(),
-      this.dbService.getQuestionsByCorrectnessRange(0.75, 0.9999), // up to (but not including) 100%
-      this.dbService.getQuestionsByCorrectnessRange(0.50, 0.7499),
-      this.dbService.getQuestionsByCorrectnessRange(0.25, 0.4999),
-      this.dbService.getQuestionsByCorrectnessRange(0.00, 0.2499)
+      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(this.activeContestId),
+      this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(this.activeContestId),
+      this.dbService.getAllQuestionNeverAnswered(this.activeContestId),
+      this.dbService.getAllQuestionAnsweredAtLeastOnce(this.activeContestId),
+      this.dbService.getOnlyQuestionCorrectlyAnswered(this.activeContestId),
+      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.75, 0.9999),
+      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.50, 0.7499),
+      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.25, 0.4999),
+      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.00, 0.2499)
     ]);
 
+    // this.allQuestionsFromDb is already filtered by activeContestId
+    const totalQuestionsInCurrentContext = this.allQuestionsFromDb.length;
+
     this.tipologiaDomande = [
-      { topic: 'Domande totali nel DB', total: this.allQuestionsFromDb.length, questionIds: this.allQuestionsFromDb.map(q => q.id), correct: 0, accuracy: 0 },
+      { topic: `Domande totali ${this.activeContestId ? `per '${this.activeContestId}'` : 'nel DB'}`, total: totalQuestionsInCurrentContext, questionIds: this.allQuestionsFromDb.map(q => q.id), correct: 0, accuracy: 0 },
       { topic: 'Domande mai affrontate', total: uniqueNeverAnswered.length, questionIds: uniqueNeverAnswered.map(q => q.id), correct: 0, accuracy: 0 },
+      // ... other items ...
       { topic: 'Domande affrontate almeno una volta', total: uniqueAnsweredOnce.length, questionIds: uniqueAnsweredOnce.map(q => q.id), correct: 0, accuracy: 0 },
       { topic: 'Domande sbagliate almeno una volta', total: uniqueWrongOnce.length, questionIds: uniqueWrongOnce.map(q => q.id), correct: 0, accuracy: 0 },
       { topic: 'Domande risposte correttamente almeno una volta', total: uniqueCorrectOnce.length, questionIds: uniqueCorrectOnce.map(q => q.id), correct: 0, accuracy: 0 },
@@ -766,7 +843,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
       fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
       enableTimer: quizConfig.enableTimer || false, // Default to false for practice
-      timerDuration: quizConfig.timerDurationSeconds || 0
+      timerDuration: quizConfig.timerDurationSeconds || 0,
+      publicContest: this.selectedPublicContest,
     };
 
     // Clean up undefined queryParams
@@ -777,13 +855,24 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async calculateTodayDetailedPerformance(): Promise<void> {
     const today = new Date();
+    // getDetailedPerformanceForDate will use this.activeContestId
     this.todayDetailedPerformance = await this.getDetailedPerformanceForDate(today);
   }
 
   private async getDetailedPerformanceForDate(date: Date): Promise<DailyPerformanceDataDetailed | null> {
-    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(date);
+    // Pass this.activeContestId to the dbService call
+    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(this.activeContestId, date);
     if (attemptsForDate.length === 0) {
-      return null;
+      return { // Return a shell object if no attempts, so chart shows "0"
+        date: this.datePipe.transform(date, 'yyyy-MM-dd')!,
+        quizzesTaken: 0,
+        correctAnswerCount: 0,
+        wrongAnswerCount: 0,
+        skippedAnswerCount: 0,
+        correctAnswerIds: [],
+        wrongAnswerIds: [],
+        skippedAnswerIds: [],
+      };
     }
 
     const dateStr = this.datePipe.transform(date, 'yyyy-MM-dd')!;
@@ -791,10 +880,12 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const correctIds = new Set<string>();
     const wrongIds = new Set<string>();
     const skippedIds = new Set<string>();
+    let totalQuestionsInAttempts = 0;
 
     attemptsForDate.forEach(attempt => {
+      totalQuestionsInAttempts += attempt.allQuestions.length;
       attempt.answeredQuestions.forEach(aq => {
-        if (aq.questionId) { // Ensure questionId exists
+        if (aq.questionId) {
           if (aq.isCorrect) {
             correctCount++;
             correctIds.add(aq.questionId);
@@ -803,8 +894,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         }
       });
-      const allQuestionIdsInAttempt = new Set(attempt.allQuestions.map(qInfo => qInfo.questionId).filter(id => id) as string[]);
-      const answeredQuestionIdsInAttempt = new Set(attempt.answeredQuestions.map(aq => aq.questionId).filter(id => id) as string[]);
+      const allQuestionIdsInAttempt = new Set(attempt.allQuestions.map(qInfo => qInfo.questionId).filter(id => !!id) as string[]);
+      const answeredQuestionIdsInAttempt = new Set(attempt.answeredQuestions.map(aq => aq.questionId).filter(id => !!id) as string[]);
+
       allQuestionIdsInAttempt.forEach(qid => {
         if (!answeredQuestionIdsInAttempt.has(qid)) {
           skippedIds.add(qid);
@@ -824,26 +916,25 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     };
   }
 
-  // --- NEW: Methods for Selected Date Chart ---
   onDateSelectedForChart(dateValue: string): void {
     this.selectedDateForChart = dateValue;
-    // Clear previous data for selected date when a new date is picked,
-    // user then has to click "Carica Dati"
-    this.selectedDateDetailedPerformance = null;
+    this.selectedDateDetailedPerformance = null; // Clear old data
     if (this.selectedDateChart) {
       this.selectedDateChart.destroy();
       this.selectedDateChart = undefined;
-      this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Clicca "Carica Dati" per la nuova data.');
     }
+    // Automatically load data for the new date or require a button click?
+    // For now, let's keep the "Carica Dati" button as primary trigger.
+    this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Premi "Carica Dati" per visualizzare.');
   }
 
-  async loadDataForSelectedDate(): Promise<void> {
+  async loadDataForSelectedDate(recreateChart: boolean = true): Promise<void> {
     if (!this.selectedDateForChart) {
       this.alertService.showAlert("Info", "Per favore, seleziona una data.");
       return;
     }
     this.isLoadingSelectedDateData = true;
-    this.selectedDateDetailedPerformance = null;
+    this.selectedDateDetailedPerformance = null; // Clear previous
     if (this.selectedDateChart) {
       this.selectedDateChart.destroy();
       this.selectedDateChart = undefined;
@@ -851,22 +942,22 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       const dateParts = this.selectedDateForChart.split('-');
-      const year = parseInt(dateParts[0], 10);
-      const month = parseInt(dateParts[1], 10) - 1;
-      const day = parseInt(dateParts[2], 10);
-      const targetDate = new Date(year, month, day);
-
+      const targetDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+      // getDetailedPerformanceForDate will use this.activeContestId
       this.selectedDateDetailedPerformance = await this.getDetailedPerformanceForDate(targetDate);
     } catch (error) {
       console.error('Error loading data for selected date:', error);
       this.alertService.showAlert("Errore", "Impossibile caricare i dati per la data selezionata.");
+      this.selectedDateDetailedPerformance = null; // Ensure it's null on error
     } finally {
       this.isLoadingSelectedDateData = false;
       this.cdr.detectChanges();
-      if (this.selectedDateDetailedPerformance) {
-        this.createSelectedDatePerformanceChart();
-      } else {
-        this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Nessun quiz per la data selezionata.');
+      if (recreateChart) {
+        if (this.selectedDateDetailedPerformance) {
+          this.createSelectedDatePerformanceChart();
+        } else {
+          this.clearCanvasOrShowMessage(this.selectedDatePerformanceChartRef, 'Nessun quiz per la data selezionata.');
+        }
       }
     }
   }

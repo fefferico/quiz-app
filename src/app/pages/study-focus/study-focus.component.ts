@@ -5,8 +5,11 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faBarChart, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { QuizSettings } from '../../models/quiz.model';
+import { Subscription } from 'rxjs';
+import { ContestSelectionService } from '../../core/services/contest-selection.service';
+import { AlertService } from '../../services/alert.service';
 
 interface CategorizedQuestion extends Question {
   failureRate: number;
@@ -33,13 +36,23 @@ interface QuestionGroup {
 export class StudyFocusComponent implements OnInit {
   private dbService = inject(DatabaseService);
   private router = inject(Router);
+  private alertService = inject(AlertService);
+  private contestSelectionService = inject(ContestSelectionService); // Inject the new service
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  faMagnifyingGlass: IconDefinition = faMagnifyingGlass; // This was already here, seems unused in the template you showed previously
+  faBarChart: IconDefinition = faBarChart; // This was already here, seems unused in the template you showed previously
+  faLandmark: IconDefinition = faLandmark; // This was already here, seems unused in the template you showed previously
 
   isLoading = true;
   allQuestionsWithStats: CategorizedQuestion[] = [];
   questionGroups: QuestionGroup[] = [];
+
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest() || '';
+  }
 
   // Define categories and their thresholds (failure rate: 0.0 to 1.0)
   // Order matters for display
@@ -52,14 +65,23 @@ export class StudyFocusComponent implements OnInit {
   protected readonly MIN_ATTEMPTS_FOR_CATEGORY = 3; // Min attempts before categorizing a question
 
 
-  ngOnInit(): void {
-    this.loadAndCategorizeQuestions();
+  private chckForContest(): void {
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      })
+    }
   }
 
-  async loadAndCategorizeQuestions(): Promise<void> {
+  ngOnInit(): void {
+    this.chckForContest();
+    this.loadAndCategorizeQuestions(this.selectedPublicContest);
+  }
+
+  async loadAndCategorizeQuestions(contestId: string): Promise<void> {
     this.isLoading = true;
     try {
-      const questionsFromDb = await this.dbService.getAllQuestions();
+      const questionsFromDb = await this.dbService.getAllQuestions(contestId);
       this.allQuestionsWithStats = questionsFromDb
         .map(q => {
           const timesCorrect = q.timesCorrect || 0;

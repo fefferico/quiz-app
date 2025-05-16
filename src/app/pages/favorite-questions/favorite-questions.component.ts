@@ -5,8 +5,9 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
+import { ContestSelectionService } from '../../core/services/contest-selection.service';
 
 @Component({
   selector: 'app-favorite-questions',
@@ -19,6 +20,7 @@ export class FavoriteQuestionsComponent implements OnInit {
   private dbService = inject(DatabaseService);
   private router = inject(Router);
   private alertService = inject(AlertService);
+  private contestSelectionService = inject(ContestSelectionService); // Inject the new service
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -26,7 +28,21 @@ export class FavoriteQuestionsComponent implements OnInit {
   favoriteQuestions: Question[] = [];
   isLoading = true;
 
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): string {
+    return this.contestSelectionService.getCurrentSelectedContest() || '';
+  }
+
+  private chckForContest(): void {
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      })
+    }
+  }
+
   ngOnInit(): void {
+    this.chckForContest();
     this.loadFavorites();
   }
 
@@ -51,7 +67,7 @@ export class FavoriteQuestionsComponent implements OnInit {
 
   startQuizWithFavorites(): void {
     if (this.favoriteQuestions.length === 0) {
-      this.alertService.showAlert("Attenzione","Non sono presenti domande preferite con cui poter iniziare un quiz.");
+      this.alertService.showAlert("Attenzione", "Non sono presenti domande preferite con cui poter iniziare un quiz.");
       return;
     }
     const questionIds = this.favoriteQuestions.map(q => q.id);

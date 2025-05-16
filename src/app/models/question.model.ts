@@ -15,6 +15,7 @@ export interface Question {
   lastAnsweredTimestamp?: number;
   lastAnswerCorrect?: boolean;
   accuracy?: number;
+  publicContest?: string;
 }
 
 export enum QuestionDifficulty {

@@ -5,7 +5,7 @@ import { QuizSettings } from '../../../../models/quiz.model';
 import { GenericData } from '../../../../models/statistics.model';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser} from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
   selector: 'app-setup-modal', // Changed selector to avoid confusion
@@ -20,6 +20,7 @@ export class SetupModalComponent implements OnInit {
   @Input() topics: GenericData[] = []; // Placeholder for topic counts if needed
   clonedTopics: GenericData[] = []; // Placeholder for topic counts if needed
   @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
+  @Input() contestName: string = '';
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
 
@@ -64,14 +65,16 @@ export class SetupModalComponent implements OnInit {
           count: tc.count
         })),
         enableTimer: false,
-        timerDurationSeconds: 0
+        timerDurationSeconds: 0,
+        publicContest: this.contestName
       };
     } else {
       quizSettings = {
         numQuestions: this.selectedNumQuestions,
         selectedTopics: [], // Empty means all if selectAllTopics is true
         enableTimer: false,
-        timerDurationSeconds: 0
+        timerDurationSeconds: 0,
+        publicContest: this.contestName
       };
     }
     quizSettings.keywords = []; // Add keywords to both modes
@@ -90,7 +93,8 @@ export class SetupModalComponent implements OnInit {
         enableTimer: false,
         timerDuration: 0,
         // get specific question id
-        fixedQuestionIds: fixedQuestionIds
+        fixedQuestionIds: fixedQuestionIds,
+        publicContest: this.contestName
       }
     });
   }
@@ -154,7 +158,7 @@ export class SetupModalComponent implements OnInit {
   }
 
   resetCount(topic: GenericData | undefined = undefined): void {
-    if (!topic){
+    if (!topic) {
       this.clonedTopics.forEach(_topic => { _topic.count = 0; });
       this.selectedNumQuestions = 0;
     }
@@ -164,7 +168,7 @@ export class SetupModalComponent implements OnInit {
     if (originalTopic && clonedTopic) {
       clonedTopic.count = 0;
       // Recalculate the total number of questions
-      this.selectedNumQuestions = this.clonedTopics.filter(_topic=>_topic.topic !== topic?.topic).reduce((sum, tc) => sum + Number(tc.count || 0), 0);
+      this.selectedNumQuestions = this.clonedTopics.filter(_topic => _topic.topic !== topic?.topic).reduce((sum, tc) => sum + Number(tc.count || 0), 0);
     }
   }
 
