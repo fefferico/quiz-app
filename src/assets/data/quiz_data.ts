@@ -137135,7 +137135,7 @@ export const initialQuestions = [
  
    // TEST POMPIERI
   {
-    "id": "7000",
+    "id": "8000",
     "text": "La sorella di Giuliana è madre del fratello di Maura, quindi che tipo di rapporto di parentelaintercorre tra Maura e il figlio di Giuliana?",
     "topic": "RAGIONAMENTO CRITICO - VERBALE",
     "options": [
@@ -137151,14 +137151,14 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 27,
+    "questionVersion": 28,
     "lastAnsweredTimestamp": 0,
     "lastAnswerCorrect": false,
     "accuracy": 0,
     "publicContest": "banca_dati_finta_di_test_pompieri"
   },
   {
-    "id": "7001",
+    "id": "8001",
     "text": "Loredana, Federica e Alberta hanno sposato Vittorio, Alfredo e Leopoldo, due dei quali sono tra loro fratelli. Federica ha sposato il fratello di Alfredo; Alberta ha sposato Alfredo; Loredana non è cognata di Federica e Leopoldo non ha fratelli\": se si considerano queste affermazioni, cosa si deduce?",
     "topic": "RAGIONAMENTO CRITICO - VERBALE",
     "options": [
@@ -137174,7 +137174,7 @@ export const initialQuestions = [
     "timesCorrect": 0,
     "timesIncorrect": 0,
     "isFavorite": 0,
-    "questionVersion": 27,
+    "questionVersion": 28,
     "lastAnsweredTimestamp": 0,
     "lastAnswerCorrect": false,
     "accuracy": 0,

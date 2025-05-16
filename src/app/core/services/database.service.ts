@@ -222,10 +222,6 @@ export class DatabaseService {
         if (questiondIDs && questiondIDs.length > 0) {
           query = this.db.questions.where('publicContest').equals(contestId)
             .filter(qst => questiondIDs.includes(qst.id));
-          // query = query = this.db.questions.where('publicContest').equals(contestId)
-          //   .filter(question => {
-          //     return topics.some(topic => topic.toLowerCase() === (question.topic ?? '').toLowerCase());
-          //   }).filter(qst => questiondIDs.includes(qst.id));
         } else {
           query = this.db.questions.where('publicContest').equals(contestId)
             .filter(question => dist.topic.toLowerCase() === (question.topic ?? '').toLowerCase());
