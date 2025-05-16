@@ -111936,25 +111936,26 @@ export const initialQuestions = [
  "accuracy": 0,
  "publicContest": "PoliziaStatale_2024"
    },
-   // {
-   //   "id": "251",
-   //   "text": "",
-   //   "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
-   //   "options": [
-   //     "59",
-   //     "65",
-   //     "74",
-   //     "78",
-   //     "60"
-   //   ],
-   //   "correctAnswerIndex": 0,
-   //   "explanation": "",
-   //   "difficulty": QuestionDifficulty.Medium,
-   //   "timesCorrect": 0,
-   //   "timesIncorrect": 0,
-   //   "isFavorite": 0,
-   //   "questionVersion": 8
-   // },
+   {
+     "id": "4898",
+     "text": "60",
+     "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
+     "options": [
+       "59",
+       "65",
+       "74",
+       "78",
+       "60"
+     ],
+     "correctAnswerIndex": 0,
+     "explanation": "",
+     "difficulty": QuestionDifficulty.Medium,
+     "timesCorrect": 0,
+     "timesIncorrect": 0,
+     "isFavorite": 0,
+     "questionVersion": 30,
+ "publicContest": "PoliziaStatale_2024"
+   },
    {
      "id": "4898",
      "text": "Quale sarà il numero da inserire logicamente alla fine della serie seguente 13 18 23 28 33 …?",
@@ -120261,25 +120262,26 @@ export const initialQuestions = [
  "accuracy": 0,
  "publicContest": "PoliziaStatale_2024"
    },
-   // {
-   //   "id": "025",
-   //   "text": "",
-   //   "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
-   //   "options": [
-   //     "il numero è formato da 17 migliaia e 25 unità",
-   //     "il numero è composto da 25 decine e 17 centinaia",
-   //     "il numero è formato da 17 decine e 25 centinaia",
-   //     "il numero è formato da 17 centinaia e 25 unità",
-   //     "il numero è formato da 17 unità e 25 migliaia"
-   //   ],
-   //   "correctAnswerIndex": 0,
-   //   "explanation": "",
-   //   "difficulty": QuestionDifficulty.Medium,
-   //   "timesCorrect": 0,
-   //   "timesIncorrect": 0,
-   //   "isFavorite": 0,
-   //   "questionVersion": 8
-   // },
+   {
+     "id": "5260",
+     "text": "l numero è formato da 17 migliaia e 25 unità?",
+     "topic": "RAGIONAMENTO LOGICO - MATEMATICO",
+     "options": [
+       "il numero è formato da 17 migliaia e 25 unità",
+       "il numero è composto da 25 decine e 17 centinaia",
+       "il numero è formato da 17 decine e 25 centinaia",
+       "il numero è formato da 17 centinaia e 25 unità",
+       "il numero è formato da 17 unità e 25 migliaia"
+     ],
+     "correctAnswerIndex": 0,
+     "explanation": "",
+     "difficulty": QuestionDifficulty.Medium,
+     "timesCorrect": 0,
+     "timesIncorrect": 0,
+     "isFavorite": 0,
+     "questionVersion": 30,
+ "publicContest": "PoliziaStatale_2024"
+   },
    {
      "id": "5261",
      "text": "Quale numero completa correttamente la serie? 12/24/48; 24/48/96; 48/96/?",
