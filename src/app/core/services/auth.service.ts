@@ -1,50 +1,60 @@
+// src/app/core/services/auth.service.ts
 import { Injectable } from '@angular/core';
-import { Router } from '@angular/router'; // Optional: for redirecting
+import { SupabaseClient, Session, User } from '@supabase/supabase-js';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { SupabaseService } from './supabase-service.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Store the HASH of your password, not the password itself.
-  // Replace this with the actual hash you generated.
-  private readonly SHARED_SECRET_HASH = 'd4c578e2a78db5bab09cb55903eab84db9edaeb10807ddec45dec412c99daf2c';
-  private readonly AUTH_STORAGE_KEY = 'quizAppAuthenticated';
+  private supabase: SupabaseClient;
+  private _currentUser = new BehaviorSubject<User | null>(null);
+  public currentUser$: Observable<User | null> = this._currentUser.asObservable();
+  public currentSession$: Observable<Session | null>;
 
-  constructor(private router: Router) { } // Inject Router if you want to redirect
 
-  private async clientSideHash(password: string): Promise<string> {
-    if (!password) return '';
-    const msgUint8 = new TextEncoder().encode(password); // encode as (utf-8) Uint8Array
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8); // hash the message
-    const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // convert bytes to hex string
-    return hashHex;
+  constructor(private supabaseService: SupabaseService) {
+    this.supabase = this.supabaseService.supabase;
+
+    // Immediately try to get the current session
+    this.supabase.auth.getSession().then(({ data: { session } }) => {
+      this._currentUser.next(session?.user ?? null);
+    });
+
+    // Listen for auth state changes
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, 'Session:', session);
+      this._currentUser.next(session?.user ?? null);
+    });
+
+    // For convenience, expose session as an observable too
+    this.currentSession$ = new Observable(observer => {
+        this.supabase.auth.getSession().then(({ data: { session } }) => {
+            observer.next(session);
+        });
+        const { data: { subscription } } = this.supabase.auth.onAuthStateChange(
+            (event, session) => {
+                observer.next(session);
+            }
+        );
+        return () => subscription.unsubscribe();
+    });
   }
 
-  isAuthenticated(): boolean {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(this.AUTH_STORAGE_KEY) === 'true';
-    }
-    return false; // Fallback if localStorage is not available
+  async signUp(credentials: { email: string, password: string }) {
+    return this.supabase.auth.signUp(credentials);
   }
 
-  async attemptLogin(password: string): Promise<boolean> {
-    const enteredHash = await this.clientSideHash(password);
-    if (enteredHash === this.SHARED_SECRET_HASH) {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(this.AUTH_STORAGE_KEY, 'true');
-      }
-      return true;
-    }
-    return false;
+  async signIn(credentials: { email: string, password: string }) {
+    return this.supabase.auth.signInWithPassword(credentials);
   }
 
-  logout(): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(this.AUTH_STORAGE_KEY);
-    }
-    // Optional: Redirect to a login page or home page after logout
-    // this.router.navigate(['/login']); 
-    console.log('User logged out');
+  async signOut() {
+    return this.supabase.auth.signOut();
+  }
+
+  getCurrentUserSnapshot(): User | null {
+    return this._currentUser.value;
   }
 }

@@ -65,6 +65,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   yesterdayProblematicQuestionIds: string[] = [];
   todayProblematicQuestionIds: string[] = [];
   neverEncounteredQuestionIds: string[] = [];
+  neverEncounteredQuestionCount: number = 0;
   selectedXDayDate: string | null = null;
 
 
@@ -175,7 +176,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
         await Promise.all([
           this.loadTodayProblematicQuestions(contestIdentifier),
           this.loadYesterdayProblematicQuestions(contestIdentifier),
-          this.loadNeverEncounteredQuestionIds(contestIdentifier)
+          this.countNeverEncounteredQuestion(contestIdentifier)
         ]);
       } catch (error) {
         console.error(`Error loading data for contest ${contestIdentifier}:`, error);
@@ -269,9 +270,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
   }
 
-  async loadNeverEncounteredQuestionIds(contestId: string | null): Promise<void> {
+  async countNeverEncounteredQuestion(contestId: string | null): Promise<void> {
     this.loadingButtonKey = 'never_encountered';
-    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(contestId);
+    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(contestId);
     this.loadingButtonKey = null;
   }
 
@@ -310,6 +311,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   }
 
   startNeverEncounteredQuiz(): void {
+    if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0){
+      this.loadNeverEncounteredQuestions();
+    }
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
       `Domande Mai Viste (${this.selectedPublicContest || 'Generale'})`,
@@ -327,6 +331,10 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       `Quiz Concorso: ${this.selectedPublicContest}`,
       'public_contest_quiz'
     );
+  }
+
+  async loadNeverEncounteredQuestions(): Promise<void> {
+    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(this.selectedPublicContest);
   }
 
   openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }

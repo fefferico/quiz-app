@@ -550,7 +550,12 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async resetStatistics(): Promise<void> {
     const confirmationMessage = `Sei sicuro di voler cancellare tutte le statistiche ${this.activeContestId ? `relative al concorso '${this.activeContestId}'` : ''}? Questo cancellerà lo storico dei quiz ${this.activeContestId ? `per questo concorso` : '(globali se nessun concorso è selezionato)'}.`;
-    if (confirm(confirmationMessage)) {
+
+    this.alertService.showConfirmationDialog("ATTENZIONE", confirmationMessage).then(async (result) => {
+      if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+        return;
+      }
+
       try {
         // Pass activeContestId to dbService.resetDatabase if it's meant to be contest-specific
         // Or, if resetDatabase is global, clear attempts for contest then reload.
@@ -564,7 +569,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         console.error('Error resetting statistics:', error);
         this.alertService.showAlert("Attenzione", "Errore durante il reset delle statistiche.");
       }
-    }
+    });
   }
 
   startPracticeQuizForTopic(topic: string): void {

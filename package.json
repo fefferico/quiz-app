@@ -26,6 +26,7 @@
     "@angular/ssr": "^19.2.11",
     "@fortawesome/angular-fontawesome": "1.0",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@supabase/supabase-js": "^2.49.4",
     "chart.js": "^4.4.9",
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^4.1.0",
