@@ -137251,5 +137251,52 @@ export const initialQuestions = [
     "publicContest": "banca_dati_finta_di_test_pompieri"
   },
 
+   {
+     "id": "8002",
+     "text": "Solidarnosc\", nacque attorno al 1980 inquale nazione europea?",
+     "topic": "STORIA",
+     "options": [
+       "In Polonia",
+       "In Romania",
+       "In Ungheria",
+       "In Italia",
+       "In Germania"
+     ],
+     "correctAnswerIndex": 0,
+     "explanation": "",
+     "difficulty": QuestionDifficulty.Medium,
+     "timesCorrect": 0,
+     "timesIncorrect": 0,
+     "isFavorite": 0,
+     "questionVersion": 29, 
+ "lastAnsweredTimestamp": 0,
+ "lastAnswerCorrect": false,
+ "accuracy": 0,
+ "publicContest": "banca_dati_finta_di_test_pompieri"
+   },
+   {
+     "id": "8003",
+     "text": "ll trattato di Brest-Litovsk (1918 ) fu un trattato di pace stipulato tra:",
+     "topic": "STORIA",
+     "options": [
+       "gli imperi centrali e la russia",
+       "impero austro- ungarico e la francia",
+       "la germania e la russia",
+       "la germania e la polonia",
+       "gli imperi centrali e l'Italia"
+     ],
+     "correctAnswerIndex": 0,
+     "explanation": "",
+     "difficulty": QuestionDifficulty.Medium,
+     "timesCorrect": 0,
+     "timesIncorrect": 0,
+     "isFavorite": 0,
+     "questionVersion": 29, 
+ "lastAnsweredTimestamp": 0,
+ "lastAnswerCorrect": false,
+ "accuracy": 0,
+ "publicContest": "banca_dati_finta_di_test_pompieri"
+   },
+
   // TEST BELLOCCIO
 ]
