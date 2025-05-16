@@ -30,9 +30,9 @@
       </div>
       <select *ngIf="!isLoadingPageData && availablePublicContests.length > 0" id="publicContestSelectHomePage"
         [ngModel]="selectedPublicContest" (ngModelChange)="updateSelectedContestInService($event)"
-        class="p-2 border rounded  w-full">
-        <option [ngValue]="''" disabled selected>-- Seleziona un Concorso --</option>
-        <option *ngFor="let contest of availablePublicContests" [ngValue]="contest">
+        class="p-2 border rounded w-full dark:text-gray-600">
+        <option class="dark:text-gray-500" [ngValue]="''" disabled selected>-- Seleziona un Concorso --</option>
+        <option *ngFor="let contest of availablePublicContests" [ngValue]="contest" class="dark:text-gray-500">
           {{ contest }}
         </option>
       </select>
@@ -63,8 +63,8 @@
   </div>
 
   <div *ngIf="!selectedPublicContest"
-    class="flex flex-col items-center gap-2 p-3 border bg-lime-300 border-lime-300 dark:border-lime-600 rounded-lg max-w-md mx-auto bg-white dark:bg-lime-800 shadow animate-pulse">
-    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 self-start">
+    class="flex flex-col items-center gap-2 p-3 border bg-lime-600 border-lime-300 dark:border-lime-600 rounded-lg max-w-md mx-auto bg-white dark:bg-lime-800 shadow animate-pulse">
+    <span class="text-sm font-medium text-white dark:text-gray-300 self-start">
       E' obbligatorio selezionare una BANCA DATI per poter usare i pulsanti qui sotto
     </span>
   </div>
