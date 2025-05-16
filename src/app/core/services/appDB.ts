@@ -5,7 +5,7 @@ import { initialQuestions } from '../../../assets/data/quiz_data';
 
 
 // --- IMPORTANT: Increment this version number whenever you update initialQuestions ---
-const CURRENT_DB_SCHEMA_VERSION = 29; // Example: If previous was 5
+const CURRENT_DB_SCHEMA_VERSION = 30; // Example: If previous was 5
 
 // 1. Define a class that extends Dexie
 export class AppDB extends Dexie {
