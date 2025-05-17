@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import { DatabaseService } from '../../../core/services/database.service';
 import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faFaceSmileBeam } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
+import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faFaceSmileBeam, faLandmark, faBarChart } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -35,6 +35,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   faChevronDown: IconDefinition = faChevronDown; // For accordion closed
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
   faGood: IconDefinition = faFaceSmileBeam;
+  faLandmark: IconDefinition = faLandmark;
+  faBarChart: IconDefinition = faBarChart;
 
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
@@ -382,7 +384,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         numQuestions: shuffledQuestionIds.length, // numQuestions is now the count of selected IDs
         // Topics and keywords from original settings might be too broad if we are repeating specific Qs
         // We are now using fixedQuestionIds, so topics/keywords from settings are less relevant for selection
-        // topics: settings.selectedTopics?.join(','), 
+        // topics: settings.selectedTopics?.join(','),
         // keywords: settings.keywords?.join(','),
         // topicDistribution: settings.topicDistribution ? JSON.stringify(settings.topicDistribution) : '',
         enableTimer: false, // Typically disable timer for review/repeat quizzes

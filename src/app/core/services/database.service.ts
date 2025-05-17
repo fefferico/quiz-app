@@ -356,6 +356,7 @@ export class DatabaseService {
       startDate.setDate(startDate.getDate() - 1);
       startDate.setHours(0, 0, 0, 0);
       endDate = new Date();
+      endDate.setDate(endDate.getDate() - 1);
       endDate.setHours(23, 59, 59, 999);
     }
     else if (dateSpecifier instanceof Date) {
@@ -368,7 +369,7 @@ export class DatabaseService {
 
     let query = this.db.quizAttempts
       .where('timestampEnd')
-      .between(startDate.getTime(), endDate.getTime(), true, true);
+      .between(startDate, endDate, true, true);
 
     // --- SCOPE BY CONTEST IF PROVIDED ---
     if (contestId) {
@@ -380,7 +381,7 @@ export class DatabaseService {
       // If indexed: query = query.and(attempt => attempt.settings.publicContest === contestId);
     }
 
-    let attempts: QuizAttempt[] = [];
+    let attempts: QuizAttempt[] = await query.toArray();
     let unansweredIDs = new Set<string>();
     let answeredWronglyIDs = new Set<string>();
 
