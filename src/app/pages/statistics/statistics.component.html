@@ -16,7 +16,7 @@
             d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
             clip-rule="evenodd" />
         </svg>
-        Esporta in PDF {{ activeContestId ? '(' + activeContestId + ')' : '' }}
+        Esporta in PDF
       </button>
     </div>
   </header>
@@ -55,6 +55,7 @@
             class="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-4 sm:px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
             Esercitati sulle risposte sbagliate/mancanti di oggi ({{ (todayDetailedPerformance.wrongAnswerIds?.length ??
             0) + (todayDetailedPerformance.skippedAnswerIds?.length ?? 0) }})
+            <br><span class="text-sm">Potresti ritrovarti dei doppioni</span>
           </button>
         </div>
       </section>
@@ -155,31 +156,6 @@
           </ng-template>
         </div>
       </section>
-
-      <!-- Today Performance -->
-      <section class="mb-10">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultato odierno</h2>
-        <div
-          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <div
-            *ngIf="dailyPerformanceDetailed && dailyPerformanceDetailed.length > 0 && (dailyPerformanceDetailed[0]?.wrongAnswerIds?.length ?? 0) >= 0; else noTodayData"
-            class="h-64 sm:h-96 md:h-[450px]">
-            <canvas #todayPerformanceChartOld></canvas>
-          </div>
-          <ng-template #noTodayData>
-            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per la
-              giornata odierna, fai
-              ancora qualche quiz per vedere i grafici!</p>
-          </ng-template>
-        </div>
-      </section>
-      <div class="text-center"
-        *ngIf="dailyPerformanceDetailed.length > 0 && dailyPerformanceDetailed[0] && dailyPerformanceDetailed[0].wrongAnswerIds && dailyPerformanceDetailed[0].wrongAnswerIds.length > 0;">
-        <button (click)="startPracticeQuizForTodayWrong()"
-          class="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 my-3 px-4 sm:px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
-          Esercitati su queste domande sbagliate ({{ dailyPerformanceDetailed[0].wrongAnswerIds.length }})
-        </button>
-      </div>
 
       <section class="mb-10" *ngIf="topicCoverage.length > 0">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Copertura Argomenti</h2>

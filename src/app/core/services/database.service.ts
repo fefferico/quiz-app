@@ -50,7 +50,7 @@ export class DatabaseService {
 
   getQuestionsByCorrectnessRange(contestId: string, min: number, max: number): Promise<Question[]> {
     return this.db.questions.where('publicContest').equals(contestId)
-      .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min && this.rateofCorrectlyAnswered(question) >= min)
+      .filter(question => question !== undefined && this.rateOfCorrectlyAnswered(question) >= min && this.rateOfCorrectlyAnswered(question) >= min)
       .toArray();
   }
 
@@ -66,28 +66,9 @@ export class DatabaseService {
       .toArray();
   }
 
-  rateofCorrectlyAnswered(question: Question): number {
+  rateOfCorrectlyAnswered(question: Question): number {
     return ((question.timesCorrect ?? 0) / ((question.timesCorrect ?? 0) + (question.timesIncorrect ?? 0))) * 100;
   }
-
-  getAllQuestionWhichYouAreQuiteGoodAt(contestId: string, min: number, max?: number): Promise<Question[]> {
-    if (min && max) {
-      return this.db.questions.where('publicContest').equals(contestId)
-        .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min && this.rateofCorrectlyAnswered(question) <= max)
-        .toArray();
-    } else if (min && !max) {
-      return this.db.questions.where('publicContest').equals(contestId)
-        .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) >= min)
-        .toArray();
-    } else if (!min && max) {
-      return this.db.questions.where('publicContest').equals(contestId)
-        .filter(question => question !== undefined && this.rateofCorrectlyAnswered(question) <= min)
-        .toArray();
-    }
-    return Promise.resolve([]);
-  }
-
-
 
   getQuestionsByTopic(contestId: string, topic: string): Promise<Question[]> {
     return this.db.questions.where('publicContest').equals(contestId)
@@ -135,7 +116,7 @@ export class DatabaseService {
     count: number, // Overall target count, or sum from distribution
     topics: string[] = [], // For simple mode or fallback
     keywords: string[] = [],
-    questiondIDs: string[] = [],
+    questionIDs: string[] = [],
     topicDistribution?: TopicCount[] // <-- NEW: Topic distribution
   ): Promise<Question[]> {
     console.log('[DBService] getRandomQuestions called with:', { count, topics, keywords, topicDistribution });
@@ -149,11 +130,11 @@ export class DatabaseService {
         if (dist.count <= 0) continue;
 
         let query = null;
-        if (questiondIDs && questiondIDs.length > 0) {
+        if (questionIDs && questionIDs.length > 0) {
           query = this.db.questions.where('publicContest').equals(contestId)
             .filter(question => {
               return topics.some(topic => topic.toLowerCase() === (question.topic ?? '').toLowerCase());
-            }).filter(qst => questiondIDs.includes(qst.id));
+            }).filter(qst => questionIDs.includes(qst.id));
 
         } else {
           query = this.db.questions.where('publicContest').equals(contestId)
@@ -181,8 +162,8 @@ export class DatabaseService {
     } else {
       // Mode 2: Simple mode (all topics or selected topics with global count)
       let query = null;
-      if (questiondIDs && questiondIDs.length > 0) {
-        query = this.getQuestionByIds(questiondIDs);
+      if (questionIDs && questionIDs.length > 0) {
+        query = this.getQuestionByIds(questionIDs);
       } else {
         console.log('[DBService] Using Simple Mode. Topics:', topics, 'Global count:', count);
         query = this.getQuestionsByTopics(contestId, topics);
@@ -209,7 +190,7 @@ export class DatabaseService {
     count: number,
     topics: string[] = [],
     keywords: string[] = [],
-    questiondIDs: string[] = [],
+    questionIDs: string[] = [],
     topicDistribution?: TopicCount[]
   ): Promise<Question[]> {
     let allFetchedQuestions: Question[] = [];
@@ -219,9 +200,9 @@ export class DatabaseService {
         if (dist.count <= 0) continue;
 
         let query = null;
-        if (questiondIDs && questiondIDs.length > 0) {
+        if (questionIDs && questionIDs.length > 0) {
           query = this.db.questions.where('publicContest').equals(contestId)
-            .filter(qst => questiondIDs.includes(qst.id));
+            .filter(qst => questionIDs.includes(qst.id));
         } else {
           query = this.db.questions.where('publicContest').equals(contestId)
             .filter(question => dist.topic.toLowerCase() === (question.topic ?? '').toLowerCase());
@@ -244,8 +225,8 @@ export class DatabaseService {
       return allFetchedQuestions;
     } else {
       let questions: Question[] = [];
-      if (questiondIDs && questiondIDs.length > 0) {
-        questions = await this.getQuestionByIds(questiondIDs);
+      if (questionIDs && questionIDs.length > 0) {
+        questions = await this.getQuestionByIds(questionIDs);
       } else if (topics && topics.length > 0) {
         questions = await this.getQuestionsByTopics(contestId, topics);
       } else {
@@ -359,13 +340,12 @@ export class DatabaseService {
       endDate.setDate(endDate.getDate() - 1);
       endDate.setHours(23, 59, 59, 999);
     }
-    else if (dateSpecifier instanceof Date) {
+    else {
       startDate = new Date(dateSpecifier);
       endDate = new Date(dateSpecifier);
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
     }
-    else { return []; }
 
     let query = this.db.quizAttempts
       .where('timestampEnd')
@@ -400,13 +380,13 @@ export class DatabaseService {
           for (const aq of attempt.allQuestions) {
             const qst = await this.getQuestionById(aq.questionId);
             // recovering the correctness from the question and the attempt itself
-            const isUnanswerInsideAttemp = attempt.allQuestions && attempt.allQuestions.find(attemptQst => attemptQst?.questionId === qst?.id) ? true : false;
-            const isWrongInsideAttempt = !aq.isCorrect;
+            const isUnansweredInsideAttempt = attempt.allQuestions && attempt.allQuestions.some(attemptQst => attemptQst?.questionId === qst?.id);
+            const isWrongInsideAttempt = aq?.isCorrect === false;
             const isQstNeverBeenAnswered = (qst?.lastAnsweredTimestamp ?? 0) === 0;
 
             let isWrongInsideQst: boolean | undefined = true;
             isWrongInsideQst = qst && (isQstNeverBeenAnswered || ((qst?.lastAnsweredTimestamp ?? 0) >= startDate.getTime() && (qst?.lastAnsweredTimestamp ?? 0) <= endDate.getTime() && !qst?.lastAnswerCorrect));
-            if (((isWrongInsideAttempt || isUnanswerInsideAttemp) && (!isWrongInsideQst && isQstNeverBeenAnswered)) || isWrongInsideQst) {
+            if (((isWrongInsideAttempt || isUnansweredInsideAttempt) && (!isWrongInsideQst && isQstNeverBeenAnswered)) || isWrongInsideQst) {
               problematicIds.add(aq.questionId);
               answeredWronglyIDs.add(aq.questionId);
             }

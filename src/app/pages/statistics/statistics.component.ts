@@ -1,25 +1,42 @@
 // src/app/pages/statistics/statistics.component.ts
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, DatePipe, PercentPipe } from '@angular/common'; // DecimalPipe removed as not directly used in template
-import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
-import { Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement } from 'chart.js/auto'; // Added ChartEvent, ActiveElement
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  ElementRef,
+  ViewChild,
+  OnDestroy,
+  inject,
+  ChangeDetectorRef
+} from '@angular/core';
+import {CommonModule, DatePipe, PercentPipe} from '@angular/common'; // DecimalPipe removed as not directly used in template
+import {Router, RouterLink, ActivatedRoute} from '@angular/router'; // Import ActivatedRoute
+import {Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement} from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import 'chartjs-adapter-date-fns';
-import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
+import {FormsModule} from '@angular/forms'; // Import FormsModule for ngModel
 
-import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, QuizSettings } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
-import { Question } from '../../models/question.model';
+import {DatabaseService} from '../../core/services/database.service';
+import {QuizAttempt, QuizSettings} from '../../models/quiz.model'; // Added QuestionSnapshotInfo
+import {Question} from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
-import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
-import { GenericData } from '../../models/statistics.model';
+import {SimpleModalComponent} from '../../shared/simple-modal/simple-modal.component';
+import {SetupModalComponent} from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
+import {GenericData} from '../../models/statistics.model';
 
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome, faMagnifyingGlass, faPersonMilitaryRifle, faGears, faLandmark, faTrashCan } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
-import { AlertService } from '../../services/alert.service';
-import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
-import { Subscription } from 'rxjs';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import {
+  IconDefinition,
+  faHome,
+  faMagnifyingGlass,
+  faPersonMilitaryRifle,
+  faGears,
+  faLandmark,
+  faTrashCan
+} from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import {AlertService} from '../../services/alert.service';
+import {ContestSelectionService} from '../../core/services/contest-selection.service'; // Import ContestSelectionService
+import {Subscription} from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -192,10 +209,22 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isLoading || this.errorLoading) return;
 
     // Destroy existing charts before recreating
-    if (this.topicChart) { this.topicChart.destroy(); this.topicChart = undefined; }
-    if (this.dailyChart) { this.dailyChart.destroy(); this.dailyChart = undefined; }
-    if (this.todayChart) { this.todayChart.destroy(); this.todayChart = undefined; }
-    if (this.selectedDateChart) { this.selectedDateChart.destroy(); this.selectedDateChart = undefined; }
+    if (this.topicChart) {
+      this.topicChart.destroy();
+      this.topicChart = undefined;
+    }
+    if (this.dailyChart) {
+      this.dailyChart.destroy();
+      this.dailyChart = undefined;
+    }
+    if (this.todayChart) {
+      this.todayChart.destroy();
+      this.todayChart = undefined;
+    }
+    if (this.selectedDateChart) {
+      this.selectedDateChart.destroy();
+      this.selectedDateChart = undefined;
+    }
 
     // Topic Performance Chart
     if (this.topicPerformanceChartRef?.nativeElement && this.topicPerformance.length > 0) {
@@ -366,7 +395,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.quizAttempts.forEach(attempt => {
       attempt.allQuestions.forEach(qSnapshotInfo => { // Use allQuestions to capture exposure
         const topic = qSnapshotInfo.questionSnapshot.topic || 'Uncategorized';
-        const data = performanceMap.get(topic) || { correct: 0, total: 0, questionIds: new Set() };
+        const data = performanceMap.get(topic) || {correct: 0, total: 0, questionIds: new Set()};
         data.questionIds.add(qSnapshotInfo.questionId);
 
         const answeredVersion = attempt.answeredQuestions.find(aq => aq.questionId === qSnapshotInfo.questionId);
@@ -398,7 +427,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const timestamp = attempt.timestampEnd || attempt.timestampStart;
       if (!timestamp) return;
       const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
-      const dayData = dailyMap.get(dateKey) || { quizzes: 0, correct: 0, attempted: 0 };
+      const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, attempted: 0};
       dayData.quizzes++;
       dayData.correct += attempt.score || 0;
       dayData.attempted += attempt.totalQuestionsInQuiz;
@@ -420,13 +449,15 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.quizAttempts.forEach(attempt => {
       attempt.answeredQuestions.forEach(ansQ => {
         const topic = ansQ.questionSnapshot.topic || 'Uncategorized';
-        const data = wrongMap.get(topic) || { wrong: 0, totalInTopic: 0 };
+        const data = wrongMap.get(topic) || {wrong: 0, totalInTopic: 0};
         data.totalInTopic++;
         if (!ansQ.isCorrect) {
           data.wrong++;
           this.totalWrongAnswersOverall++;
         }
-        wrongMap.set(topic, data);
+        if (!wrongMap.has(topic)) {
+          wrongMap.set(topic, data);
+        }
       });
     });
     this.wrongAnswerBreakdown = Array.from(wrongMap.entries()).map(([topic, data]) => ({
@@ -498,19 +529,55 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       data: {
         labels: labels,
         datasets: [
-          { label: 'Precisione media giornaliera (%)', data: accuracyData, borderColor: 'rgb(75, 192, 192)', backgroundColor: 'rgba(75, 192, 192, 0.2)', tension: 0.1, yAxisID: 'yAccuracy', fill: true },
-          { label: 'Quiz svolti', data: quizzesTakenData, borderColor: 'rgb(255, 99, 132)', backgroundColor: 'rgba(255, 99, 132, 0.2)', type: 'bar', yAxisID: 'yQuizzes' }
+          {
+            label: 'Precisione media giornaliera (%)',
+            data: accuracyData,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1,
+            yAxisID: 'yAccuracy',
+            fill: true
+          },
+          {
+            label: 'Quiz svolti',
+            data: quizzesTakenData,
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            type: 'bar',
+            yAxisID: 'yQuizzes'
+          }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        interaction: { intersect: false, mode: 'index' },
+        interaction: {intersect: false, mode: 'index'},
         scales: {
-          x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' } }, title: { display: true, text: 'Data' } },
-          yAccuracy: { type: 'linear', position: 'left', min: 0, max: 100, title: { display: true, text: 'Precisione (%)' }, ticks: { callback: value => value + '%' } },
-          yQuizzes: { type: 'linear', position: 'right', min: 0, title: { display: true, text: 'Quiz svolti' }, grid: { drawOnChartArea: false }, ticks: { stepSize: 1 } }
+          x: {
+            type: 'time',
+            time: {unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: {day: 'MMM d'}},
+            title: {display: true, text: 'Data'}
+          },
+          yAccuracy: {
+            type: 'linear',
+            position: 'left',
+            min: 0,
+            max: 100,
+            title: {display: true, text: 'Precisione (%)'},
+            ticks: {callback: value => value + '%'}
+          },
+          yQuizzes: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            title: {display: true, text: 'Quiz svolti'},
+            grid: {drawOnChartArea: false},
+            ticks: {stepSize: 1}
+          }
         },
-        plugins: { tooltip: { mode: 'index', intersect: false }, title: { display: true, text: 'Andamento Performance Giornaliera' } }
+        plugins: {
+          tooltip: {mode: 'index', intersect: false},
+          title: {display: true, text: 'Andamento Performance Giornaliera'}
+        }
       } as ChartOptions
     };
     this.dailyChart = new Chart(ctx, chartDailyConfig);
@@ -531,18 +598,24 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [{ label: 'Precisione per argomento (%)', data: data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }]
+        datasets: [{
+          label: 'Precisione per argomento (%)',
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         scales: {
-          x: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } },
-          y: { ticks: { autoSkip: false } }
+          x: {beginAtZero: true, max: 100, ticks: {callback: value => value + '%'}},
+          y: {ticks: {autoSkip: false}}
         },
         plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: context => `${this.topicPerformance[context.dataIndex].topic}: ${context.parsed.x.toFixed(1)}%` } }, // Show full topic name in tooltip
-          title: { display: true, text: 'Precisione per Argomento' }
+          legend: {display: false},
+          tooltip: {callbacks: {label: context => `${this.topicPerformance[context.dataIndex].topic}: ${context.parsed.x.toFixed(1)}%`}}, // Show full topic name in tooltip
+          title: {display: true, text: 'Precisione per Argomento'}
         }
       }
     });
@@ -611,7 +684,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-
   async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
     this.isLoadingModal = true;
     const selectedData = this.tipologiaDomande[index];
@@ -629,7 +701,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Uncategorized';
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, { count: 0, questionIds: [] });
+          topicsMap.set(topic, {count: 0, questionIds: []});
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
@@ -663,7 +735,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({orientation: 'p', unit: 'mm', format: 'a4'});
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 15; // Start a bit lower
@@ -684,34 +756,44 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, { align: 'right' });
+        doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, {align: 'right'});
       }
     };
 
 
-    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
     const mainTitle = `Report Statistiche Quiz${this.activeContestId ? ` - ${this.activeContestId}` : ''}`;
-    doc.text(mainTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    doc.text(mainTitle, doc.internal.pageSize.getWidth() / 2, 15, {align: 'center'});
     yPos += lineHeight * 3;
 
     if (this.quizAttempts.length > 0) {
-      doc.setFontSize(14); doc.text('Performance Generale', margin, yPos); yPos += lineHeight * 1.5;
-      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.setFontSize(14);
+      doc.text('Performance Generale', margin, yPos);
+      yPos += lineHeight * 1.5;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
       [
         `Quiz Svolti: ${this.totalQuizzesTaken}`,
         `Domande Affrontate: ${this.totalQuestionsAttempted}`,
         `Risposte Corrette: ${this.totalCorrectAnswers}`,
         `Precisione Generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
         `Punteggio Medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
-      ].forEach(stat => { checkYPos(lineHeight); doc.text(stat, margin + 2, yPos); yPos += lineHeight; });
+      ].forEach(stat => {
+        checkYPos(lineHeight);
+        doc.text(stat, margin + 2, yPos);
+        yPos += lineHeight;
+      });
       yPos += sectionSpacing;
     }
 
 
     if (this.topicCoverage.length > 0) {
       checkYPos(lineHeight * 3);
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text(`Copertura Argomenti ${this.activeContestId ? `(${this.activeContestId})` : ''}`, 10, yPos); yPos += 7;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Copertura Argomenti ${this.activeContestId ? `(${this.activeContestId})` : ''}`, 10, yPos);
+      yPos += 7;
       (doc as any).autoTable({
         startY: yPos,
         head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
@@ -719,19 +801,25 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
           new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
         ]),
-        theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
-        headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
-        columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } }, // Topic name left aligned
-        margin: { left: margin, right: margin },
-        didDrawPage: (data: any) => { yPos = data.cursor.y; if (yPos > pageHeight - margin - 10) yPos = margin }
+        theme: 'striped', styles: {fontSize: 8, cellPadding: 1.5, halign: 'right'},
+        headStyles: {fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center'}, // gray-500
+        columnStyles: {0: {halign: 'left', cellWidth: 'auto'}}, // Topic name left aligned
+        margin: {left: margin, right: margin},
+        didDrawPage: (data: any) => {
+          yPos = data.cursor.y;
+          if (yPos > pageHeight - margin - 10) yPos = margin
+        }
       });
       yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
     }
 
 
     if (this.topicChart && this.topicPerformance.length > 0) {
-      checkYPos(80); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text(`Precisione per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
+      checkYPos(80);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Precisione per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
+      yPos += lineHeight * 1.5;
       try {
         const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
         const imgProps = this.topicChart.canvas;
@@ -741,13 +829,19 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         checkYPos(imgHeight + lineHeight);
         doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
         yPos += imgHeight + lineHeight;
-      } catch (e) { console.error("Error PDF Topic Chart:", e); yPos += lineHeight; }
+      } catch (e) {
+        console.error("Error PDF Topic Chart:", e);
+        yPos += lineHeight;
+      }
       yPos += sectionSpacing / 2;
     }
 
     if (this.dailyChart && this.dailyPerformance.length > 0) {
-      checkYPos(100); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text(`Andamento Giornaliero ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
+      checkYPos(100);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Andamento Giornaliero ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
+      yPos += lineHeight * 1.5;
       try {
         const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
         const imgProps = this.dailyChart.canvas;
@@ -757,14 +851,19 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         checkYPos(imgHeight + lineHeight);
         doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
         yPos += imgHeight + lineHeight;
-      } catch (e) { console.error("Error PDF Daily Chart:", e); yPos += lineHeight; }
+      } catch (e) {
+        console.error("Error PDF Daily Chart:", e);
+        yPos += lineHeight;
+      }
       yPos += sectionSpacing / 2;
     }
 
     if (this.wrongAnswerBreakdown.length > 0) {
       checkYPos(lineHeight * 3);
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-      doc.text(`Focus Errori per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos); yPos += lineHeight * 1.5;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Focus Errori per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
+      yPos += lineHeight * 1.5;
       (doc as any).autoTable({
         startY: yPos,
         head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
@@ -773,11 +872,14 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
           new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
         ]),
-        theme: 'grid', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
-        headStyles: { fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // red-like
-        columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } },
-        margin: { left: margin, right: margin },
-        didDrawPage: (data: any) => { yPos = data.cursor.y; if (yPos > pageHeight - margin - 10) yPos = margin }
+        theme: 'grid', styles: {fontSize: 8, cellPadding: 1.5, halign: 'right'},
+        headStyles: {fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center'}, // red-like
+        columnStyles: {0: {halign: 'left', cellWidth: 'auto'}},
+        margin: {left: margin, right: margin},
+        didDrawPage: (data: any) => {
+          yPos = data.cursor.y;
+          if (yPos > pageHeight - margin - 10) yPos = margin
+        }
       });
       yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
     }
@@ -812,26 +914,90 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const totalQuestionsInCurrentContext = this.allQuestionsFromDb.length;
 
     this.tipologiaDomande = [
-      { topic: `Domande totali ${this.activeContestId ? `per '${this.activeContestId}'` : 'nel DB'}`, total: totalQuestionsInCurrentContext, questionIds: this.allQuestionsFromDb.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande mai affrontate', total: uniqueNeverAnswered.length, questionIds: uniqueNeverAnswered.map(q => q.id), correct: 0, accuracy: 0 },
+      {
+        topic: `Domande totali ${this.activeContestId ? `per '${this.activeContestId}'` : 'nel DB'}`,
+        total: totalQuestionsInCurrentContext,
+        questionIds: this.allQuestionsFromDb.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande mai affrontate',
+        total: uniqueNeverAnswered.length,
+        questionIds: uniqueNeverAnswered.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
       // ... other items ...
-      { topic: 'Domande affrontate almeno una volta', total: uniqueAnsweredOnce.length, questionIds: uniqueAnsweredOnce.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande sbagliate almeno una volta', total: uniqueWrongOnce.length, questionIds: uniqueWrongOnce.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande risposte correttamente almeno una volta', total: uniqueCorrectOnce.length, questionIds: uniqueCorrectOnce.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande di cui sai tutto (100% corrette)', total: onlyCorrectlyAnswered.length, questionIds: onlyCorrectlyAnswered.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande da rafforzare (75-99% corrette)', total: domandeDaRafforzare.length, questionIds: domandeDaRafforzare.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande in cui vai malino (50-74% corrette)', total: domandeInCuiVaiMalino.length, questionIds: domandeInCuiVaiMalino.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande in cui vai molto male (25-49% corrette)', total: domandeInCuiVaiMoltoMale.length, questionIds: domandeInCuiVaiMoltoMale.map(q => q.id), correct: 0, accuracy: 0 },
-      { topic: 'Domande "disastro" (0-24% corrette)', total: domandeDisastro.length, questionIds: domandeDisastro.map(q => q.id), correct: 0, accuracy: 0 }
+      {
+        topic: 'Domande affrontate almeno una volta',
+        total: uniqueAnsweredOnce.length,
+        questionIds: uniqueAnsweredOnce.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande sbagliate almeno una volta',
+        total: uniqueWrongOnce.length,
+        questionIds: uniqueWrongOnce.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande risposte correttamente almeno una volta',
+        total: uniqueCorrectOnce.length,
+        questionIds: uniqueCorrectOnce.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande di cui sai tutto (100% corrette)',
+        total: onlyCorrectlyAnswered.length,
+        questionIds: onlyCorrectlyAnswered.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande da rafforzare (75-99% corrette)',
+        total: domandeDaRafforzare.length,
+        questionIds: domandeDaRafforzare.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande in cui vai malino (50-74% corrette)',
+        total: domandeInCuiVaiMalino.length,
+        questionIds: domandeInCuiVaiMalino.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande in cui vai molto male (25-49% corrette)',
+        total: domandeInCuiVaiMoltoMale.length,
+        questionIds: domandeInCuiVaiMoltoMale.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      },
+      {
+        topic: 'Domande "disastro" (0-24% corrette)',
+        total: domandeDisastro.length,
+        questionIds: domandeDisastro.map(q => q.id),
+        correct: 0,
+        accuracy: 0
+      }
     ];
   }
 
-  openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }
+  openQuizSetupModal(): void {
+    this.isQuizSetupModalOpen = true;
+  }
+
   closeQuizSetupModal(): void {
     this.isQuizSetupModalOpen = false;
     this.isLoadingModal = false;
     this.loadingButtonIndex = -1;
   }
+
   handleQuizSetupSubmitted(quizConfig: Partial<QuizSettings> & { fixedQuestionIds?: string[] }): void { // Added fixedQuestionIds
     this.closeQuizSetupModal();
 
@@ -850,7 +1016,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Clean up undefined queryParams
     Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
 
-    this.router.navigate(['/quiz/take'], { queryParams });
+    this.router.navigate(['/quiz/take'], {queryParams});
   }
 
   async calculateTodayDetailedPerformance(): Promise<void> {
@@ -876,10 +1042,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const dateStr = this.datePipe.transform(date, 'yyyy-MM-dd')!;
-    let correctCount = 0;
-    const correctIds = new Set<string>();
-    const wrongIds = new Set<string>();
-    const skippedIds = new Set<string>();
+    const correctIds = new Array<string>();
+    const wrongIds = new Array<string>();
+    const skippedIds = new Array<string>();
     let totalQuestionsInAttempts = 0;
 
     attemptsForDate.forEach(attempt => {
@@ -887,29 +1052,27 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       attempt.answeredQuestions.forEach(aq => {
         if (aq.questionId) {
           if (aq.isCorrect) {
-            correctCount++;
-            correctIds.add(aq.questionId);
+            correctIds.push(aq.questionId);
           } else {
-            wrongIds.add(aq.questionId);
+            wrongIds.push(aq.questionId);
           }
         }
       });
-      const allQuestionIdsInAttempt = new Set(attempt.allQuestions.map(qInfo => qInfo.questionId).filter(id => !!id) as string[]);
-      const answeredQuestionIdsInAttempt = new Set(attempt.answeredQuestions.map(aq => aq.questionId).filter(id => !!id) as string[]);
-
-      allQuestionIdsInAttempt.forEach(qid => {
-        if (!answeredQuestionIdsInAttempt.has(qid)) {
-          skippedIds.add(qid);
-        }
+      const unansweredQuestionIdsInAttempt = attempt.unansweredQuestions?.map(unaq => unaq?.questionId).filter(id => !!id) as string[];
+      unansweredQuestionIdsInAttempt.forEach((qid: string) => {
+        // aggiungo anche quelle non risposte a prescindere
+        //if (!answeredQuestionIdsInAttempt.has(qid)) {
+        skippedIds.push(qid);
+        //}
       });
     });
 
     return {
       date: dateStr,
       quizzesTaken: attemptsForDate.length,
-      correctAnswerCount: correctCount,
-      wrongAnswerCount: wrongIds.size,
-      skippedAnswerCount: skippedIds.size,
+      correctAnswerCount: correctIds.length,
+      wrongAnswerCount: wrongIds.length,
+      skippedAnswerCount: skippedIds.length,
       correctAnswerIds: Array.from(correctIds),
       wrongAnswerIds: Array.from(wrongIds),
       skippedAnswerIds: Array.from(skippedIds),
@@ -999,10 +1162,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       data: chartData,
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-        scales: { y: { beginAtZero: true, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 } } },
+        scales: {y: {beginAtZero: true, title: {display: true, text: 'Conteggio'}, ticks: {stepSize: 1}}},
         plugins: {
-          legend: { display: false },
-          title: { display: true, text: `Dettaglio Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}` },
+          legend: {display: false},
+          title: {display: true, text: `Dettaglio Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}`},
           tooltip: {
             callbacks: {
               label: function (context) {
@@ -1032,26 +1195,37 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const dateForTitle = this.datePipe.transform(this.selectedDateDetailedPerformance.date, 'dd/MM/yy');
 
       switch (clickedIndex) {
-        case 0: /* Quizzes Taken */ return;
+        case 0: /* Quizzes Taken */
+          return;
         case 1: /* Sbagliate */
           if ((this.selectedDateDetailedPerformance.wrongAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.selectedDateDetailedPerformance.wrongAnswerIds;
             modalTitle = `Rivedi Errori del ${dateForTitle}`;
-          } else { this.alertService.showAlert("Info", `Nessun errore per il ${dateForTitle}.`); return; }
+          } else {
+            this.alertService.showAlert("Info", `Nessun errore per il ${dateForTitle}.`);
+            return;
+          }
           break;
         case 2: /* Saltate/Non Risposte */
           if ((this.selectedDateDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.selectedDateDetailedPerformance.skippedAnswerIds ?? [];
             modalTitle = `Rivedi Saltate/Non Risposte del ${dateForTitle}`;
-          } else { this.alertService.showAlert("Info", `Nessuna domanda saltata per il ${dateForTitle}.`); return; }
+          } else {
+            this.alertService.showAlert("Info", `Nessuna domanda saltata per il ${dateForTitle}.`);
+            return;
+          }
           break;
         case 3: /* Corrette */
           if ((this.selectedDateDetailedPerformance.correctAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.selectedDateDetailedPerformance.correctAnswerIds ?? [];
             modalTitle = `Rivedi Corrette del ${dateForTitle}`;
-          } else { this.alertService.showAlert("Info", `Nessuna risposta corretta per il ${dateForTitle}.`); return; }
+          } else {
+            this.alertService.showAlert("Info", `Nessuna risposta corretta per il ${dateForTitle}.`);
+            return;
+          }
           break;
-        default: return;
+        default:
+          return;
       }
       if (questionIdsToPractice.length > 0) {
         await this.setupQuizForModal(questionIdsToPractice, modalTitle);
@@ -1076,8 +1250,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.alertService.showAlert("Info", "Carica prima i dati per una data specifica.");
     }
   }
-  // --- END NEW ---
 
+  // --- END NEW ---
 
 
   createTodayPerformanceChart(): void {
@@ -1119,10 +1293,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'bar', data: chartData,
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-        scales: { y: { beginAtZero: true, title: { display: true, text: 'Conteggio' }, ticks: { stepSize: 1 } } },
+        scales: {y: {beginAtZero: true, title: {display: true, text: 'Conteggio'}, ticks: {stepSize: 1}}},
         plugins: {
-          legend: { display: false },
-          title: { display: true, text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})` },
+          legend: {display: false},
+          title: {
+            display: true,
+            text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`
+          },
           tooltip: {
             callbacks: {
               label: function (context) {
@@ -1151,34 +1328,48 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       let modalTitle = '';
 
       switch (clickedIndex) { // labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette']
-        case 0: /* Quizzes Taken */ return;
+        case 0: /* Quizzes Taken */
+          return;
         case 1:
           if ((this.todayDetailedPerformance.wrongAnswerCount ?? 0) + (this.todayDetailedPerformance.correctAnswerCount ?? 0) + (this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
             questionIdsToPractice = (this.todayDetailedPerformance.wrongAnswerIds ?? [])
               .concat(this.todayDetailedPerformance.correctAnswerIds ?? [])
               .concat(this.todayDetailedPerformance.skippedAnswerIds ?? []);
             modalTitle = 'Rivedi domande di Oggi';
-          } else { this.alertService.showAlert("Info", "Nessuna domanda fatta oggi... Studia, capra!"); return; }
+          } else {
+            this.alertService.showAlert("Info", "Nessuna domanda fatta oggi... Studia, capra!");
+            return;
+          }
           break;
         case 2: /* Sbagliate */
           if ((this.todayDetailedPerformance.wrongAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.wrongAnswerIds;
             modalTitle = 'Rivedi Errori di Oggi';
-          } else { this.alertService.showAlert("Info", "Nessun errore da rivedere per oggi. Ottimo!"); return; }
+          } else {
+            this.alertService.showAlert("Info", "Nessun errore da rivedere per oggi. Ottimo!");
+            return;
+          }
           break;
         case 3: /* Saltate/Non Risposte */
           if ((this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.skippedAnswerIds ?? [];
             modalTitle = 'Rivedi Saltate/Non Risposte di Oggi';
-          } else { this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi."); return; }
+          } else {
+            this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi.");
+            return;
+          }
           break;
         case 4: /* Corrette */
           if ((this.todayDetailedPerformance.correctAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.correctAnswerIds ?? [];
             modalTitle = 'Rivedi Corrette di Oggi';
-          } else { this.alertService.showAlert("Info", "Nessuna risposta corretta da rivedere per oggi."); return; }
+          } else {
+            this.alertService.showAlert("Info", "Nessuna risposta corretta da rivedere per oggi.");
+            return;
+          }
           break;
-        default: return;
+        default:
+          return;
       }
       if (questionIdsToPractice.length > 0) {
         await this.setupQuizForModal(questionIdsToPractice, modalTitle);
@@ -1196,7 +1387,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento';
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, { count: 0, questionIds: [] });
+          topicsMap.set(topic, {count: 0, questionIds: []});
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
@@ -1222,7 +1413,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.todayDetailedPerformance) {
       const wrongIds = this.todayDetailedPerformance.wrongAnswerIds || [];
       const skippedIds = this.todayDetailedPerformance.skippedAnswerIds || [];
-      const combinedIds = Array.from(new Set([...wrongIds, ...skippedIds]));
+      // col set prendo gli identificativi univoci
+      // const combinedIds = Array.from(new Set([...wrongIds, ...skippedIds]));
+      const combinedIds = wrongIds.concat(skippedIds);
 
       if (combinedIds.length > 0) {
         this.setupQuizForModal(combinedIds, 'Rivedi Errori/Saltate di Oggi');
