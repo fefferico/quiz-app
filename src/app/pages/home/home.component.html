@@ -54,7 +54,7 @@
     Caricamento dati specifici del concorso...
   </div>
 
-  <div *ngIf="pausedQuiz" class="mb-6">
+  <div *ngIf="pausedQuiz && !isStatsViewer" class="mb-6">
     <button (click)="resumePausedQuiz()"
             class="w-full sm:w-auto inline-block bg-teal-500 hover:bg-teal-600 text-white dark:bg-teal-600 dark:hover:bg-teal-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
       <fa-icon class="mr-2" [icon]="faPlay"></fa-icon>
@@ -71,7 +71,7 @@
 
 
   <div class="mt-4 inline-grid grid-cols-2 sm:grid-cols-1 md:grid-cols-1 gap-2">
-    <button [routerLink]="'/quiz/setup'"
+    <button *ngIf="!isStatsViewer" [routerLink]="'/quiz/setup'"
             [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
@@ -83,7 +83,7 @@
       Nuovo Quiz
     </button>
 
-    <button [routerLink]="'/quiz/history'"
+    <button *ngIf="!isStatsViewer" [routerLink]="'/quiz/history'"
             [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
@@ -105,7 +105,7 @@
       Statistiche
     </button>
 
-    <button [routerLink]="'/study-focus'"
+    <button *ngIf="!isStatsViewer" [routerLink]="'/study-focus'"
             [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
@@ -116,7 +116,7 @@
       Aree da Approfondire
     </button>
 
-    <button [routerLink]="'/favorites'"
+    <button *ngIf="!isStatsViewer" [routerLink]="'/favorites'"
             [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
@@ -128,7 +128,7 @@
     </button>
 
     <!-- Buttons for contest-specific data -->
-    <button (click)="startNeverEncounteredQuiz()"
+    <button *ngIf="!isStatsViewer" (click)="startNeverEncounteredQuiz()"
             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
             [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
@@ -139,7 +139,7 @@
       Domande Mai Viste {{ selectedPublicContest ? '(' + neverEncounteredQuestionCount + ')' : '' }}
     </button>
 
-    <button (click)="startYesterdayProblematicQuiz()"
+    <button *ngIf="!isStatsViewer" (click)="startYesterdayProblematicQuiz()"
             [disabled]="!selectedPublicContest || yesterdayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'yesterday_problematic')"
             class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'yesterday_problematic')" class="mr-2"
@@ -148,7 +148,7 @@
       Rivedi Errori di IERI {{ selectedPublicContest ? '(' + yesterdayProblematicQuestionIds.length + ')' : '' }}
     </button>
 
-    <button (click)="startTodayProblematicQuiz()"
+    <button *ngIf="!isStatsViewer" (click)="startTodayProblematicQuiz()"
             [disabled]="!selectedPublicContest || todayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'today_problematic')"
             class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'today_problematic')" class="mr-2"
@@ -157,13 +157,14 @@
       Rivedi Errori di OGGI {{ selectedPublicContest ? '(' + todayProblematicQuestionIds.length + ')' : '' }}
     </button>
 
-    <div
-      class="col-span-2 sm:col-span-2 md:col-span-2 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg"
-      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+    <div *ngIf="!isStatsViewer"
+         class="col-span-2 sm:col-span-2 md:col-span-2 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+         [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <label for="xDayDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Seleziona Data per
         Errori:</label>
       <input type="date" id="xDayDate" #xDayDateInput [ngModel]="selectedXDayDate | date:'yyyy-MM-dd'"
-             (ngModelChange)="selectedXDayDate = $event" class="p-2 border w-full max-w-xs disabled rounded dark:text-gray-500"
+             (ngModelChange)="selectedXDayDate = $event"
+             class="p-2 border w-full max-w-xs disabled rounded dark:text-gray-500"
              [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
              [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
              [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData">

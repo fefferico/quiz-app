@@ -1,7 +1,7 @@
 import {Component, inject, OnInit} from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../core/services/auth.service';
+import {AppUser, AuthService, LoginResult} from '../../core/services/auth.service';
 import { DatabaseService } from '../../core/services/database.service';
 import { CommonModule } from '@angular/common';
 
@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private serviceDB = inject(DatabaseService);
 
+  username = '';
   password = '';
   errorMessage = '';
 
@@ -29,12 +30,16 @@ export class LoginComponent implements OnInit {
   }
 
   async onLogin() {
+    if (!this.username) {
+      this.errorMessage = 'Username obbligatoria.';
+      return;
+    }
     if (!this.password) {
       this.errorMessage = 'Password obbligatoria.';
       return;
     }
-    const success = await this.authService.attemptLogin(this.password);
-    if (success) {
+    const result: LoginResult = await this.authService.attemptLogin({username: this.username, password: this.password});
+    if (result && result.success) {
       this.errorMessage = '';
       //this.serviceDB.onUserLoggedIn(); // <<< TELL SERVICE TO LOAD DATA
       const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';

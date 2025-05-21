@@ -1,24 +1,46 @@
 // src/app/features/quiz/quiz-taking/quiz-taking.component.ts
-import { Component, OnInit, OnDestroy, inject, HostListener, Renderer2, ElementRef, ChangeDetectorRef, NgZone } from '@angular/core'; // Added NgZone
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, timer, Observable, Subject } from 'rxjs';
-import { map, takeWhile, finalize, takeUntil } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
-import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
-import { QuestionFeedbackComponent } from '../../../question-feedback/question-feedback.component';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  HostListener,
+  Renderer2,
+  ElementRef,
+  ChangeDetectorRef,
+  NgZone
+} from '@angular/core'; // Added NgZone
+import {CommonModule} from '@angular/common';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {Subscription, timer, Observable, Subject} from 'rxjs';
+import {map, takeWhile, finalize, takeUntil} from 'rxjs/operators';
+import {v4 as uuidv4} from 'uuid';
+import {CanComponentDeactivate} from '../../../core/guards/unsaved-changes.guard';
+import {QuestionFeedbackComponent} from '../../../question-feedback/question-feedback.component';
 
-import { DatabaseService } from '../../../core/services/database.service';
-import { Question } from '../../../models/question.model';
-import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus } from '../../../models/quiz.model';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {DatabaseService} from '../../../core/services/database.service';
+import {Question} from '../../../models/question.model';
+import {QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus} from '../../../models/quiz.model';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 // IMPORT faCog for the new button
-import { IconDefinition, faArrowLeft, faArrowRight, faCircleCheck, faCircleExclamation, faHome, faPause, faMusic, faVolumeMute, faCog, faVolumeUp } from '@fortawesome/free-solid-svg-icons'; // Added faCog
-import { AlertService } from '../../../services/alert.service';
-import { AlertButton } from '../../../models/alert.model';
-import { SoundService } from '../../../core/services/sound.service';
-import { GenericData } from '../../../models/statistics.model';
-import { ContestSelectionService } from '../../../core/services/contest-selection.service';
+import {
+  IconDefinition,
+  faArrowLeft,
+  faArrowRight,
+  faCircleCheck,
+  faCircleExclamation,
+  faHome,
+  faPause,
+  faMusic,
+  faVolumeMute,
+  faCog,
+  faVolumeUp
+} from '@fortawesome/free-solid-svg-icons'; // Added faCog
+import {AlertService} from '../../../services/alert.service';
+import {AlertButton} from '../../../models/alert.model';
+import {SoundService} from '../../../core/services/sound.service';
+import {GenericData} from '../../../models/statistics.model';
+import {ContestSelectionService} from '../../../core/services/contest-selection.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -92,10 +114,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   readonly fontSizeIncrement = 0.1;
 
   availableFonts: FontOption[] = [
-    { name: 'Predefinito', cssClass: 'font-default' },
-    { name: 'OpenDyslexic', cssClass: 'font-opendyslexic', styleValue: "'OpenDyslexic', sans-serif" },
-    { name: 'Verdana', cssClass: 'font-verdana', styleValue: "Verdana, sans-serif" },
-    { name: 'Arial', cssClass: 'font-arial', styleValue: "Arial, sans-serif" },
+    {name: 'Predefinito', cssClass: 'font-default'},
+    {name: 'OpenDyslexic', cssClass: 'font-opendyslexic', styleValue: "'OpenDyslexic', sans-serif"},
+    {name: 'Verdana', cssClass: 'font-verdana', styleValue: "Verdana, sans-serif"},
+    {name: 'Arial', cssClass: 'font-arial', styleValue: "Arial, sans-serif"},
   ];
   currentFontIndex: number = 0;
   currentFont: FontOption = this.availableFonts[0];
@@ -256,9 +278,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   get selectedPublicContest(): string {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
+
   forceExit: boolean = false;
 
-  private chckForContest(): void {
+  private checkForContest(): void {
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
         this.forceExit = true;
@@ -270,7 +293,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   ngOnInit(): void {
-    this.chckForContest();
+    this.checkForContest();
     this.loadAvailableVoices(); // Attempt to load voices initially
 
     this.quizStartTime = new Date();
@@ -312,7 +335,13 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
           const topicDistributionParam = actualParams['topicDistribution'] || '';
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
-          if (topicDistributionParam) { try { selectedTopicDistribution = JSON.parse(topicDistributionParam); } catch (e) { console.error('Error parsing topicDistribution:', e); } }
+          if (topicDistributionParam) {
+            try {
+              selectedTopicDistribution = JSON.parse(topicDistributionParam);
+            } catch (e) {
+              console.error('Error parsing topicDistribution:', e);
+            }
+          }
 
           this.isTimerEnabled = actualParams['enableTimer'] === 'true';
           this.isCronometerEnabled = actualParams['enableCronometer'] === 'true';
@@ -352,6 +381,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   toggleAccessibilityControls(): void {
     this.showAccessibilityControls = !this.showAccessibilityControls;
   }
+
   // --- END NEW ---
 
   async loadQuestions(isResumeLoad: boolean = false): Promise<void> {
@@ -391,8 +421,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     } catch (error) {
       console.error('Error loading questions:', error);
       this.errorLoading = "Errore nel caricamento delle domande.";
-    }
-    finally {
+    } finally {
       this.isLoading = false;
     }
   }
@@ -639,7 +668,6 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     const originalQuestionData = this.questions[this.currentQuestionIndex];
 
 
-
     this.userAnswers.push({
       questionId: actualQuestionId,
       userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
@@ -720,9 +748,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   getNumberOfCorrectAnswers(): number {
     return this.userAnswers.filter(ans => ans.isCorrect).length;
   }
+
   getNumberOfIncorrectAnswers(): number {
     return this.userAnswers.filter(ans => !ans.isCorrect).length;
   }
+
   getNumberOfUnansweredQuestions(): number {
     return this.questions.length - this.userAnswers.length;
   }
@@ -817,7 +847,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }
     });
 
-    const finalQuizSettings = { ...this.quizSettings };
+    const finalQuizSettings = {...this.quizSettings};
     if (this.isTimerEnabled) {
       finalQuizSettings.enableTimer = true;
       finalQuizSettings.timerDurationSeconds = this.quizSettings.timerDurationSeconds; // Use original duration from settings
@@ -916,11 +946,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       role: 'cancel',
       cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
     } as AlertButton,
-    {
-      text: 'ESCI',
-      role: 'confirm',
-      data: 'ok_confirmed'
-    } as AlertButton];
+      {
+        text: 'ESCI',
+        role: 'confirm',
+        data: 'ok_confirmed'
+      } as AlertButton];
 
     if (!this.forceExit) {
       return this.alertService.showConfirmationDialog("Si è sicuri di voler abbandonare il quiz?", "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa.", customBtns).then(result => {
@@ -1342,6 +1372,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       this.processSpeakQueue();
     }
   }
+
   // --- END Updated TTS Methods ---
 
   private stripHtml(html: string): string {
@@ -1419,6 +1450,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       if (voice.lang.startsWith('en')) this.preferredEnglishVoice = voice;
     }
   }
+
   // --- END NEW ---
   private findBestVoiceForLang(lang: string): SpeechSynthesisVoice | null {
     if (!this.availableVoices || this.availableVoices.length === 0) return null;

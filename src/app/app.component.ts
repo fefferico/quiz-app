@@ -1,14 +1,16 @@
 // src/app/app.component.ts
 import { Component, computed, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import {RouterOutlet, RouterLink, Router} from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import {
   faSun, faMoon, faAdjust, faHome, IconDefinition,
   faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faLandmark,
+  faSignOut,
   faBars, faTimes // Import hamburger and close icons
 } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from './services/theme.service';
+import {AuthService} from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -33,10 +35,13 @@ export class AppComponent {
   faTimes: IconDefinition = faTimes; // Close (X) icon for menu
   faMagnifyingGlass: IconDefinition = faMagnifyingGlass;
   faStar: IconDefinition = faStar;
+  faSignOut: IconDefinition = faSignOut;
 
   public isMenuOpen: boolean = false; // State for hamburger menu
 
   public themeService: ThemeService = inject(ThemeService);
+  authService = inject(AuthService);
+  private router = inject(Router);
 
   public icon: Signal<IconDefinition> = computed(() => {
     const theme = this.themeService.currentTheme();
@@ -75,5 +80,15 @@ export class AppComponent {
     if (this.isMenuOpen) {
       this.isMenuOpen = false;
     }
+  }
+
+  listenForLogoff(): void {
+    this.authService.signOut().then(() => {
+      console.log("User logged off");
+      // Optionally redirect to login page or show a message
+      this.router.navigate(['/login']);
+    }).catch((error) => {
+      console.error("Error logging off:", error);
+    });
   }
 }
