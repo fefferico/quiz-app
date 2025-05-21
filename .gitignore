@@ -47,4 +47,5 @@ venv/*
 path/to/venv/*
 
 /release/*
-environment.ts
+# Ignore environment files with secrets
+src/environments/environment.ts
