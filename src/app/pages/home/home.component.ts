@@ -7,7 +7,7 @@ import {QuizAttempt, QuizSettings} from '../../models/quiz.model';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
-  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faGavel
+  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle
 } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
 import {SimpleModalComponent} from '../../shared/simple-modal/simple-modal.component';
 import {SetupModalComponent} from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
@@ -84,6 +84,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   faStar: IconDefinition = faStar;
   faRepeat: IconDefinition = faRepeat;
   faExclamation: IconDefinition = faExclamation;
+  faPersonMilitaryRifle: IconDefinition = faPersonMilitaryRifle;
   faPlay: IconDefinition = faPlay;
   faQuestion: IconDefinition = faQuestion;
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
@@ -92,6 +93,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   // Keep track of the contestId this component is currently operating with
   private currentLocalContestId: string | null = null;
 
+  isTimerEnabled: boolean = false;
+  timerDuration: number = 0;
   // Getter to easily access the contest from the template
   get selectedPublicContest(): string {
     return this.contestSelectionService.getCurrentSelectedContest() || '';
@@ -238,7 +241,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   private async prepareAndOpenModal(
     fetchQuestionsFn: () => Promise<Question[]>,
     modalTitle: string,
-    buttonKey: string
+    buttonKey: string,
+    isSimulation: boolean = false
   ): Promise<void> {
     if (!this.selectedPublicContest && modalTitle !== 'Riprendi il quiz precedente' && modalTitle !== 'Nuovo Quiz Generico') {
       // Allow "Nuovo Quiz" to proceed without a contest, but it will show all topics.
@@ -255,7 +259,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     let questionsForModal: Question[] = [];
 
     try {
-      this.spinnerService.show("Recupero domande mai viste...");
+      this.spinnerService.show(isSimulation ? "Recupero domande per il quiz simulato..." : "Recupero domande mai viste...");
       questionsForModal = await fetchQuestionsFn();
       this.spinnerService.hide();
     } catch (error) {
@@ -342,15 +346,18 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     );
   }
 
-  startPublicContestQuizNow(): void { // Renamed to avoid conflict with previous onSelect which reloads data
+  startSimulationContestQuizNow(): void { // Renamed to avoid conflict with previous onSelect which reloads data
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
     }
+    this.isTimerEnabled = true;
+    this.timerDuration = 5400; // 90 minutes in seconds
     this.prepareAndOpenModal(
-      () => this.dbService.getQuestionsByPublicContest(this.selectedPublicContest!), // Assert non-null
-      `Quiz Concorso: ${this.selectedPublicContest}`,
-      'public_contest_quiz'
+      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null
+      `Simulazione Concorso: ${this.selectedPublicContest}`,
+      'public_contest_quiz',
+      true
     );
   }
 

@@ -12,7 +12,10 @@ import {
 import {CommonModule, DatePipe, PercentPipe} from '@angular/common'; // DecimalPipe removed as not directly used in template
 import {Router, RouterLink, ActivatedRoute} from '@angular/router'; // Import ActivatedRoute
 import {Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement} from 'chart.js/auto'; // Added ChartEvent, ActiveElement
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'chartjs-adapter-date-fns';
+import { it } from 'date-fns/locale';
+
 import {FormsModule} from '@angular/forms'; // Import FormsModule for ngModel
 
 import {DatabaseService} from '../../core/services/database.service';
@@ -54,6 +57,8 @@ interface DailyPerformanceData {
   date: string;
   quizzesTaken: number;
   totalCorrect: number;
+  totalIncorrect: number;
+  totalSkipped: number;
   totalAttemptedInDay: number;
   averageAccuracy: number;
 }
@@ -85,6 +90,14 @@ interface TopicCoverageData {
   totalQuestionsCorrectlyAnswered: number;
   correctPercentage: number;
   totalQuestionsWronglyAnswered: number;
+}
+
+interface DailyMap {
+  quizzes: number,
+  correct: number,
+  incorrect: number,
+  skipped: number,
+  attempted: number
 }
 
 
@@ -180,6 +193,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Set the default locale for all charts
+    Chart.defaults.locale = 'it';
     this.isStatsViewer = this.authService.isStatsViewer();
     this.checkForContest();
     this.routeSub = this.route.queryParamMap.subscribe(async params => {
@@ -292,7 +307,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
         this.dbService.getAllQuizAttemptsByContest(this.activeContestId),
         // Usage
-        this.dbService.fetchAllRows('questions', this.activeContestId) // Assuming this method filters by publicContest
+        this.dbService.fetchAllRows(this.activeContestId) // Assuming this method filters by publicContest
         //this.dbService.getAllQuestions(this.activeContestId) // Assumes this method filters by publicContest
       ]);
 
@@ -393,7 +408,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   calculateDailyPerformance(): void {
-    const dailyMap = new Map<string, { quizzes: number, correct: number, attempted: number }>();
+    const dailyMap = new Map<string, DailyMap>();
     const dateFormatter = new DatePipe('en-US');
     const sortedAttempts = [...this.quizAttempts].sort((a, b) =>
       new Date(a.timestampEnd || a.timestampStart || 0).getTime() - new Date(b.timestampEnd || b.timestampStart || 0).getTime()
@@ -402,10 +417,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const timestamp = attempt.timestampEnd || attempt.timestampStart;
       if (!timestamp) return;
       const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
-      const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, attempted: 0};
+      const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0};
       dayData.quizzes++;
-      dayData.correct += attempt.score || 0;
+      dayData.correct += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => aq.isCorrect).length : 0;
       dayData.attempted += attempt.totalQuestionsInQuiz;
+      dayData.skipped += attempt.unansweredQuestions ? attempt.unansweredQuestions.length : 0;
       dailyMap.set(dateKey, dayData);
     });
     this.dailyPerformance = Array.from(dailyMap.entries())
@@ -413,9 +429,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         date: date,
         quizzesTaken: data.quizzes,
         totalCorrect: data.correct,
+        totalIncorrect: data.attempted - data.correct,
         totalAttemptedInDay: data.attempted,
         averageAccuracy: data.attempted > 0 ? (data.correct / data.attempted) : 0
-      })).slice(-30);
+      } as DailyPerformanceData)).slice(-30);
   }
 
   async calculateTopicCoverage(contest: string): Promise<void> {
@@ -441,7 +458,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!encounteredQuestionIdsByTopic.has(topic)) {
         encounteredQuestionIdsByTopic.set(topic, new Set());
       }
-      if (encounteredQuestionIdsByTopic.get(topic) && (question.timesIncorrect || question.timesCorrect)){
+      if (encounteredQuestionIdsByTopic.get(topic) && (question.timesIncorrect || question.timesCorrect)) {
         encounteredQuestionIdsByTopic.get(topic)!.add(question.id);
       }
 
@@ -493,69 +510,186 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   createDailyPerformanceChart(): void {
     if (this.dailyChart) this.dailyChart.destroy();
-    if (!this.dailyPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) return;
+    if (!this.dailyPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) {
+      this.clearCanvasOrShowMessage(this.dailyPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
+      return;
+    }
     const ctx = this.dailyPerformanceChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
     const labels = this.dailyPerformance.map(dp => dp.date);
     const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
     const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
+    const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
+    const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
+    // Assuming dp.totalIncorrect = (questions presented - correct answers),
+    // which includes both wrongly answered and skipped questions based on current calculateDailyPerformance.
+    const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
+    const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
+    const maxTotalAnswered = Math.max(...totalAttemptedData);
+
+    const chartData = {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line' as const,
+          label: 'Precisione Media (%)',
+          data: accuracyData,
+          borderColor: 'rgba(255, 159, 64, 1)', // Orange
+          backgroundColor: 'rgba(255, 159, 64, 0.2)',
+          yAxisID: 'yAccuracy',
+          tension: 0.1,
+          fill: false
+        },
+        {
+          type: 'bar' as const,
+          label: 'Domande svolte',
+          data: totalAttemptedData,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte errate',
+          data: totalIncorrectData,
+          backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red (similar to today's chart incorrect)
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte saltate',
+          data: totalSkippedData,
+          backgroundColor: 'rgba(255, 206, 86, 0.6)', // Red (similar to today's chart incorrect)
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte Corrette',
+          data: totalCorrectData,
+          backgroundColor: 'rgba(75, 192, 192, 0.7)', // Green (similar to today's chart correct)
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+      ]
+    };
 
     const chartDailyConfig: ChartConfiguration = {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Precisione media giornaliera (%)',
-            data: accuracyData,
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1,
-            yAxisID: 'yAccuracy',
-            fill: true
-          },
-          {
-            label: 'Quiz svolti',
-            data: quizzesTakenData,
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            type: 'bar',
-            yAxisID: 'yQuizzes'
-          }
-        ]
-      },
+      type: 'bar', // Base type, individual datasets can override
+      data: chartData,
       options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: {intersect: false, mode: 'index'},
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
         scales: {
           x: {
             type: 'time',
-            time: {unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: {day: 'MMM d'}},
-            title: {display: true, text: 'Data'}
+            adapters: { // Explicitly configure the adapter for this scale
+              date: {
+                locale: it // Pass the imported 'it' object from date-fns/locale
+              }
+            },
+            time: {
+              unit: 'day',
+              tooltipFormat: 'd MMM yyyy', // es: 15 gen 2023
+              displayFormats: {
+                day: 'd MMM' // es: 15 gen
+              }
+            },
+            title: {
+              display: true,
+              text: 'Data'
+            }
           },
-          yAccuracy: {
+          yAccuracy: { // For the line chart (Accuracy)
             type: 'linear',
             position: 'left',
             min: 0,
             max: 100,
-            title: {display: true, text: 'Precisione (%)'},
-            ticks: {callback: value => value + '%'}
+            title: {
+              display: true,
+              text: 'Precisione (%)'
+            },
+            ticks: {
+              callback: value => value + '%'
+            },
+            grid: {
+              drawOnChartArea: true // Keep grid for primary Y axis
+            }
           },
-          yQuizzes: {
+          yQuizzes: { // For the bar charts (Counts)
+            suggestedMax: maxTotalAnswered + 2, // Add a little space above the max value
             type: 'linear',
             position: 'right',
             min: 0,
-            title: {display: true, text: 'Quiz svolti'},
-            grid: {drawOnChartArea: false},
-            ticks: {stepSize: 1}
+            title: {
+              display: true,
+              text: 'Conteggio' // More generic term for counts
+            },
+            grid: {
+              drawOnChartArea: false, // Hide grid for secondary Y axis to avoid clutter
+            },
+            ticks: {
+              stepSize: 1 // Ensure whole numbers for counts
+            }
           }
         },
         plugins: {
-          tooltip: {mode: 'index', intersect: false},
-          title: {display: true, text: 'Andamento Performance Giornaliera'}
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          },
+          title: {
+            display: true,
+            text: 'Andamento Performance Giornaliera'
+          },
+          legend: {
+            display: true,
+            position: 'top',
+          },
+          datalabels: {
+            display: (context: any) => {
+              const value = context.dataset.data[context.dataIndex] as number;
+              if (typeof value !== 'number') {
+                return false;
+              }
+              // For bar charts (identified by yAxisID), hide label if value is 0
+              if (context.dataset.yAxisID === 'yQuizzes') {
+                return value !== 0;
+              }
+              return true; // Always display for other types (like the accuracy line)
+            },
+            anchor: 'end',
+            align: 'center', // Keeps labels at the top-center of bars, and above line points
+            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#374151', // Theme-aware color
+            font: {
+              weight: 'bold',
+              size: 12 // Reduced from 20 for better readability and fit
+            },
+            formatter: (value: number, context: any) => {
+              if (typeof value !== 'number') {
+                return ''; // Return empty string for non-numeric values
+              }
+              // Check if the dataset is the accuracy line
+              if (context.dataset.yAxisID === 'yAccuracy') {
+                return value.toFixed(2) + '%'; // Format as percentage with two decimal place
+              } else {
+                return Math.round(value).toString(); // Format as integer for bar charts
+              }
+            }
+          }
         }
-      } as ChartOptions
+      } as ChartOptions,
+      plugins: [ChartDataLabels]
     };
     this.dailyChart = new Chart(ctx, chartDailyConfig);
   }
@@ -1099,60 +1233,100 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const ctx = this.selectedDatePerformanceChartRef.nativeElement.getContext('2d');
-    if (!ctx) return;
+    const ctxSelectedDate = this.selectedDatePerformanceChartRef.nativeElement.getContext('2d');
+    if (!ctxSelectedDate) return;
 
     const data = this.selectedDateDetailedPerformance;
     const chartData = {
-      labels: ['Quiz Svolti', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
+      labels: ['Quiz Svolti', 'Domande', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
       datasets: [{
-        label: `Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}`,
+        label: `Performance di Oggi (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
         data: [
           data.quizzesTaken,
+          (data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0),
           data.wrongAnswerCount ?? 0,
           data.skippedAnswerCount ?? 0,
           data.correctAnswerCount ?? 0
         ],
         backgroundColor: [
-          'rgba(54, 162, 235, 0.6)', 'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)'
+          'rgba(213, 217, 220, 0.6)',// Quiz Svolti
+          'rgba(54, 162, 235, 0.6)', // Domande
+          'rgba(255, 99, 132, 0.6)', // Sbagliate
+          'rgba(255, 206, 86, 0.6)', // Saltate/Non Risposte
+          'rgba(75, 192, 192, 0.6)'  // Corrette
         ],
         borderColor: [
-          'rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)',
-          'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'
+          'rgba(145,149,154,0.82)', // Quiz Svolti
+          'rgba(54, 162, 235, 1)', // Domande
+          'rgba(255, 99, 132, 1)',// Sbagliate
+          'rgba(255, 206, 86, 1)', // Saltate/Non Risposte
+          'rgba(75, 192, 192, 1)'// Corrette
         ],
-        borderWidth: 1
+        borderWidth: 10
       }]
     };
-
     const chartConfig: ChartConfiguration = {
       type: 'bar',
       data: chartData,
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-        scales: {y: {beginAtZero: true, title: {display: true, text: 'Conteggio'}, ticks: {stepSize: 1}}},
+        layout: {
+          padding: {
+            top: 30 // Add space from the top bar
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              stepSize: 1, font: {
+                size: 18, // Make labels bigger
+                weight: 'bold'
+              },
+              color: '#222' // Make labels darker
+            },
+          },
+          y: {
+            beginAtZero: true,
+            title: {display: true, text: 'Conteggio'},
+            ticks: {
+              stepSize: 1
+            },
+            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0) ) + 2 // Add 2 to the max value for top space
+          }
+        },
         plugins: {
           legend: {display: false},
-          title: {display: true, text: `Dettaglio Performance del ${this.datePipe.transform(data.date, 'dd/MM/yyyy')}`},
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                let label = context.dataset.label || '';
-                if (context.dataset.data && context.dataset.data[context.dataIndex] !== undefined) {
-                  if (label) label += ': ';
-                  label += context.dataset.data[context.dataIndex];
-                }
-                return label;
-              }
+          title: {
+            display: true,
+            text: `Dettaglio risultato del giorno (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
+            font: {
+              size: 22,
+              weight: 'bold',
+              family: 'Arial, Helvetica, sans-serif'
+            },
+            color: '#111'
+          },
+          datalabels: {
+            display: true,
+            anchor: 'center',
+            align: 'center',
+            color: '#222',
+            font: {
+              weight: 'bold',
+              size: 20
+            },
+            formatter: function (value: any) {
+              return value;
             }
           }
         },
         onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
           this.handleSelectedDateChartClick(event, elements, chart);
         }
-      } as ChartOptions
+      } as ChartOptions,
+      plugins: [ChartDataLabels]
     };
-    this.selectedDateChart = new Chart(ctx, chartConfig);
+    this.todayChart = new Chart(ctxSelectedDate, chartConfig);
   }
 
   async handleSelectedDateChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
@@ -1244,47 +1418,81 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           data.correctAnswerCount ?? 0
         ],
         backgroundColor: [
-          'rgba(213, 217, 220, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)', 'rgba(75, 192, 192, 0.6)'
+          'rgba(213, 217, 220, 0.6)',// Quiz Svolti
+          'rgba(54, 162, 235, 0.6)', // Domande
+          'rgba(255, 99, 132, 0.6)', // Sbagliate
+          'rgba(255, 206, 86, 0.6)', // Saltate/Non Risposte
+          'rgba(75, 192, 192, 0.6)'  // Corrette
         ],
         borderColor: [
-          'rgba(213, 217, 220, 0.6)',
-          'rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)',
-          'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'
+          'rgba(145,149,154,0.82)', // Quiz Svolti
+          'rgba(54, 162, 235, 1)', // Domande
+          'rgba(255, 99, 132, 1)',// Sbagliate
+          'rgba(255, 206, 86, 1)', // Saltate/Non Risposte
+          'rgba(75, 192, 192, 1)'// Corrette
         ],
-        borderWidth: 1
+        borderWidth: 10
       }]
     };
     const chartTodayConfig: ChartConfiguration = {
       type: 'bar', data: chartData,
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-        scales: {y: {beginAtZero: true, title: {display: true, text: 'Conteggio'}, ticks: {stepSize: 1}}},
+        layout: {
+          padding: {
+            top: 30 // Add space from the top bar
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              stepSize: 1, font: {
+                size: 18, // Make labels bigger
+                weight: 'bold'
+              },
+              color: '#222' // Make labels darker
+            },
+          },
+          y: {
+            beginAtZero: true,
+            title: {display: true, text: 'Conteggio'},
+            ticks: {
+              stepSize: 1
+            },
+            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0) ) + 2 // Add 2 to the max value for top space
+          }
+        },
         plugins: {
           legend: {display: false},
           title: {
             display: true,
-            text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`
+            text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
+            font: {
+              size: 22,
+              weight: 'bold',
+              family: 'Arial, Helvetica, sans-serif'
+            },
+            color: '#111'
           },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                let label = context.dataset.label || '';
-                if (context.dataset.data && context.dataset.data[context.dataIndex] !== undefined) {
-                  if (label) label += ': ';
-                  label += context.dataset.data[context.dataIndex];
-                }
-                return label;
-              }
+          datalabels: {
+            display: true,
+            anchor: 'center',
+            align: 'center',
+            color: '#222',
+            font: {
+              weight: 'bold',
+              size: 20
+            },
+            formatter: function (value: any) {
+              return value;
             }
           }
         },
         onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
           this.handleTodayChartClick(event, elements, chart);
         }
-      } as ChartOptions
+      } as ChartOptions,
+      plugins: [ChartDataLabels]
     };
     this.todayChart = new Chart(ctxToday, chartTodayConfig);
   }

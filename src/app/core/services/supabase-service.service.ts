@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 // Updated import to include SupabaseClientOptions
 import { createClient, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
-import {environment} from '../../../environments/environment';
+import {environment} from '../../../environments/environment.prod';
 
 @Injectable({
   providedIn: 'root'

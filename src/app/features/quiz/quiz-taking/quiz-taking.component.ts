@@ -347,7 +347,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             }
           }
 
-          this.isTimerEnabled = actualParams['enableTimer'] === 'true';
+          this.isTimerEnabled = actualParams['enableTimer'] == true || actualParams['enableTimer'] === 'true';
           this.isCronometerEnabled = actualParams['enableCronometer'] === 'true';
           this.timerDuration = actualParams['timerDuration'] ? +actualParams['timerDuration'] : 0;
           this._timeLeftSeconds = this.timerDuration;

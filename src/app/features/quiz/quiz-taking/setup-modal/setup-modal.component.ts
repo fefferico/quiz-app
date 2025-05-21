@@ -21,6 +21,8 @@ export class SetupModalComponent implements OnInit {
   clonedTopics: GenericData[] = []; // Placeholder for topic counts if needed
   @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
   @Input() contestName: string = '';
+  @Input() enableTimer: boolean = false;
+  @Input() timerDuration: number = 0;
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
 
@@ -64,16 +66,16 @@ export class SetupModalComponent implements OnInit {
           topic: tc.topic,
           count: tc.count
         })),
-        enableTimer: false,
-        timerDurationSeconds: 0,
+        enableTimer: this.enableTimer,
+        timerDurationSeconds: this.timerDuration,
         publicContest: this.contestName
       };
     } else {
       quizSettings = {
         numQuestions: this.selectedNumQuestions,
         selectedTopics: [], // Empty means all if selectAllTopics is true
-        enableTimer: false,
-        timerDurationSeconds: 0,
+        enableTimer: this.enableTimer,
+        timerDurationSeconds: this.timerDuration,
         publicContest: this.contestName
       };
     }
@@ -94,8 +96,8 @@ export class SetupModalComponent implements OnInit {
         keywords: quizSettings.keywords.join(','),
         // For quiz mode, pass other relevant params
         topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
-        enableTimer: false,
-        timerDuration: 0,
+        enableTimer: quizSettings.enableTimer,
+        timerDuration: quizSettings.timerDurationSeconds,
         // get specific question id
         fixedQuestionIds: fixedQuestionIds,
         publicContest: this.contestName

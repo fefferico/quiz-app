@@ -1437,6 +1437,59 @@ export class DatabaseService implements OnDestroy {
   */
 
 
+  async getQuestionsByPublicContestForSimulation(contestIdentifier: string): Promise<Question[]> {
+    if (!contestIdentifier) return [];
+
+    // This method simulates a test with 100 quiz questions distributed as follows:
+    // 20% CULTURA GENERALE - Cultura Generale (20 questions)
+    // 12% ITALIANO - Letteratura (12 questions)
+    // 12% ITALIANO - Grammatica or Ragionamento Critico - Verbale (12 questions)
+    // 12% MATEMATICA or Ragionamento Logico Matematico (12 questions)
+    // 12% STORIA - Storia (12 questions)
+    // 12% EDUCAZIONE CIVICA - Educazione Civica (12 questions)
+    // 12% INGLESE - Lingua Inglese (12 questions)
+    // 8% INFORMATICA - Informatica (8 questions)
+    const topicDistribution: { topic: string | string[]; count: number }[] = [
+      {topic: 'CULTURA GENERALE', count: 20},
+      {topic: 'Letteratura', count: 12},
+      {topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12},
+      {topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12},
+      {topic: 'STORIA', count: 12},
+      {topic: 'COSTITUZIONE', count: 12},
+      {topic: 'INGLESE', count: 12},
+      {topic: 'INFORMATICA', count: 8}
+    ];
+
+    // Try to fetch all questions that have never been encountered
+    const allQuestions: Question[] = await this.fetchAllNeverEncounteredRows(contestIdentifier);
+    const selectedQuestions: Question[] = [];
+
+    for (const dist of topicDistribution) {
+      let candidates: Question[];
+      if (Array.isArray(dist.topic)) {
+        candidates = allQuestions.filter(q =>
+          (Array.isArray(dist.topic)
+            ? dist.topic.some((t: string) => (q.topic ?? '').trim().toLowerCase().indexOf((t as string).trim().toLowerCase())>=0)
+            : (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase())>=0)
+        );
+      } else {
+        candidates = allQuestions.filter(q => (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase())>=0);
+      }
+      // Shuffle candidates
+      candidates = candidates.sort(() => 0.5 - Math.random());
+      selectedQuestions.push(...candidates.slice(0, dist.count));
+    }
+
+    // If less than 100 due to missing topics, fill with random remaining questions
+    if (selectedQuestions.length < 100) {
+      const remaining = allQuestions.filter(q => !selectedQuestions.some(sq => sq.id === q.id));
+      const needed = 100 - selectedQuestions.length;
+      selectedQuestions.push(...remaining.sort(() => 0.5 - Math.random()).slice(0, needed));
+    }
+
+    return selectedQuestions.slice(0, 100);
+  }
+
   async getQuestionsByPublicContest(contestIdentifier: string): Promise<Question[]> {
     if (!contestIdentifier) return [];
     return this.getAllQuestions(contestIdentifier); // Leverages existing Supabase-first logic
@@ -1578,7 +1631,36 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-  async fetchAllRows(tableName: string, contestId: string): Promise<Question[]> {
+  async fetchAllNeverEncounteredRows(contestId: string, tableName: string = "questions"): Promise<Question[]> {
+    const chunkSize = 1000; // Supabase limit
+    let allRows: Question[] = [];
+    let start = 0;
+
+    while (true) {
+      const {data, error} = await this.supabase.from('questions').select('*')
+        .eq('public_contest', contestId)
+        .eq('times_correct', 0)
+        .eq('times_incorrect', 0)
+        .range(start, start + chunkSize - 1)
+        .order('id', {ascending: true});
+
+      if (error) {
+        console.error('Error fetching rows:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break; // Exit loop when no more rows are returned
+      }
+
+      allRows = allRows.concat(data);
+      start += chunkSize; // Move to the next chunk
+    }
+
+    return allRows.map(row => this.mapQuestionFromSupabase(row));
+  }
+
+  async fetchAllRows(contestId: string, tableName: string = "questions"): Promise<Question[]> {
     const chunkSize = 1000; // Supabase limit
     let allRows: Question[] = [];
     let start = 0;
