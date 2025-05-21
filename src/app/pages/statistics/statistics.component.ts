@@ -1330,6 +1330,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async handleSelectedDateChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
+    if (this.isStatsViewer){
+      return;
+    }
     if (elements.length > 0 && this.selectedDateDetailedPerformance) {
       const clickedIndex = elements[0].index;
       let questionIdsToPractice: string[] = [];
@@ -1498,6 +1501,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async handleTodayChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
+    if (this.isStatsViewer){
+      return;
+    }
     if (elements.length > 0 && this.todayDetailedPerformance) {
       const clickedIndex = elements[0].index;
       let questionIdsToPractice: string[] = [];
