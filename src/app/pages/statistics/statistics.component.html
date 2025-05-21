@@ -91,8 +91,7 @@
           </div>
           <ng-template #noSelectedDateData>
             <p class="text-gray-500 dark:text-gray-400 text-center py-8">
-              {{ selectedDateForChart ? 'Nessun quiz completato per la data selezionata.' : 'Seleziona una data per
-              visualizzare le statistiche.' }}
+              {{ selectedDateForChart ? 'Nessun quiz completato per la data selezionata.' : 'Seleziona una data per visualizzare le statistiche.' }}
             </p>
           </ng-template>
         </div>
@@ -155,31 +154,6 @@
           </ng-template>
         </div>
       </section>
-
-      <!-- Today Performance -->
-      <section class="mb-10">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Risultato odierno</h2>
-        <div
-          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <div
-            *ngIf="dailyPerformanceDetailed && dailyPerformanceDetailed.length > 0 && (dailyPerformanceDetailed[0]?.wrongAnswerIds?.length ?? 0) >= 0; else noTodayData"
-            class="h-64 sm:h-96 md:h-[450px]">
-            <canvas #todayPerformanceChartOld></canvas>
-          </div>
-          <ng-template #noTodayData>
-            <p class="text-gray-500 dark:text-gray-400 text-center py-8">Non ci sono abbastanza informazioni per la
-              giornata odierna, fai
-              ancora qualche quiz per vedere i grafici!</p>
-          </ng-template>
-        </div>
-      </section>
-      <div class="text-center"
-        *ngIf="dailyPerformanceDetailed.length > 0 && dailyPerformanceDetailed[0] && dailyPerformanceDetailed[0].wrongAnswerIds && dailyPerformanceDetailed[0].wrongAnswerIds.length > 0;">
-        <button (click)="startPracticeQuizForTodayWrong()"
-          class="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 my-3 px-4 sm:px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
-          Esercitati su queste domande sbagliate ({{ dailyPerformanceDetailed[0].wrongAnswerIds.length }})
-        </button>
-      </div>
 
       <section class="mb-10" *ngIf="topicCoverage.length > 0">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Copertura Argomenti</h2>

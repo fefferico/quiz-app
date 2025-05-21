@@ -81,10 +81,14 @@ export class SetupModalComponent implements OnInit {
 
     console.log(`Starting quiz with settings:`, quizSettings);
 
-    const fixedQuestionIds: string[] = this.clonedTopics.filter(_topic => _topic.count > 0) ? this.clonedTopics.filter(_topic => _topic.count > 0).map(q => q.questionIds).flat() : [];
+    const fixedQuestionIds: string[] = this.clonedTopics
+      .filter(_topic => _topic.count > 0)
+      .map(q => q.questionIds)
+      .flat()
+      .slice(0, quizSettings.numQuestions ?? 0);
 
-    this.router.navigate([navigateToPath], { // Use dynamic path
-      queryParams: {
+    const
+      queryParams = {
         numQuestions: quizSettings.numQuestions, // Could be very large for "all" in study mode
         topics: quizSettings.selectedTopics?.join(','),
         keywords: quizSettings.keywords.join(','),
@@ -95,8 +99,10 @@ export class SetupModalComponent implements OnInit {
         // get specific question id
         fixedQuestionIds: fixedQuestionIds,
         publicContest: this.contestName
-      }
-    });
+      };
+
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
   }
 
   onInternalCancel(): void {

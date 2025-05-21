@@ -1,11 +1,12 @@
 // src/app/core/services/database.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Question } from '../../models/question.model'; // Adjust path if necessary
 import { QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
 import { AppDB } from './appDB';
 import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-
+import { AuthService } from './auth.service';
+import { Subscription } from 'rxjs'; // Added import
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -19,22 +20,44 @@ interface BaseSupabaseResponse {
 @Injectable({
   providedIn: 'root' // Ensures this service is a singleton
 })
-export class DatabaseService {
-  private dexieDB: AppDB;
+export class DatabaseService implements OnDestroy {
+  private dexieDB!: AppDB; // Changed: Definite assignment assertion
   private supabase: SupabaseClient;
+  private isDbInitialized = false; // Added: Flag to track DB initialization
+  private authSubscription: Subscription | undefined; // Added: For managing subscription
 
   constructor(
     private supabaseService: SupabaseService,
+    private authService: AuthService,
   ) {
     console.log('DatabaseService constructor called.');
     this.supabase = this.supabaseService.supabase;
-    this.dexieDB = new AppDB(); // Initialize Dexie
 
-    this.dexieDB.open().then(() => {
-      console.log('DexieDB opened successfully by DatabaseService.');
-    }).catch(err => {
-      console.error('Failed to open DexieDB from DatabaseService: ', err.stack || err);
+    // Subscribe to user authentication state
+    this.authSubscription = this.authService.currentUser$.subscribe(user => {
+      if (user && !this.isDbInitialized) {
+        console.log('User authenticated, initializing AppDB in DatabaseService.');
+        this.dexieDB = new AppDB(this.authService); // Initialize Dexie
+        this.dexieDB.open().then(() => {
+          console.log('DexieDB opened successfully by DatabaseService.');
+          this.isDbInitialized = true;
+        }).catch(err => {
+          console.error('Failed to open DexieDB from DatabaseService: ', err.stack || err);
+          // Optionally, reset isDbInitialized or handle error state more robustly
+        });
+      } else if (!user && this.isDbInitialized) {
+        // User logged out, and DB was initialized
+        console.log('User logged out. DexieDB was initialized. Consider cleanup if needed.');
+        this.isDbInitialized = false;
+      }
     });
+  }
+
+  // Added: ngOnDestroy lifecycle hook to unsubscribe
+  ngOnDestroy() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 
   // --- Helper for mapping Supabase (snake_case) to App (camelCase) ---
@@ -458,7 +481,7 @@ export class DatabaseService {
     } catch (error) {
       console.error(`[DBService] Error in getRandomQuestions, falling back to empty array or simpler Dexie logic if applicable:`, error);
       // Fallback logic for getRandomQuestions is complex.
-      // For now, just returning empty or rethrowing. 
+      // For now, just returning empty or rethrowing.
       // A full Dexie-only version of this function would be needed here for a true fallback.
       // Given the constituent calls (getQuestionsByTopic etc.) handle their own fallbacks,
       // this catch might be for errors during the combination/filtering logic.
@@ -1556,5 +1579,31 @@ export class DatabaseService {
       }
       // throw error; // Avoid throwing to allow app to continue
     }
+  }
+
+  async fetchAllRows(tableName: string, contestId: string): Promise<any[]> {
+    const chunkSize = 1000; // Supabase limit
+    let allRows: any[] = [];
+    let start = 0;
+
+    while (true) {
+      const { data, error } = await this.supabase.from('questions').select('*')
+        .eq('public_contest', contestId)
+        .range(start, start + chunkSize - 1);
+
+      if (error) {
+        console.error('Error fetching rows:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break; // Exit loop when no more rows are returned
+      }
+
+      allRows = allRows.concat(data);
+      start += chunkSize; // Move to the next chunk
+    }
+
+    return allRows;
   }
 }

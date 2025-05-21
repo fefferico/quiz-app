@@ -2,6 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { Question  } from '../../models/question.model'; // Adjust path if necessary
 import { QuizAttempt } from '../../models/quiz.model';   // Adjust path if necessary
 import { initialQuestions } from '../../../assets/data/quiz_data';
+import {AuthService} from './auth.service';
 
 
 // --- IMPORTANT: Increment this version number whenever you update initialQuestions ---
@@ -18,8 +19,12 @@ export class AppDB extends Dexie {
 
   private jsonPath = 'assets/data/quiz_data.ts';
 
-  constructor() {
+  constructor(private authService: AuthService) {
     super('QuizAppDB');
+    if (!authService.getCurrentUserSnapshot()){
+      return;
+    }
+    console.log("here I am logged in")
     this.version(CURRENT_DB_SCHEMA_VERSION).stores({
       questions: 'id, topic, difficulty, timesCorrect, timesIncorrect, isFavorite, questionVersion, lastAnsweredTimestamp, lastAnswerCorrect, accuracy, publicContest',  // Removed & for boolean indexing
       quizAttempts: 'id, timestampEnd, status, settings.selectedTopics, timestampStart, settings.publicContest' // Status index added

@@ -53,6 +53,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private soundService = inject(SoundService);
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
 
+  private navigationState: any; // Added to store navigation state
+
   private soundIsPlaying: boolean = false;
 
   faSoundOn = faMusic;
@@ -66,8 +68,6 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   readonly STREAK_THRESHOLDS = [3, 5, 10]; // Example: Play sound at 3, 5, 10 correct in a row
   readonly STREAK_SOUND_KEYS = ['streak1', 'streak2', 'streak3']; // Corresponding sound keys
   // --- END NEW ---
-
-
 
   neverEncounteredQuestions: Question[] = [];
   neverEncounteredQuestionIds: string[] = []; // NEW: Store IDs for never encountered
@@ -238,6 +238,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
 
   constructor() {
+    // Access navigation state in the constructor
+    const currentNavigation = this.router.getCurrentNavigation();
+    this.navigationState = currentNavigation?.extras.state;
+
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       this.synth = window.speechSynthesis;
       this.synth.onvoiceschanged = () => {
@@ -274,13 +278,16 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     this.routeSub = this.route.queryParams
       .pipe(takeUntil(this.destroy$))
-      .subscribe(async params => {
-        const resumeAttemptId = params['resumeAttemptId'];
-        const randomQuestions = params['randomQuestions'];
-        const fixedQuestionIds = params['fixedQuestionIds'] ? params['fixedQuestionIds'].toString().split(',') : [];
-        this.quizTitle = params['quizTitle'] || 'Quiz';
+      .subscribe(async queryOnlyParams => { // Renamed to avoid confusion
+        // Use the stored navigationState first, then fallback to queryParams
+        const actualParams = this.navigationState?.['quizParams'] || queryOnlyParams;
 
-        this.quizSpecificSoundsEnabled = params['enableStreakSounds'] === 'true';
+        const resumeAttemptId = actualParams['resumeAttemptId'];
+        const randomQuestions = actualParams['randomQuestions'];
+        const fixedQuestionIds = actualParams['fixedQuestionIds'] ? actualParams['fixedQuestionIds'].toString().split(',') : [];
+        this.quizTitle = actualParams['quizTitle'] || 'Quiz';
+
+        this.quizSpecificSoundsEnabled = actualParams['enableStreakSounds'] === 'true';
         if (this.synth) {
           this.soundService.setSoundsEnabled(this.quizSpecificSoundsEnabled && !this.isReadingModeEnabled);
         } else {
@@ -297,19 +304,19 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this.currentQuizAttemptId = uuidv4();
           this.quizStatus = 'in-progress';
 
-          const publicContest = params['publicContest'] ? params['publicContest'] : '';
-          const numQuestions = params['numQuestions'] ? +params['numQuestions'] : 10;
-          const topicsParam = params['topics'] || '';
+          const publicContest = actualParams['publicContest'] ? actualParams['publicContest'] : '';
+          const numQuestions = actualParams['numQuestions'] ? +actualParams['numQuestions'] : 10;
+          const topicsParam = actualParams['topics'] || '';
           const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
-          const keywordsParam = params['keywords'] || '';
+          const keywordsParam = actualParams['keywords'] || '';
           const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
-          const topicDistributionParam = params['topicDistribution'] || '';
+          const topicDistributionParam = actualParams['topicDistribution'] || '';
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
           if (topicDistributionParam) { try { selectedTopicDistribution = JSON.parse(topicDistributionParam); } catch (e) { console.error('Error parsing topicDistribution:', e); } }
 
-          this.isTimerEnabled = params['enableTimer'] === 'true';
-          this.isCronometerEnabled = params['enableCronometer'] === 'true';
-          this.timerDuration = params['timerDuration'] ? +params['timerDuration'] : 0;
+          this.isTimerEnabled = actualParams['enableTimer'] === 'true';
+          this.isCronometerEnabled = actualParams['enableCronometer'] === 'true';
+          this.timerDuration = actualParams['timerDuration'] ? +actualParams['timerDuration'] : 0;
           this._timeLeftSeconds = this.timerDuration;
 
           this.quizSettings = {
@@ -736,9 +743,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             text: this.questions[this.currentQuestionIndex].text,
             topic: this.questions[this.currentQuestionIndex].topic,
             options: [...this.currentQuestion.options],
-            correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
-            explanation: this.questions[this.currentQuestionIndex].explanation,
-            isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
+            correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
+            explanation: this.currentQuestion.explanation,
+            isFavorite: this.currentQuestion.isFavorite || 0
           }
         });
       }
@@ -1273,7 +1280,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     if (this.synth && this.synth.speaking) {
       this.synth.cancel(); // This will trigger onend/onerror of the utterance that was active
     }
-    // `this.currentUtterance` will be set to null by the `onend` or `onerror` 
+    // `this.currentUtterance` will be set to null by the `onend` or `onerror`
     // handler of the utterance that was cancelled.
     // We can also proactively set it to null here for immediate state update,
     // though the event handlers should ideally manage it.
@@ -1504,3 +1511,4 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     }
   }
 }
+

@@ -5,9 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faMagnifyingGlass, faBarChart, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faMagnifyingGlass, faBarChart, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { QuizSettings } from '../../models/quiz.model';
-import { Subscription } from 'rxjs';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { AlertService } from '../../services/alert.service';
 
@@ -41,7 +40,6 @@ export class StudyFocusComponent implements OnInit {
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
-  faMagnifyingGlass: IconDefinition = faMagnifyingGlass; // This was already here, seems unused in the template you showed previously
   faBarChart: IconDefinition = faBarChart; // This was already here, seems unused in the template you showed previously
   faLandmark: IconDefinition = faLandmark; // This was already here, seems unused in the template you showed previously
 
@@ -65,7 +63,7 @@ export class StudyFocusComponent implements OnInit {
   protected readonly MIN_ATTEMPTS_FOR_CATEGORY = 3; // Min attempts before categorizing a question
 
 
-  private chckForContest(): void {
+  private checkForContest(): void {
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
         this.router.navigate(['/home']);
@@ -74,7 +72,7 @@ export class StudyFocusComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.chckForContest();
+    this.checkForContest();
     this.loadAndCategorizeQuestions(this.selectedPublicContest);
   }
 

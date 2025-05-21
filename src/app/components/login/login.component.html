@@ -1,14 +1,21 @@
-<div class="col-12 col-md-12 text-center" >
-  <h2>Quiz App Login</h2>
-  <form (ngSubmit)="onLogin()">
-    <div>
-      <label for="password">Password:</label>
-      <input type="password" id="password" [(ngModel)]="password" name="password" required>
-    </div>
-    <button type="submit">Login</button>
-    <p *ngIf="errorMessage" style="color: red;">{{ errorMessage }}</p>
-  </form>
-  <p style="font-size: 0.8em; color: grey;">
-    Note: This is a basic client-side password check for simple access control.
-  </p>
+<div class="login-container flex justify-center">
+  <div class="login-card">
+    <form (ngSubmit)="onLogin()" class="login-form">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-gray-800 dark:text-gray-100">Benvenuto su DajeFra!</h1>
+      <div class="form-group flex flex-col items-start w-full mb-2">
+        <label for="password" class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+        <input type="password" id="password" [(ngModel)]="password" name="password" required autocomplete="current-password"
+          class="p-2 border rounded w-full dark:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <button type="submit"
+        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-lg shadow-md transition duration-150">
+        Login
+      </button>
+      <p *ngIf="errorMessage" class="error-message text-red-600 text-center mt-2">{{ errorMessage }}</p>
+    </form>
+    <p class="login-note mt-4 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+      <span class="material-symbols-outlined" style="font-size: 1em; vertical-align: middle;">INFO</span>
+      Accesso riservato. Inserisci la password per continuare.
+    </p>
+  </div>
 </div>

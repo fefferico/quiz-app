@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // Import FormsModule
+import {Component, inject, OnInit} from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { DatabaseService } from '../../core/services/database.service';
 import { CommonModule } from '@angular/common';
@@ -12,13 +12,23 @@ import { CommonModule } from '@angular/common';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private serviceDB = inject(DatabaseService);
+
   password = '';
   errorMessage = '';
 
-  constructor(private authService: AuthService, private router: Router, private serviceDB: DatabaseService) {}
+  ngOnInit() {
+    if (this.authService.isAuthenticated()) {
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
+      this.router.navigateByUrl(returnUrl);
+    }
+  }
 
-async onLogin() {
+  async onLogin() {
     if (!this.password) {
       this.errorMessage = 'Password obbligatoria.';
       return;
@@ -26,11 +36,13 @@ async onLogin() {
     const success = await this.authService.attemptLogin(this.password);
     if (success) {
       this.errorMessage = '';
-      this.serviceDB.onUserLoggedIn(); // <<< TELL SERVICE TO LOAD DATA
-      this.router.navigate(['/home']); 
+      //this.serviceDB.onUserLoggedIn(); // <<< TELL SERVICE TO LOAD DATA
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
+      this.router.navigateByUrl(returnUrl);
     } else {
-      this.errorMessage = 'Incorrect password.';
+      this.errorMessage = 'Password errata, riprovare.';
       this.password = '';
     }
   }
 }
+

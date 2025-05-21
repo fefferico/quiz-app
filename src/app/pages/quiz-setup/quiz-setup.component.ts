@@ -186,7 +186,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       } else {
         // User selected "All Topics". If fixed IDs were present, what happens?
         // Option: Clear fixed IDs and go to normal "All Topics" mode.
-        // this.preloadedFixedQuestionIds = []; 
+        // this.preloadedFixedQuestionIds = [];
       }
     }
     this.updateSelectionMode();
@@ -364,7 +364,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     });
 
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], { queryParams });
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
   }
 
   async exportQuestionsToPDF(includeAnswers: boolean = false): Promise<void> {
@@ -494,3 +494,4 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     }
   }
 }
+

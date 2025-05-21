@@ -376,21 +376,25 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
     const shuffledQuestionIds = [...idsToUse].sort(() => 0.5 - Math.random());
 
-    this.router.navigate(['/quiz/take'], {
-      queryParams: {
+    const
+      queryParams = {
         quizTitle: `Ripetizione: ${settings.selectedTopics?.join(', ') || 'Quiz Misto'}`,
         numQuestions: shuffledQuestionIds.length, // numQuestions is now the count of selected IDs
         // Topics and keywords from original settings might be too broad if we are repeating specific Qs
         // We are now using fixedQuestionIds, so topics/keywords from settings are less relevant for selection
-        // topics: settings.selectedTopics?.join(','), 
+        // topics: settings.selectedTopics?.join(','),
         // keywords: settings.keywords?.join(','),
         // topicDistribution: settings.topicDistribution ? JSON.stringify(settings.topicDistribution) : '',
         enableTimer: false, // Typically disable timer for review/repeat quizzes
         timerDuration: 0,
         enableCronometer: true, // Optionally enable cronometer
         fixedQuestionIds: shuffledQuestionIds.join(',') // Pass the specific IDs
-      }
-    });
+      };
+
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
+
   }
 
   getTotalStringByGroup(group: GroupedQuestionDisplay): string {

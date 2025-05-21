@@ -205,7 +205,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   resumePausedQuiz(): void {
     if (this.pausedQuiz) {
-      this.router.navigate(['/quiz/take'], { queryParams: { resumeAttemptId: this.pausedQuiz.id } });
+      let navigateToPath = '/quiz/take'; // Default path
+      console.log(`Navigating to ${navigateToPath} with queryParams:`, { resumeAttemptId: this.pausedQuiz.id });
+      this.router.navigate([navigateToPath], { state: { quizParams: { resumeAttemptId: this.pausedQuiz.id } } });
     }
   }
 
@@ -310,9 +312,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     );
   }
 
-  startNeverEncounteredQuiz(): void {
+  async startNeverEncounteredQuiz(): Promise<void> {
     if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0){
-      this.loadNeverEncounteredQuestions();
+      await this.loadNeverEncounteredQuestions();
     }
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
@@ -361,7 +363,10 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
         : undefined
     };
     Object.keys(queryParams).forEach(key => (queryParams[key] === undefined || queryParams[key] === '') && delete queryParams[key]);
-    this.router.navigate(['/quiz/take'], { queryParams });
+
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
   }
 
   previousTrackIndex: number | null = null;

@@ -2,10 +2,10 @@
 <div class="text-center p-4 sm:p-6 md:p-10 dark:text-gray-200">
   <div class="flex justify-center align-middle items-center">
     <img (click)="startMusic(0)" src="assets/icons/lazio.png" style="width: 64px; height: 64px;" alt="Logo"
-      class="mx-1 mb-4 hover:cursor-pointer" title="Vola!" />
-    <img src="assets/icons/versus.png" style="width: 32px; height: 32px;" alt="Logo" class="mx-1 mb-3" />
+         class="mx-1 mb-4 hover:cursor-pointer" title="Vola!"/>
+    <img src="assets/icons/versus.png" style="width: 32px; height: 32px;" alt="Logo" class="mx-1 mb-3"/>
     <img (click)="startMusic(1)" src="assets/icons/roma.png" style="width: 64px; height: 64px;" alt="Logo"
-      class="mx-1 mb-4 hover:cursor-pointer" title="Amaggica!" />
+         class="mx-1 mb-4 hover:cursor-pointer" title="Amaggica!"/>
   </div>
 
   <h1 class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Benvenuti su DajeFra!</h1>
@@ -19,25 +19,25 @@
         Seleziona un Concorso Pubblico (Obbligatorio):
       </label>
       <div *ngIf="isLoadingPageData"
-        class="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 w-full py-2">
+           class="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 w-full py-2">
         <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
           </path>
         </svg>
         Caricamento concorsi...
       </div>
       <select *ngIf="!isLoadingPageData && availablePublicContests.length > 0" id="publicContestSelectHomePage"
-        [ngModel]="selectedPublicContest" (ngModelChange)="updateSelectedContestInService($event)"
-        class="p-2 border rounded w-full dark:text-gray-600">
+              [ngModel]="selectedPublicContest" (ngModelChange)="updateSelectedContestInService($event)"
+              class="p-2 border rounded w-full dark:text-gray-600">
         <option class="dark:text-gray-500" [ngValue]="''" disabled selected>-- Seleziona un Concorso --</option>
         <option *ngFor="let contest of availablePublicContests" [ngValue]="contest" class="dark:text-gray-500">
           {{ contest }}
         </option>
       </select>
       <p *ngIf="!isLoadingPageData && availablePublicContests.length === 0"
-        class="text-xs text-gray-500 dark:text-gray-400 py-2">
+         class="text-xs text-gray-500 dark:text-gray-400 py-2">
         Nessun concorso pubblico specifico trovato nel database.
       </p>
     </div>
@@ -45,10 +45,10 @@
 
   <div *ngIf="isLoadingContestSpecificData" class="my-4 text-center text-indigo-600 dark:text-indigo-400">
     <svg class="animate-spin inline-block mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-      viewBox="0 0 24 24">
+         viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
       </path>
     </svg>
     Caricamento dati specifici del concorso...
@@ -56,132 +56,132 @@
 
   <div *ngIf="pausedQuiz" class="mb-6">
     <button (click)="resumePausedQuiz()"
-      class="w-full sm:w-auto inline-block bg-teal-500 hover:bg-teal-600 text-white dark:bg-teal-600 dark:hover:bg-teal-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse break-words">
+            class="w-full sm:w-auto inline-block bg-teal-500 hover:bg-teal-600 text-white dark:bg-teal-600 dark:hover:bg-teal-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
       <fa-icon class="mr-2" [icon]="faPlay"></fa-icon>
       Riprendi il quiz precedente
     </button>
   </div>
 
   <div *ngIf="!selectedPublicContest"
-    class="flex flex-col items-center gap-2 p-3 border bg-lime-600 border-lime-300 dark:border-lime-600 rounded-lg max-w-md mx-auto bg-white dark:bg-lime-800 shadow animate-pulse break-words">
+       class="flex flex-col items-center gap-2 p-3 border bg-lime-600 border-lime-300 dark:border-lime-600 rounded-lg max-w-md mx-auto bg-white dark:bg-lime-800 shadow animate-pulse">
     <span class="text-sm font-medium text-white dark:text-gray-300 self-start">
       E' obbligatorio selezionare una BANCA DATI per poter usare i pulsanti qui sotto
     </span>
   </div>
 
 
-  <div class="mt-4 inline-grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+  <div class="mt-4 inline-grid grid-cols-2 sm:grid-cols-1 md:grid-cols-1 gap-2">
     <button [routerLink]="'/quiz/setup'"
-      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 break-words">
+            [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && (loadingButtonKey === 'public_contest_quiz'))" class="mr-2"
-        [icon]="faLandmark"></fa-icon>
+               [icon]="faLandmark"></fa-icon>
       <!-- Spinner SVG -->
       Nuovo Quiz
     </button>
 
     <button [routerLink]="'/quiz/history'"
-      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="w-full inline-block bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center break-words"
-      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+            [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="w-full inline-block bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+            [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <fa-icon class="mr-2" [icon]="faHistory"></fa-icon>
       Storico Quiz
     </button>
 
     <button [routerLink]="'/statistics'"
-      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="w-full inline-block bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center break-words"
-      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+            [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="w-full inline-block bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+            [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <fa-icon class="mr-2" [icon]="faBarChart"></fa-icon>
       Statistiche
     </button>
 
     <button [routerLink]="'/study-focus'"
-      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="w-full inline-block bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center break-words"
-      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+            [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="w-full inline-block bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+            [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <fa-icon class="mr-2" [icon]="faMagnifyingGlass"></fa-icon>
       Aree da Approfondire
     </button>
 
     <button [routerLink]="'/favorites'"
-      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="w-full inline-block bg-purple-500 hover:bg-purple-600 text-white dark:bg-purple-600 dark:hover:bg-purple-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center break-words"
-      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+            [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="w-full inline-block bg-purple-500 hover:bg-purple-600 text-white dark:bg-purple-600 dark:hover:bg-purple-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+            [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <fa-icon class="mr-2" [icon]="faStar"></fa-icon>
       Quiz Preferiti
     </button>
 
     <!-- Buttons for contest-specific data -->
     <button (click)="startNeverEncounteredQuiz()"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      class="flex items-center justify-center w-full bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 break-words">
+            [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+            class="flex items-center justify-center w-full bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'never_encountered')" class="mr-2"
-        [icon]="faQuestion"></fa-icon>
+               [icon]="faQuestion"></fa-icon>
       <!-- Spinner -->
-      Domande Mai Viste {{ selectedPublicContest ? '('+neverEncounteredQuestionCount+')' : '' }}
+      Domande Mai Viste {{ selectedPublicContest ? '(' + neverEncounteredQuestionCount + ')' : '' }}
+    </button>
+
+    <button (click)="startYesterdayProblematicQuiz()"
+            [disabled]="!selectedPublicContest || yesterdayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'yesterday_problematic')"
+            class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
+      <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'yesterday_problematic')" class="mr-2"
+               [icon]="faUndoAlt"></fa-icon>
+      <!-- Spinner -->
+      Rivedi Errori di IERI {{ selectedPublicContest ? '(' + yesterdayProblematicQuestionIds.length + ')' : '' }}
+    </button>
+
+    <button (click)="startTodayProblematicQuiz()"
+            [disabled]="!selectedPublicContest || todayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'today_problematic')"
+            class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
+      <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'today_problematic')" class="mr-2"
+               [icon]="faUndoAlt"></fa-icon>
+      <!-- Spinner -->
+      Rivedi Errori di OGGI {{ selectedPublicContest ? '(' + todayProblematicQuestionIds.length + ')' : '' }}
     </button>
 
     <div
-      class="col-span-1 sm:col-span-2 md:col-span-1 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+      class="col-span-2 sm:col-span-2 md:col-span-2 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg"
       [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
       <label for="xDayDate" class="text-sm font-medium text-gray-700 dark:text-gray-300">Seleziona Data per
         Errori:</label>
       <input type="date" id="xDayDate" #xDayDateInput [ngModel]="selectedXDayDate | date:'yyyy-MM-dd'"
-        (ngModelChange)="selectedXDayDate = $event" class="p-2 border w-full max-w-xs disabled rounded"
-        [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-        [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-        [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData">
+             (ngModelChange)="selectedXDayDate = $event" class="p-2 border w-full max-w-xs disabled rounded dark:text-gray-500"
+             [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+             [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+             [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData">
       <button (click)="startXDayProblematicQuiz(xDayDateInput.value)"
-        [disabled]="!selectedPublicContest || !selectedXDayDate || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'x_day_problematic')"
-        class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 break-words">
+              [disabled]="!selectedPublicContest || !selectedXDayDate || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'x_day_problematic')"
+              class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
         <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'x_day_problematic')" class="mr-2"
-          [icon]="faUndoAlt"></fa-icon>
+                 [icon]="faUndoAlt"></fa-icon>
         <!-- Spinner -->
         Rivedi del Giorno Selezionato
       </button>
     </div>
 
-    <button (click)="startYesterdayProblematicQuiz()"
-      [disabled]="!selectedPublicContest || yesterdayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'yesterday_problematic')"
-      class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 break-words">
-      <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'yesterday_problematic')" class="mr-2"
-        [icon]="faUndoAlt"></fa-icon>
-      <!-- Spinner -->
-      Rivedi Errori di IERI {{ selectedPublicContest ? '('+yesterdayProblematicQuestionIds.length+')' : '' }}
-    </button>
-
-    <button (click)="startTodayProblematicQuiz()"
-      [disabled]="!selectedPublicContest || todayProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'today_problematic')"
-      class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 break-words">
-      <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'today_problematic')" class="mr-2"
-        [icon]="faUndoAlt"></fa-icon>
-      <!-- Spinner -->
-      Rivedi Errori di OGGI {{ selectedPublicContest ? '('+todayProblematicQuestionIds.length+')' : '' }}
-    </button>
-
     <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="quizSetupModalTitle || 'Configurazione quiz'"
-      (close)="closeQuizSetupModal()">
+                      (close)="closeQuizSetupModal()">
       <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [modalTitle]="quizSetupModalTitle"
-        [contestName]="selectedPublicContest" (submitFeedback)="handleQuizSetupSubmitted($event)"
-        (cancelFeedback)="closeQuizSetupModal()">
+                       [contestName]="selectedPublicContest" (submitFeedback)="handleQuizSetupSubmitted($event)"
+                       (cancelFeedback)="closeQuizSetupModal()">
       </app-setup-modal>
     </app-simple-modal>
   </div>

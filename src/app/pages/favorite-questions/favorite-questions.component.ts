@@ -75,12 +75,14 @@ export class FavoriteQuestionsComponent implements OnInit {
 
     // Navigate to QuizSetup with parameters to load these specific IDs
     // This requires QuizSetupComponent and subsequently QuizTakingComponent to handle a 'fixedQuestionIds' param
-    this.router.navigate(['/quiz/take'], {
-      queryParams: {
+    const queryParams = {
         // numQuestions: questionIds.length, // numQuestions will be derived from IDs length
         fixedQuestionIds: questionIds
         // We can also set a default title or context for this type of quiz
-      }
-    });
+      };
+
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
   }
 }

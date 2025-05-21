@@ -121,8 +121,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('todayPerformanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
 
-  dailyPerformanceDetailed: DailyPerformanceDataDetailed[] = [];
-
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
 
@@ -256,7 +254,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       // Pass activeContestId to filter data at source
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
         this.dbService.getAllQuizAttemptsByContest(this.activeContestId),
-        this.dbService.getAllQuestions(this.activeContestId) // Assumes this method filters by publicContest
+        // Usage
+        this.dbService.fetchAllRows('questions', this.activeContestId) // Assuming this method filters by publicContest
+        //this.dbService.getAllQuestions(this.activeContestId) // Assumes this method filters by publicContest
       ]);
 
       this.quizAttempts = quizAttempts;
@@ -268,7 +268,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.calculateDailyPerformance(); // Uses this.quizAttempts
         await this.calculateTodayDetailedPerformance(); // Uses dbService call with activeContestId
         this.calculateWrongAnswerBreakdown(); // Uses this.quizAttempts
-        this.calculateTopicCoverage(); // Uses this.quizAttempts and this.allQuestionsFromDb
+        this.calculateTopicCoverage(this.activeContestId); // Uses this.quizAttempts and this.allQuestionsFromDb
         await this.getGenericData(); // Uses dbService calls with activeContestId
 
         // if a date is selected and it's not today, try to load its data
@@ -332,33 +332,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.averageScorePercentage = totalPossibleScoreSum > 0
       ? (totalWeightedScoreSum / totalPossibleScoreSum)
       : 0;
-  }
-
-  async calculateDailyPerformanceWithDetails(): Promise<void> {
-    const todayAttempts = await this.dbService.getAllTodayQuizAttempts(this.activeContestId);
-    if (todayAttempts.length > 0) {
-      const todayDateStr = new DatePipe('it-IT').transform(new Date(), 'yyyy-MM-dd')!;
-      const wrongIdsSet = new Set<string>();
-      todayAttempts.forEach(attempt => {
-        attempt.answeredQuestions.forEach(aq => {
-          if (!aq.isCorrect) wrongIdsSet.add(aq.questionId);
-        });
-      });
-      let totalQuiz = 0;
-      todayAttempts.forEach(attempt => {
-        attempt.allQuestions.forEach(aq => {
-          totalQuiz++;
-        });
-      });
-
-      this.dailyPerformanceDetailed = [{
-        date: todayDateStr,
-        quizzesTaken: totalQuiz,
-        wrongAnswerIds: Array.from(wrongIdsSet)
-      }];
-    } else {
-      this.dailyPerformanceDetailed = [];
-    }
   }
 
   calculateTopicPerformance(): void {
@@ -440,7 +413,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       .sort((a, b) => b.topicSpecificFailureRate - a.topicSpecificFailureRate);
   }
 
-  calculateTopicCoverage(): void {
+  async calculateTopicCoverage(contest: string): Promise<void> {
     if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
       this.topicCoverage = [];
       return;
@@ -605,14 +578,17 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const finalQuestionIds = Array.from(practiceQuestionIds);
-    this.router.navigate(['/quiz/take'], {
-      queryParams: {
+    const queryParams = {
         quizTitle: `Pratica: ${topic}${this.activeContestId ? ` (${this.activeContestId})` : ''}`,
         fixedQuestionIds: finalQuestionIds.join(','), // Use fixedQuestionIds
         numQuestions: finalQuestionIds.length,
         publicContest: this.activeContestId // Pass contest context
-      }
-    });
+      };
+
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
+
   }
 
 
@@ -855,7 +831,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Clean up undefined queryParams
     Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
 
-    this.router.navigate(['/quiz/take'], { queryParams });
+    let navigateToPath = '/quiz/take'; // Default path
+    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
+
   }
 
   async calculateTodayDetailedPerformance(): Promise<void> {
