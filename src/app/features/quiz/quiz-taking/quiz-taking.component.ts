@@ -906,7 +906,6 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     try {
       this.spinnerService.show("Salvataggio in corso...");
       await this.dbService.saveQuizAttempt(quizAttempt);
-
       await this.dbService.updateQuestionsStatsBulk(this.userAnswers);
       // for (const answeredQ of this.userAnswers) {
         // await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);

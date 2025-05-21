@@ -69,6 +69,11 @@
     "typescript": "~5.7.2",
     "wait-on": "^8.0.3"
   },
+  "overrides": {
+    "@supabase/supabase-js": {
+      "@supabase/auth-js": "2.61.0"
+    }
+  },
   "description": "This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.11.",
   "main": "main.js",
   "keywords": [],

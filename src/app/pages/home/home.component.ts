@@ -1,24 +1,25 @@
 // src/app/pages/home/home.component.ts
-import { Component, OnInit, OnDestroy, inject } from '@angular/core'; // Add OnDestroy
-import { CommonModule, DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {Component, OnInit, OnDestroy, inject} from '@angular/core'; // Add OnDestroy
+import {CommonModule, DatePipe} from '@angular/common';
+import {Router, RouterLink} from '@angular/router';
+import {DatabaseService} from '../../core/services/database.service';
+import {QuizAttempt, QuizSettings} from '../../models/quiz.model';
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
   faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faGavel
 } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
-import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
-import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
-import { GenericData } from '../../models/statistics.model';
-import { AlertService } from '../../services/alert.service';
-import { SoundService } from '../../core/services/sound.service';
-import { Question } from '../../models/question.model';
-import { FormsModule } from '@angular/forms';
-import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import the service
-import { Subscription } from 'rxjs';
+import {SimpleModalComponent} from '../../shared/simple-modal/simple-modal.component';
+import {SetupModalComponent} from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
+import {GenericData} from '../../models/statistics.model';
+import {AlertService} from '../../services/alert.service';
+import {SoundService} from '../../core/services/sound.service';
+import {Question} from '../../models/question.model';
+import {FormsModule} from '@angular/forms';
+import {ContestSelectionService} from '../../core/services/contest-selection.service'; // Import the service
+import {Subscription} from 'rxjs';
 import {AppUser, AuthService} from '../../core/services/auth.service';
+import {SpinnerService} from '../../core/services/spinner.service';
 
 @Component({
   selector: 'app-home',
@@ -38,6 +39,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
   private contestSubscription!: Subscription; // For unsubscribing
   authService = inject(AuthService);
+  spinnerService = inject(SpinnerService);
 
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
   loggedInUser: string = '';
@@ -153,8 +155,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     } catch (error) {
       console.error("Error initializing homepage:", error);
       this.alertService.showAlert("Errore", "Impossibile caricare i dati iniziali della pagina.");
+    } finally {
+      this.isLoadingPageData = false;
     }
-    finally { this.isLoadingPageData = false; }
   }
 
   async onPublicContestSelected(contestIdentifier: string | null): Promise<void> {
@@ -190,8 +193,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       } catch (error) {
         console.error(`Error loading data for contest ${contestIdentifier}:`, error);
         this.alertService.showAlert("Errore", `Impossibile caricare i dati per il concorso: ${contestIdentifier}`);
-      }
-      finally {
+      } finally {
         this.isLoadingContestSpecificData = false;
         this.loadingButtonKey = null;
       }
@@ -215,8 +217,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   resumePausedQuiz(): void {
     if (this.pausedQuiz) {
       let navigateToPath = '/quiz/take'; // Default path
-      console.log(`Navigating to ${navigateToPath} with queryParams:`, { resumeAttemptId: this.pausedQuiz.id });
-      this.router.navigate([navigateToPath], { state: { quizParams: { resumeAttemptId: this.pausedQuiz.id } } });
+      console.log(`Navigating to ${navigateToPath} with queryParams:`, {resumeAttemptId: this.pausedQuiz.id});
+      this.router.navigate([navigateToPath], {state: {quizParams: {resumeAttemptId: this.pausedQuiz.id}}});
     }
   }
 
@@ -253,7 +255,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     let questionsForModal: Question[] = [];
 
     try {
+      this.spinnerService.show("Recupero domande mai viste...");
       questionsForModal = await fetchQuestionsFn();
+      this.spinnerService.hide();
     } catch (error) {
       console.error(`Error fetching questions for modal (${modalTitle}):`, error);
       this.alertService.showAlert("Errore", `Impossibile recuperare le domande per: ${modalTitle}.`);
@@ -266,7 +270,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento';
-        if (!topicsMap.has(topic)) { topicsMap.set(topic, { count: 0, questionIds: [] }); }
+        if (!topicsMap.has(topic)) {
+          topicsMap.set(topic, {count: 0, questionIds: []});
+        }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
         topicData.questionIds.push(q.id);
@@ -288,9 +294,11 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   }
 
 
-
   startXDayProblematicQuiz(dateString: string | null): void {
-    if (!dateString) { this.alertService.showAlert("Attenzione", "Seleziona una data."); return; }
+    if (!dateString) {
+      this.alertService.showAlert("Attenzione", "Seleziona una data.");
+      return;
+    }
     const selectedDate = new Date(dateString);
     selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
     const formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || dateString;
@@ -322,8 +330,10 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   }
 
   async startNeverEncounteredQuiz(): Promise<void> {
-    if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0){
+    if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0) {
+      this.spinnerService.show("Recupero domande mai viste...");
       await this.loadNeverEncounteredQuestions();
+      this.spinnerService.hide();
     }
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
@@ -348,7 +358,10 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(this.selectedPublicContest);
   }
 
-  openQuizSetupModal(): void { this.isQuizSetupModalOpen = true; }
+  openQuizSetupModal(): void {
+    this.isQuizSetupModalOpen = true;
+  }
+
   closeQuizSetupModal(): void {
     this.isQuizSetupModalOpen = false;
     this.isLoadingModalData = false;
@@ -375,7 +388,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
+    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
   }
 
   previousTrackIndex: number | null = null;
@@ -437,7 +450,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento'; // Default topic if undefined
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, { count: 0, questionIds: [] });
+          topicsMap.set(topic, {count: 0, questionIds: []});
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;

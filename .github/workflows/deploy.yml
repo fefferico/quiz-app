@@ -1,0 +1,80 @@
+# filepath: /home/ffuser/git-repos/quiz-app/.github/workflows/deploy.yml
+name: Build and Deploy Angular App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - feature/supabase # Or your default branch
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Specify your Node.js version, e.g., 18 or 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Replace environment placeholders
+        run: |
+          echo "Replacing placeholders in environment.prod.ts"
+          # Ensure environment.prod.ts is in the root. If it's in src/environments/, change path.
+          if [ -f "environment.prod.ts" ]; then
+            sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" environment.prod.ts
+            sed -i "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" environment.prod.ts
+            echo "Placeholders replaced."
+          else
+            echo "environment.prod.ts not found in root!"
+            # If your file is in src/environments/environment.prod.ts, use these lines instead:
+            # if [ -f "src/environments/environment.prod.ts" ]; then
+            #  sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" src/environments/environment.prod.ts
+            #  sed -i "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" src/environments/environment.prod.ts
+            #  echo "Placeholders replaced in src/environments/environment.prod.ts."
+            # else
+            #   echo "environment.prod.ts not found in src/environments/ either!"
+            #   exit 1
+            # fi
+            exit 1 # Exit if the root file is not found, adjust if path is different
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      - name: Build Angular app
+        # Adjust the base-href to match your GitHub Pages repository name if it's not the root of the domain
+        # e.g., /<repository-name>/
+        # If your repo is named 'quiz-app' and served at username.github.io/quiz-app/, use --base-href /quiz-app/
+        run: npm run build --configuration production --base-href /${{ github.event.repository.name }}/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Path to the directory containing the built assets.
+          # This should be your Angular build output directory (e.g., dist/your-project-name).
+          # Please verify your project name in angular.json and update if different from 'quiz-app'.
+          path: './dist/quiz-app' # IMPORTANT: Verify this path!
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

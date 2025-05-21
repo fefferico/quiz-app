@@ -16,7 +16,7 @@ import 'chartjs-adapter-date-fns';
 import {FormsModule} from '@angular/forms'; // Import FormsModule for ngModel
 
 import {DatabaseService} from '../../core/services/database.service';
-import {QuizAttempt, QuizSettings} from '../../models/quiz.model'; // Added QuestionSnapshotInfo
+import {AnsweredQuestion, QuizAttempt, QuizSettings} from '../../models/quiz.model'; // Added QuestionSnapshotInfo
 import {Question} from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -82,6 +82,9 @@ interface TopicCoverageData {
   totalQuestionsInTopicBank: number;
   questionsEncountered: number;
   coveragePercentage: number;
+  totalQuestionsCorrectlyAnswered: number;
+  correctPercentage: number;
+  totalQuestionsWronglyAnswered: number;
 }
 
 
@@ -129,7 +132,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   totalQuizzesTaken = 0;
   totalQuestionsAttempted = 0;
   totalCorrectAnswers = 0;
-  overallAccuracy = 0;
   averageScorePercentage = 0;
 
   topicPerformance: TopicPerformanceData[] = [];
@@ -147,7 +149,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
 
-  wrongAnswerBreakdown: TopicWrongAnswerData[] = [];
   totalWrongAnswersOverall = 0;
 
   topicCoverage: TopicCoverageData[] = [];
@@ -181,7 +182,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.isStatsViewer = this.authService.isStatsViewer();
     this.checkForContest();
-    this.routeSub = this.route.queryParamMap.subscribe(params => {
+    this.routeSub = this.route.queryParamMap.subscribe(async params => {
       const contestFromQuery = params.get('contest');
       if (contestFromQuery) {
         this.activeContestId = contestFromQuery;
@@ -191,13 +192,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       } else {
         this.activeContestId = this.contestSelectionService.getCurrentSelectedContest();
       }
-      this.loadAndProcessStatistics();
+      await this.loadAndProcessStatistics();
     });
 
-    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(contestId => {
+    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(async contestId => {
       if (!this.route.snapshot.queryParamMap.has('contest') && this.activeContestId !== contestId) {
         this.activeContestId = contestId || '';
-        this.loadAndProcessStatistics(); // Reload stats if service changes contest
+        await this.loadAndProcessStatistics(); // Reload stats if service changes contest
       }
     });
 
@@ -303,9 +304,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.calculateTopicPerformance(); // Uses this.quizAttempts and this.allQuestionsFromDb
         this.calculateDailyPerformance(); // Uses this.quizAttempts
         await this.calculateTodayDetailedPerformance(); // Uses dbService call with activeContestId
-        this.calculateWrongAnswerBreakdown(); // Uses this.quizAttempts
         this.calculateTopicCoverage(this.activeContestId); // Uses this.quizAttempts and this.allQuestionsFromDb
-        await this.getGenericData(); // Uses dbService calls with activeContestId
+        // await this.getGenericData(); // Uses dbService calls with activeContestId
 
         // if a date is selected and it's not today, try to load its data
         if (this.selectedDateForChart && this.datePipe.transform(new Date(), 'yyyy-MM-dd') !== this.selectedDateForChart) {
@@ -333,13 +333,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.totalQuizzesTaken = 0;
     this.totalQuestionsAttempted = 0;
     this.totalCorrectAnswers = 0;
-    this.overallAccuracy = 0;
     this.averageScorePercentage = 0;
     this.topicPerformance = [];
     this.dailyPerformance = [];
     this.todayDetailedPerformance = null;
     this.selectedDateDetailedPerformance = null;
-    this.wrongAnswerBreakdown = [];
     this.topicCoverage = [];
     this.tipologiaDomande = [];
 
@@ -362,9 +360,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       totalPossibleScoreSum += attempt.totalQuestionsInQuiz;
     });
 
-    this.overallAccuracy = this.totalQuestionsAttempted > 0
-      ? (this.totalCorrectAnswers / this.totalQuestionsAttempted)
-      : 0;
     this.averageScorePercentage = totalPossibleScoreSum > 0
       ? (totalWeightedScoreSum / totalPossibleScoreSum)
       : 0;
@@ -423,32 +418,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       })).slice(-30);
   }
 
-  calculateWrongAnswerBreakdown(): void {
-    const wrongMap = new Map<string, { wrong: number, totalInTopic: number }>();
-    this.totalWrongAnswersOverall = 0;
-    this.quizAttempts.forEach(attempt => {
-      attempt.answeredQuestions.forEach(ansQ => {
-        const topic = ansQ.questionSnapshot.topic || 'Uncategorized';
-        const data = wrongMap.get(topic) || {wrong: 0, totalInTopic: 0};
-        data.totalInTopic++;
-        if (!ansQ.isCorrect) {
-          data.wrong++;
-          this.totalWrongAnswersOverall++;
-        }
-        wrongMap.set(topic, data);
-      });
-    });
-    this.wrongAnswerBreakdown = Array.from(wrongMap.entries()).map(([topic, data]) => ({
-      topic,
-      wrongAnswers: data.wrong,
-      totalAnswersInTopic: data.totalInTopic,
-      percentageOfGlobalWrong: this.totalWrongAnswersOverall > 0 ? (data.wrong / this.totalWrongAnswersOverall) : 0,
-      topicSpecificFailureRate: data.totalInTopic > 0 ? (data.wrong / data.totalInTopic) : 0
-    }))
-      .filter(item => item.wrongAnswers > 0)
-      .sort((a, b) => b.topicSpecificFailureRate - a.topicSpecificFailureRate);
-  }
-
   async calculateTopicCoverage(contest: string): Promise<void> {
     if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
       this.topicCoverage = [];
@@ -465,27 +434,57 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     const encounteredQuestionIdsByTopic = new Map<string, Set<string>>();
-    this.quizAttempts.forEach(attempt => {
-      attempt.allQuestions.forEach(qSnapshotInfo => {
-        const topic = qSnapshotInfo.questionSnapshot.topic || 'Uncategorized';
-        if (!encounteredQuestionIdsByTopic.has(topic)) {
-          encounteredQuestionIdsByTopic.set(topic, new Set());
-        }
-        encounteredQuestionIdsByTopic.get(topic)!.add(qSnapshotInfo.questionId);
-      });
+    const timesAnsweredCorrectlyQuestionIdsByTopic = new Map<string, number>();
+    const timesAnsweredWronglyQuestionIdsByTopic = new Map<string, number>();
+    this.allQuestionsFromDb.forEach((question: Question) => {
+      const topic = question.topic || 'Uncategorized';
+      if (!encounteredQuestionIdsByTopic.has(topic)) {
+        encounteredQuestionIdsByTopic.set(topic, new Set());
+      }
+      if (encounteredQuestionIdsByTopic.get(topic) && (question.timesIncorrect || question.timesCorrect)){
+        encounteredQuestionIdsByTopic.get(topic)!.add(question.id);
+      }
+
+      if (!timesAnsweredCorrectlyQuestionIdsByTopic.has(topic)) {
+        timesAnsweredCorrectlyQuestionIdsByTopic.set(topic, 0);
+      }
+      if (timesAnsweredCorrectlyQuestionIdsByTopic.get(topic) !== undefined) {
+        const timesCorrect = typeof question.timesCorrect === 'number' ? question.timesCorrect : 0;
+        timesAnsweredCorrectlyQuestionIdsByTopic.set(
+          topic,
+          timesAnsweredCorrectlyQuestionIdsByTopic.get(topic)! + timesCorrect
+        );
+      }
+
+      if (!timesAnsweredWronglyQuestionIdsByTopic.has(topic)) {
+        timesAnsweredWronglyQuestionIdsByTopic.set(topic, 0);
+      }
+      if (timesAnsweredWronglyQuestionIdsByTopic.get(topic) !== undefined) {
+        const timesIncorrect = typeof question.timesIncorrect === 'number' ? question.timesIncorrect : 0;
+        timesAnsweredWronglyQuestionIdsByTopic.set(
+          topic,
+          timesAnsweredWronglyQuestionIdsByTopic.get(topic)! + timesIncorrect
+        );
+      }
     });
 
     this.topicCoverage = [];
     questionsByTopicDb.forEach((questionsInBankForTopic, topic) => {
       const totalInBank = questionsInBankForTopic.length;
+
       const encounteredSet = encounteredQuestionIdsByTopic.get(topic) || new Set();
       const encounteredCount = encounteredSet.size;
+      const correctCount = timesAnsweredCorrectlyQuestionIdsByTopic.get(topic) && timesAnsweredCorrectlyQuestionIdsByTopic.get(topic) || 0;
+      const incorrectCount = timesAnsweredWronglyQuestionIdsByTopic.get(topic) && timesAnsweredWronglyQuestionIdsByTopic.get(topic) || 0;
 
       this.topicCoverage.push({
         topic: topic,
         totalQuestionsInTopicBank: totalInBank,
         questionsEncountered: encounteredCount,
-        coveragePercentage: totalInBank > 0 ? (encounteredCount / totalInBank) : 0
+        coveragePercentage: totalInBank > 0 ? (encounteredCount / totalInBank) : 0,
+        totalQuestionsCorrectlyAnswered: correctCount,
+        correctPercentage: encounteredCount > 0 ? Number(((correctCount / (correctCount + incorrectCount)) * 100).toFixed(2)) : 0,
+        totalQuestionsWronglyAnswered: incorrectCount
       });
     });
 
@@ -627,7 +626,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  startPracticeQuizForTopic(topic: string): void {
+  startPracticeQuizForTopicOLD(topic: string): void {
     // allQuestionsFromDb is already filtered by contest.
     // quizAttempts is also already filtered by contest.
     // Logic should be fine.
@@ -673,19 +672,20 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   }
 
-
-  async startPracticeQuizForGeneralData(index: number): Promise<void> { // Made async
+  async startPracticeQuizForTopic(topic: string): Promise<void> {
     this.isLoadingModal = true;
-    const selectedData = this.tipologiaDomande[index];
-    if (!selectedData || !selectedData.questionIds || selectedData.questionIds.length === 0) {
-      this.alertService.showAlert("Info", `Nessuna domanda disponibile per la categoria: ${selectedData?.topic || 'sconosciuta'}`);
+    const selectedData = this.topicCoverage.find(_topic => _topic.topic === topic);
+    if (!selectedData) {
+      this.alertService.showAlert("Info", `Nessuna domanda disponibile per la categoria: ${topic || 'sconosciuta'}`);
       return;
     }
     this.quizSetupModalTitle = selectedData.topic;
     this.topics = [];
 
     try {
-      const questionsForModal = await this.dbService.getQuestionByIds(selectedData.questionIds);
+      this.spinnerService.show("Recupero domande in corso...");
+      const questionsForModal = await this.dbService.getQuestionsByTopic(this.selectedPublicContest, topic);
+      this.spinnerService.hide();
       this.isLoadingModal = false;
       const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
       questionsForModal.forEach(q => {
@@ -767,7 +767,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         `Quiz Svolti: ${this.totalQuizzesTaken}`,
         `Domande Affrontate: ${this.totalQuestionsAttempted}`,
         `Risposte Corrette: ${this.totalCorrectAnswers}`,
-        `Precisione Generale: ${new PercentPipe('en-US').transform(this.overallAccuracy, '1.0-1')}`,
         `Punteggio Medio: ${new PercentPipe('en-US').transform(this.averageScorePercentage, '1.0-1')}`
       ].forEach(stat => {
         checkYPos(lineHeight);
@@ -786,7 +785,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       yPos += 7;
       (doc as any).autoTable({
         startY: yPos,
-        head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)']],
+        head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)', 'N° volte corrette', 'N° volte errate']],
         body: this.topicCoverage.map(tc => [
           tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
           new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
@@ -848,32 +847,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       yPos += sectionSpacing / 2;
     }
 
-    if (this.wrongAnswerBreakdown.length > 0) {
-      checkYPos(lineHeight * 3);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Focus Errori per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
-      yPos += lineHeight * 1.5;
-      (doc as any).autoTable({
-        startY: yPos,
-        head: [['Argomento', 'Errori', '% su Tot. Errori', 'Tasso Errore Argomento']],
-        body: this.wrongAnswerBreakdown.map(wa => [
-          wa.topic, wa.wrongAnswers.toString(),
-          new PercentPipe('en-US').transform(wa.percentageOfGlobalWrong, '1.0-1'),
-          new PercentPipe('en-US').transform(wa.topicSpecificFailureRate, '1.0-1')
-        ]),
-        theme: 'grid', styles: {fontSize: 8, cellPadding: 1.5, halign: 'right'},
-        headStyles: {fillColor: [220, 53, 69], fontSize: 8.5, fontStyle: 'bold', halign: 'center'}, // red-like
-        columnStyles: {0: {halign: 'left', cellWidth: 'auto'}},
-        margin: {left: margin, right: margin},
-        didDrawPage: (data: any) => {
-          yPos = data.cursor.y;
-          if (yPos > pageHeight - margin - 10) yPos = margin
-        }
-      });
-      yPos = (doc as any).lastAutoTable.finalY + sectionSpacing;
-    }
-
     addPageNumbers(); // Add page numbers at the end
     const dateSuffix = this.datePipe.transform(new Date(), 'yyyyMMdd_HHmm');
     const contestSuffix = this.activeContestId ? `_${this.activeContestId.replace(/\s+/g, '_')}` : '';
@@ -889,7 +862,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       uniqueAnsweredOnce, onlyCorrectlyAnswered, domandeDaRafforzare,
       domandeInCuiVaiMalino, domandeInCuiVaiMoltoMale, domandeDisastro
     ] = await Promise.all([
-      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnce(this.activeContestId),
+      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnceCount(this.activeContestId),
       this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(this.activeContestId),
       this.dbService.getAllQuestionNeverAnswered(this.activeContestId),
       this.dbService.getAllQuestionAnsweredAtLeastOnce(this.activeContestId),
@@ -914,11 +887,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         topic: 'Domande mai affrontate',
         total: uniqueNeverAnswered.length,
-        questionIds: uniqueNeverAnswered.map(q => q.id),
+        questionIds: uniqueNeverAnswered,
         correct: 0,
         accuracy: 0
       },
-      // ... other items ...
       {
         topic: 'Domande affrontate almeno una volta',
         total: uniqueAnsweredOnce.length,
@@ -935,8 +907,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       {
         topic: 'Domande risposte correttamente almeno una volta',
-        total: uniqueCorrectOnce.length,
-        questionIds: uniqueCorrectOnce.map(q => q.id),
+        total: uniqueCorrectOnce,
+        questionIds: [],
         correct: 0,
         accuracy: 0
       },
