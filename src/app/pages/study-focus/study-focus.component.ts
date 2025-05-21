@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome, faMagnifyingGlass, faBarChart, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faBarChart, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { QuizSettings } from '../../models/quiz.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { AlertService } from '../../services/alert.service';

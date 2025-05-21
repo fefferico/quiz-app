@@ -1,7 +1,7 @@
 // src/app/app.component.ts
 import { Component, computed, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {RouterOutlet, RouterLink, Router} from '@angular/router';
+import {RouterOutlet, RouterLink, Router, RouterLinkActive} from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import {
   faSun, faMoon, faAdjust, faHome, IconDefinition,
@@ -21,7 +21,8 @@ import {SpinnerComponent} from './shared/spinner/spinner.component';
     RouterOutlet,
     RouterLink,
     FontAwesomeModule,
-    SpinnerComponent
+    SpinnerComponent,
+    RouterLinkActive
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

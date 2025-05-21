@@ -1,13 +1,13 @@
 // src/app/features/quiz/quiz-results/quiz-results.component.ts
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core'; // Added ChangeDetectorRef
-import { CommonModule, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import {Component, OnInit, OnDestroy, inject, ChangeDetectorRef} from '@angular/core'; // Added ChangeDetectorRef
+import {CommonModule, DatePipe, DecimalPipe, PercentPipe} from '@angular/common';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {Subscription} from 'rxjs';
 import jsPDF from 'jspdf';
 
-import { DatabaseService } from '../../../core/services/database.service';
-import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {DatabaseService} from '../../../core/services/database.service';
+import {QuizAttempt, AnsweredQuestion} from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
+import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition,
   faExclamation,
@@ -18,7 +18,8 @@ import {
   faFaceSmileBeam,
   faBarChart,
   faLandmark
-} from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
+} from '@fortawesome/free-solid-svg-icons';
+import {AlertService} from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -36,6 +37,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dbService = inject(DatabaseService);
+  private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef); // For manual change detection if needed
 
   // Icons
@@ -51,6 +53,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
   groupedQuestions: GroupedQuestionDisplay[] = [];
+  wrongOrUnansweredQuestionIds: string[] = []; // Store IDs of questions that were wrong or unanswered
 
   isLoading = true;
   errorLoading = '';
@@ -86,6 +89,12 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         this.groupedQuestions.forEach((group, index) => {
           this.accordionState.set(group.topic, index === 0); // Open the first group by default
         });
+        this.wrongOrUnansweredQuestionIds = this.quizAttempt.allQuestions
+          .filter(qInfo => {
+            const answeredInfo = this.quizAttempt!.answeredQuestions.find(aq => aq.questionId === qInfo.questionId);
+            return !answeredInfo || !answeredInfo.isCorrect; // Not in answeredQuestions OR isCorrect is false
+          })
+          .map(qInfo => qInfo.questionId);
       } else {
         this.errorLoading = 'Tentativo di quiz non trovato. Potrebbe essere stato eliminato o l\'ID non è corretto.';
       }
@@ -134,7 +143,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   getOptionClass(question: AnsweredQuestion, optionIndex: number): string {
-    const { userAnswerIndex, questionSnapshot, isCorrect } = question;
+    const {userAnswerIndex, questionSnapshot, isCorrect} = question;
     const correctAnswerIndex = questionSnapshot.correctAnswerIndex;
 
     // Default styles for an option that is not selected and not the correct answer
@@ -166,6 +175,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     // No need for cdr.detectChanges() here usually, as Angular's change detection
     // should pick up the change to accordionState if it's used in an *ngIf in the template.
   }
+
   // --- END NEW ---
 
   ngOnDestroy(): void {
@@ -224,11 +234,13 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       }
     };
 
-    doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-    doc.text('Risultati Quiz', pageWidth / 2, yPos, { align: 'center' });
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Risultati Quiz', pageWidth / 2, yPos, {align: 'center'});
     yPos += lineHeight * 2;
 
-    doc.setFontSize(12); doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
     doc.text(`Completato: ${new DatePipe('it-IT').transform(this.quizAttempt.timestampEnd, 'medium')}`, margin, yPos);
     yPos += lineHeight;
     doc.text(`Durata: ${this.calcDurataQuiz(this.quizAttempt)}`, margin, yPos);
@@ -248,7 +260,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
     this.groupedQuestions.forEach(group => {
       checkYPos(lineHeight * 3);
-      doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
       doc.text(`Argomento: ${group.topic}`, margin, yPos);
       yPos += lineHeight * 1.5;
       doc.setFontSize(10);
@@ -311,7 +324,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
-      doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin - 5, pageHeight - 10, { align: 'right' });
+      doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin - 5, pageHeight - 10, {align: 'right'});
     }
 
     doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
@@ -351,10 +364,12 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     // Get original question IDs from the attempt's allQuestions array
     const questionIds = this.quizAttempt.allQuestions.map(qInfo => qInfo.questionId);
     if (questionIds.length === 0) {
-      alert("Nessuna domanda trovata in questo tentativo da ripetere.");
-      return;
+      this.alertService.showAlert("Attenzione", "Nessuna domanda trovata in questo tentativo da ripetere.").then(() => {
+        return;
+      })
+    } else {
+      this.onInternalSubmit(this.quizAttempt, questionIds);
     }
-    this.onInternalSubmit(this.quizAttempt, questionIds);
   }
 
   async repeatWrongQuiz(): Promise<void> { // Make async
@@ -366,11 +381,13 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       })
       .map(qInfo => qInfo.questionId);
 
-    if (wrongOrUnansweredQuestionIds.length === 0) {
-      alert("Nessuna domanda sbagliata o non risposta in questo tentativo. Ottimo lavoro!");
-      return;
+    if (!this.wrongOrUnansweredQuestionIds || this.wrongOrUnansweredQuestionIds.length === 0) {
+      this.alertService.showAlert("Attenzione", "Nessuna domanda sbagliata o non risposta in questo tentativo. Ottimo lavoro!").then(() => {
+        return;
+      })
+    } else {
+      this.onInternalSubmit(this.quizAttempt, this.wrongOrUnansweredQuestionIds);
     }
-    this.onInternalSubmit(this.quizAttempt, wrongOrUnansweredQuestionIds);
   }
 
   onInternalSubmit(originalAttempt: QuizAttempt | undefined, questionIdsToRepeat?: string[]): void {
@@ -405,7 +422,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
+    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
 
   }
 

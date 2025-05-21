@@ -47,3 +47,4 @@ venv/*
 path/to/venv/*
 
 /release/*
+environment.ts

@@ -168,10 +168,10 @@
       </div>
     </div>
 
-    <div class="bg-gray-50 dark:bg-gray-700 p-2 sm:p-4 rounded-lg shadow mb-2">
+    <div class="bg-gray-100 border border-gray-200 dark:bg-gray-700 p-2 sm:p-4 rounded-lg shadow mb-2">
       <div class="flex justify-between items-start">
         <div class="flex-grow">
-          <h2 class="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100 leading-tight"
+          <h2 class="flex-grow h-32 overflow-y-auto text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100 leading-tight"
               [innerHTML]="currentQuestion.text"></h2>
           <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">ID:
             {{ currentQuestion.id + (currentQuestion.topic ? ' - Argomento: ' + currentQuestion.topic : '') }}</p>
@@ -277,3 +277,4 @@
     </button>
   </div>
 </div>
+
