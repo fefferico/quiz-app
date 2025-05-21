@@ -1,0 +1,7 @@
+<!-- src/404.html -->
+<script>
+  // Redirect all 404s to index.html for Angular routing
+  if (location.pathname !== '/quiz-app/' && !location.pathname.endsWith('.js') && !location.pathname.endsWith('.css')) {
+    location.replace('/quiz-app/');
+  }
+</script>
