@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from './services/theme.service';
 import {AuthService} from './core/services/auth.service';
+import {SpinnerComponent} from './shared/spinner/spinner.component';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,8 @@ import {AuthService} from './core/services/auth.service';
     CommonModule,
     RouterOutlet,
     RouterLink,
-    FontAwesomeModule
+    FontAwesomeModule,
+    SpinnerComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

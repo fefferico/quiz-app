@@ -41,6 +41,8 @@ import {AlertButton} from '../../../models/alert.model';
 import {SoundService} from '../../../core/services/sound.service';
 import {GenericData} from '../../../models/statistics.model';
 import {ContestSelectionService} from '../../../core/services/contest-selection.service';
+import {Spinner} from '@angular-devkit/build-angular/src/utils/spinner';
+import {SpinnerService} from '../../../core/services/spinner.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -74,6 +76,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private ngZone = inject(NgZone); // Inject NgZone
   private soundService = inject(SoundService);
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
+  spinnerService = inject(SpinnerService);
 
   private navigationState: any; // Added to store navigation state
 
@@ -177,6 +180,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   quizCompleted = false;
 
   isLoading = true;
+  isSavingAttempt = false;
   errorLoading = '';
 
   currentQuizAttemptId: string | null = null;
@@ -808,6 +812,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   async endQuiz(isTimeUp: boolean = false): Promise<void> {
+    this.isSavingAttempt = true;
     this.stopSpeaking(); // Stop speech on quiz end
     this.soundIsPlaying = false;
     this.clearAutoAdvanceTimeout();
@@ -899,12 +904,18 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     }
 
     try {
+      this.spinnerService.show("Salvataggio in corso...");
       await this.dbService.saveQuizAttempt(quizAttempt);
-      for (const answeredQ of this.userAnswers) {
-        await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);
-      }
+
+      await this.dbService.updateQuestionsStatsBulk(this.userAnswers);
+      // for (const answeredQ of this.userAnswers) {
+        // await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);
+      // }
+      this.spinnerService.hide();
       this.router.navigate(['/quiz/results', quizAttempt.id]);
+      this.isSavingAttempt = false;
     } catch (error) {
+      this.isSavingAttempt = false;
       console.error('Error ending quiz:', error);
       this.router.navigate(['/home']);
     }

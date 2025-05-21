@@ -82,15 +82,28 @@ export class AuthService {
     this.supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event, 'Session:', session);
       const supabaseUser = session?.user ?? null;
+      const currentAppUser = this._currentUser.value;
+
       if (supabaseUser) {
+        // A Supabase user is now active (e.g., signed in via Supabase, or session restored).
         const appUserFromSupabase = this.mapSupabaseUserToAppUser(supabaseUser);
         this._currentUser.next(appUserFromSupabase);
         this.storeUserInCache(appUserFromSupabase);
       } else {
-        // Supabase says no user / session ended. Clear current user.
-        // This will log out both Supabase users and our special local users.
-        this._currentUser.next(null);
-        this.removeUserFromCache();
+        // No active Supabase session (e.g., signed out from Supabase, token expired, or initial state).
+        // We should only clear the current user if they are:
+        // 1. A Supabase user (i.e., not a 'local_special_user').
+        // 2. Or if there was no user logged in at all.
+        if (currentAppUser && currentAppUser.app_metadata?.provider === 'local_special_user') {
+          // The current user is a special local user. Do nothing, let them stay logged in.
+          // This case is important for when a special user logs in, which calls supabase.auth.signOut().
+          console.log('Supabase session ended/null, but a local special user is active. No change to current user state by onAuthStateChange.');
+        } else {
+          // The current user was a Supabase user, or no user was logged in. It's safe to clear.
+          console.log('Supabase session ended/null. Clearing current non-special user or if no user was active.');
+          this._currentUser.next(null);
+          this.removeUserFromCache();
+        }
       }
     });
   }
@@ -209,7 +222,8 @@ export class AuthService {
   async signOut() {
     // This will sign out both local special users and Supabase users
     const { error } = await this.supabase.auth.signOut(); // This will trigger onAuthStateChange
-    // onAuthStateChange will call _currentUser.next(null) and removeUserFromCache()
+    this._currentUser.next(null);
+    this.removeUserFromCache();
     if (error) {
         console.error("Error signing out from Supabase:", error);
         // Even if Supabase signout fails, ensure local state is cleared

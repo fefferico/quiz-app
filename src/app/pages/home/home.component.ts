@@ -18,7 +18,7 @@ import { Question } from '../../models/question.model';
 import { FormsModule } from '@angular/forms';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import the service
 import { Subscription } from 'rxjs';
-import {AuthService} from '../../core/services/auth.service';
+import {AppUser, AuthService} from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -40,6 +40,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   authService = inject(AuthService);
 
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
+  loggedInUser: string = '';
 
   // --- General State ---
   isMusicPlaying: boolean = false;
@@ -96,6 +97,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   ngOnInit(): void {
     this.isStatsViewer = this.authService.isStatsViewer();
+    const currentUser = this.authService.getCurrentUserSnapshot();
+    this.loggedInUser = currentUser && 'id' in currentUser ? (currentUser as AppUser).id : '';
 
     this.contestSubscription = this.contestSelectionService.selectedContest$.subscribe(newlySelectedContestId => {
       console.log(`HomeComponent: ContestSelectionService emitted '${newlySelectedContestId}'. Current local is '${this.currentLocalContestId}'`);

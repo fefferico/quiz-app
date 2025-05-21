@@ -8,7 +8,17 @@ import jsPDF from 'jspdf';
 import { DatabaseService } from '../../../core/services/database.service';
 import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faExclamation, faRepeat, faHome, faChevronDown, faChevronUp, faFaceSmileBeam } from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
+import {
+  IconDefinition,
+  faExclamation,
+  faRepeat,
+  faHome,
+  faChevronDown,
+  faChevronUp,
+  faFaceSmileBeam,
+  faBarChart,
+  faLandmark
+} from '@fortawesome/free-solid-svg-icons'; // Added faChevronDown, faChevronUp
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -32,6 +42,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   segnala: IconDefinition = faExclamation;
   repeatIcon: IconDefinition = faRepeat;
   homeIcon: IconDefinition = faHome;
+  faLandmark: IconDefinition = faLandmark;
+  faBarChart: IconDefinition = faBarChart;
   faChevronDown: IconDefinition = faChevronDown; // For accordion closed
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
   faGood: IconDefinition = faFaceSmileBeam;

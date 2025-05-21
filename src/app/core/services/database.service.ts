@@ -1,12 +1,12 @@
 // src/app/core/services/database.service.ts
-import { Injectable, OnDestroy } from '@angular/core';
-import { Question } from '../../models/question.model'; // Adjust path if necessary
-import { QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
-import { AppDB } from './appDB';
-import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
-import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import { AuthService } from './auth.service';
-import { Subscription } from 'rxjs'; // Added import
+import {Injectable, OnDestroy} from '@angular/core';
+import {Question} from '../../models/question.model'; // Adjust path if necessary
+import {AnsweredQuestion, QuizAttempt, TopicCount} from '../../models/quiz.model';   // Adjust path if necessary
+import {AppDB} from './appDB';
+import {SupabaseService} from './supabase-service.service'; // Your Supabase client wrapper
+import {PostgrestError, SupabaseClient} from '@supabase/supabase-js';
+import {AuthService} from './auth.service';
+import {Subscription} from 'rxjs'; // Added import
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -387,7 +387,13 @@ export class DatabaseService implements OnDestroy {
     questionIDs: string[] = [], // Corrected typo: questiondIDs -> questionIDs
     topicDistribution?: TopicCount[]
   ): Promise<Question[]> {
-    console.log('[DBService] getRandomQuestions called with:', { count, topics, keywords, questionIDs, topicDistribution });
+    console.log('[DBService] getRandomQuestions called with:', {
+      count,
+      topics,
+      keywords,
+      questionIDs,
+      topicDistribution
+    });
     let allFetchedQuestions: Question[] = [];
 
     try {
@@ -475,7 +481,13 @@ export class DatabaseService implements OnDestroy {
     // This method will leverage getRandomQuestions and then filter for never encountered.
     // Or, modify the fetching logic within getRandomQuestions' structure.
 
-    console.log('[DBService] getNeverEncounteredRandomQuestionsByParams called with:', { count, topics, keywords, questionIDs, topicDistribution });
+    console.log('[DBService] getNeverEncounteredRandomQuestionsByParams called with:', {
+      count,
+      topics,
+      keywords,
+      questionIDs,
+      topicDistribution
+    });
     let allPotentialQuestions: Question[] = [];
 
     // Adapt logic from getRandomQuestions to fetch candidates
@@ -511,7 +523,9 @@ export class DatabaseService implements OnDestroy {
         let baseQuestions: Question[];
         if (questionIDs && questionIDs.length > 0) {
           baseQuestions = await this.getQuestionByIds(questionIDs.filter(id => id));
-          if (contestId) { baseQuestions = baseQuestions.filter(q => q.publicContest === contestId); }
+          if (contestId) {
+            baseQuestions = baseQuestions.filter(q => q.publicContest === contestId);
+          }
         } else if (topics && topics.length > 0) {
           baseQuestions = await this.getQuestionsByTopics(contestId, topics);
         } else {
@@ -566,7 +580,7 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<QuizAttempt>(
       this.supabase.from('quiz_attempts').select('*')
         .eq('public_contest_setting', contestId) // Using denormalized column
-        .order('timestamp_start', { ascending: false }),
+        .order('timestamp_start', {ascending: false}),
       this.mapQuizAttemptFromSupabase,
       (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
       async () => {
@@ -591,7 +605,7 @@ export class DatabaseService implements OnDestroy {
         .eq('public_contest_setting', contestId)
         .gte('timestamp_start', startOfDay.toISOString())
         .lt('timestamp_start', endOfDay.toISOString())
-        .order('timestamp_start', { ascending: false }),
+        .order('timestamp_start', {ascending: false}),
       this.mapQuizAttemptFromSupabase,
       (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
       () => {
@@ -635,7 +649,9 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*').eq('id', id).single(),
       this.mapQuestionFromSupabase,
-      async (questions) => { if (questions.length > 0) await this.dexieDB.questions.put(questions[0]); },
+      async (questions) => {
+        if (questions.length > 0) await this.dexieDB.questions.put(questions[0]);
+      },
       () => {
         console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
         return this.dexieDB.questions.get(id);
@@ -668,7 +684,7 @@ export class DatabaseService implements OnDestroy {
     // This method primarily writes; fallback for write is more complex (queueing)
     // For now, prioritize Supabase write, then update Dexie.
     const supabaseData = this.mapQuestionToSupabase(questionData);
-    const { data, error } = await this.supabase
+    const {data, error} = await this.supabase
       .from('questions')
       .insert(supabaseData)
       .select()
@@ -686,7 +702,7 @@ export class DatabaseService implements OnDestroy {
 
   async updateQuestion(id: string, changes: Partial<Question>): Promise<Question> {
     const supabaseChanges = this.mapQuestionToSupabase(changes);
-    const { data, error } = await this.supabase
+    const {data, error} = await this.supabase
       .from('questions')
       .update(supabaseChanges)
       .eq('id', id)
@@ -703,7 +719,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   async deleteQuestion(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const {error} = await this.supabase
       .from('questions')
       .delete()
       .eq('id', id);
@@ -717,7 +733,7 @@ export class DatabaseService implements OnDestroy {
   // --- QuizAttempt Table Methods (Supabase-first from original) ---
   async saveQuizAttempt(quizAttempt: QuizAttempt): Promise<QuizAttempt> {
     const supabaseAttemptData = this.mapQuizAttemptToSupabase(quizAttempt);
-    const { data, error } = await this.supabase
+    const {data, error} = await this.supabase
       .from('quiz_attempts')
       .upsert(supabaseAttemptData)
       .select()
@@ -743,7 +759,9 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<QuizAttempt>(
       this.supabase.from('quiz_attempts').select('*').eq('id', id).single(),
       this.mapQuizAttemptFromSupabase,
-      async (attempts) => { if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]); },
+      async (attempts) => {
+        if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]);
+      },
       () => {
         console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
         return this.dexieDB.quizAttempts.get(id);
@@ -766,7 +784,7 @@ export class DatabaseService implements OnDestroy {
       // For this example, let's assume a direct user_id column if provided.
       // query = query.eq('user_id', userId); // Uncomment and adjust if you have a user_id column
     }
-    query = query.order('timestamp_start', { ascending: false });
+    query = query.order('timestamp_start', {ascending: false});
 
     return this.handleSupabaseFetch<QuizAttempt>(
       query,
@@ -789,7 +807,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   async deleteQuizAttempt(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const {error} = await this.supabase
       .from('quiz_attempts')
       .delete()
       .eq('id', id);
@@ -802,7 +820,7 @@ export class DatabaseService implements OnDestroy {
 
   async clearAllQuizAttempts(contestId: string): Promise<void> {
     console.log(`Attempting to clear Supabase quiz attempts for contest: ${contestId}`);
-    const { error: supabaseError } = await this.supabase
+    const {error: supabaseError} = await this.supabase
       .from('quiz_attempts')
       .delete()
       .eq('public_contest_setting', contestId); // Standardized
@@ -865,7 +883,7 @@ export class DatabaseService implements OnDestroy {
       }
       // if (userId) { attemptsQuery = attemptsQuery.eq('user_id', userId); }
 
-      const { data: attemptsData, error: attemptsError } = await attemptsQuery;
+      const {data: attemptsData, error: attemptsError} = await attemptsQuery;
 
       if (attemptsError) {
         console.error(`Supabase error fetching attempts in ${operationName}:`, attemptsError);
@@ -895,7 +913,11 @@ export class DatabaseService implements OnDestroy {
           continue;
         }
 
-        const allQsInAttempt = (attempt.all_questions || []) as Array<{ questionId: string, questionSnapshot?: any, isCorrect?: boolean }>; // Assuming all_questions has at least questionId
+        const allQsInAttempt = (attempt.all_questions || []) as Array<{
+          questionId: string,
+          questionSnapshot?: any,
+          isCorrect?: boolean
+        }>; // Assuming all_questions has at least questionId
         const answeredQs = (attempt.answered_questions || []) as Array<{ questionId: string, isCorrect: boolean }>;
         const unansweredQs = (attempt.unanswered_questions || []) as Array<{ questionId: string }>;
 
@@ -903,7 +925,10 @@ export class DatabaseService implements OnDestroy {
 
         for (const qInfo of allQsInAttempt) {
           candidateProblematicIds.add(qInfo.questionId);
-          const existingDetail = attemptQuestionDetails.get(qInfo.questionId) || { wasUnansweredInAttempt: false, wasWrongInAttempt: false };
+          const existingDetail = attemptQuestionDetails.get(qInfo.questionId) || {
+            wasUnansweredInAttempt: false,
+            wasWrongInAttempt: false
+          };
 
           const answeredDetail = answeredQs.find(aq => aq.questionId === qInfo.questionId);
           if (answeredDetail) {
@@ -1045,7 +1070,10 @@ export class DatabaseService implements OnDestroy {
 
       for (const qInfo of allQsInAttempt) {
         candidateProblematicIds.add(qInfo.questionId);
-        const existingDetail = attemptQuestionDetails.get(qInfo.questionId) || { wasUnansweredInAttempt: false, wasWrongInAttempt: false };
+        const existingDetail = attemptQuestionDetails.get(qInfo.questionId) || {
+          wasUnansweredInAttempt: false,
+          wasWrongInAttempt: false
+        };
         const answeredDetail = answeredQs.find(aq => aq.questionId === qInfo.questionId);
         if (answeredDetail) {
           if (!answeredDetail.isCorrect) existingDetail.wasWrongInAttempt = true;
@@ -1100,7 +1128,7 @@ export class DatabaseService implements OnDestroy {
     // userId not used here as it's about global "never answered" based on question stats
 
     try {
-      const { data, error } = await supabaseQuery;
+      const {data, error} = await supabaseQuery;
       if (error) {
         console.error(`Supabase error in ${operationName}:`, error);
         if (navigator.onLine === false) {
@@ -1124,9 +1152,9 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-   async getNeverAnsweredQuestionCount(contestId: string | null = null, userId?: string): Promise<number> {
+  async getNeverAnsweredQuestionCount(contestId: string | null = null, userId?: string): Promise<number> {
     const operationName = `getNeverAnsweredQuestionCount` + (contestId ? ` for contest ${contestId}` : '');
-    let supabaseQuery = this.supabase.from('questions').select('id', { count: 'exact', head: true })
+    let supabaseQuery = this.supabase.from('questions').select('id', {count: 'exact', head: true})
       .eq('times_correct', 0)
       .eq('times_incorrect', 0);
     if (contestId) {
@@ -1135,7 +1163,7 @@ export class DatabaseService implements OnDestroy {
     // userId not used here as it's about global "never answered" based on question stats
 
     try {
-      const { count, error } = await supabaseQuery;
+      const {count, error} = await supabaseQuery;
       if (error) {
         console.error(`Supabase error in ${operationName}:`, error);
         if (navigator.onLine === false) {
@@ -1159,12 +1187,114 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
+  async updateQuestionsStatsBulk(answers: AnsweredQuestion[]): Promise<void> {
+    if (!answers || answers.length === 0) {
+      return;
+    }
+
+    const operationName = 'updateQuestionsStatsBulk';
+    console.log(`[${operationName}] Starting for ${answers.length} answers.`);
+
+    try {
+      const questionIds = [...new Set(answers.map(a => a.questionId))];
+
+      // 1. Fetch current stats for all relevant questions from Supabase
+      const {data: currentQuestionsData, error: fetchError} = await this.supabase
+        .from('questions')
+        .select('id, times_correct, times_incorrect') // Only fetch what's needed for calculation
+        .in('id', questionIds);
+
+      if (fetchError) {
+        console.error(`[${operationName}] Supabase error fetching current question stats:`, fetchError);
+        if (!navigator.onLine) {
+          console.warn(`[${operationName}] Offline. Stats update will be skipped.`);
+          // Optionally, implement offline queueing here if this is critical path when offline
+        }
+        throw fetchError; // Re-throw to let the caller know the operation failed
+      }
+
+      if (!currentQuestionsData) {
+        console.warn(`[${operationName}] No current question data returned from Supabase for IDs: ${questionIds.join(', ')}. Operation cannot proceed.`);
+        return; // Cannot proceed without current stats
+      }
+
+      const currentStatsMap = new Map(currentQuestionsData.map(q => [q.id, {
+        times_correct: q.times_correct || 0,
+        times_incorrect: q.times_incorrect || 0
+      }]));
+      const supabaseUpdatePayloads: Question[] = [];
+      const newTimestamp = new Date().getTime();
+
+      for (const answer of answers) {
+        const currentStats = currentStatsMap.get(answer.questionId);
+
+        // If the questionId from the input answers was not found in our initial fetch from Supabase,
+        // skip it to prevent trying to upsert a partial record as a new row.
+        if (currentStats === undefined) {
+          console.warn(`[${operationName}] Question ID ${answer.questionId} from input 'answers' was not found in the initial Supabase fetch or had no stats. Skipping stats update for this ID.`);
+          continue; // Skip to the next answer
+        }
+
+        // Now we are sure currentStats is defined for this answer.questionId
+        const baseTimesCorrect = currentStats.times_correct || 0; // Default to 0 if null/undefined from DB
+        const baseTimesIncorrect = currentStats.times_incorrect || 0; // Default to 0 if null/undefined from DB
+
+        const newTimesCorrect = baseTimesCorrect + (answer.isCorrect ? 1 : 0);
+        const newTimesIncorrect = baseTimesIncorrect + (answer.isCorrect ? 0 : 1);
+        const timesAnswered = newTimesCorrect + newTimesIncorrect;
+        const newAccuracy = timesAnswered > 0 ? parseFloat(((newTimesCorrect / timesAnswered) * 100).toFixed(2)) : 0;
+
+        supabaseUpdatePayloads.push(this.mapQuestionToSupabase(this.mapAnsweredQuestionToQuestion(answer)));
+      }
+
+      if (supabaseUpdatePayloads.length === 0) {
+        console.log(`[${operationName}] No valid payloads to update after processing answers. Exiting.`);
+        return;
+      }
+
+      // 2. Perform bulk update/insert to Supabase
+      const {data: updatedSupabaseQuestions, error: upsertError} = await this.supabase
+        .from('questions')
+        .upsert(supabaseUpdatePayloads, {onConflict: 'id'}) // Explicitly state conflict column
+        .select(); // Important: select() to get the updated/inserted rows back
+
+      if (upsertError) {
+        console.error(`[${operationName}] Supabase error upserting question stats:`, upsertError);
+        if (!navigator.onLine) {
+          console.warn(`[${operationName}] Offline during Supabase upsert. Dexie will not be updated with these changes.`);
+        }
+        throw upsertError; // Re-throw
+      }
+
+      // 3. Update Dexie with the successfully updated questions
+      if (updatedSupabaseQuestions && updatedSupabaseQuestions.length > 0) {
+        const dexieQuestionsToUpdate = updatedSupabaseQuestions.map(sq => this.mapQuestionFromSupabase(sq));
+        try {
+          await this.dexieDB.questions.bulkPut(dexieQuestionsToUpdate);
+          console.log(`[${operationName}] Successfully updated ${dexieQuestionsToUpdate.length} questions in Dexie.`);
+        } catch (dexieError) {
+          console.error(`[${operationName}] Error updating Dexie after Supabase success:`, dexieError);
+        }
+      } else {
+        console.warn(`[${operationName}] Supabase upsert reported success but returned no data. Dexie not updated.`);
+      }
+
+      console.log(`[${operationName}] Completed successfully for ${supabaseUpdatePayloads.length} payloads.`);
+
+    } catch (error) {
+      console.error(`[${operationName}] General error during bulk update:`, error);
+      if (!(error as any).message?.includes('Failed to fetch')) {
+        // throw error;
+      }
+    }
+  }
+
   async updateQuestionStats(questionId: string, isCorrect: boolean, userId?: string): Promise<void> {
     // This is primarily a write operation. Fallback for writes is complex (queueing).
     // For now, it directly attempts Supabase and then updates Dexie.
     // An RPC function in Supabase is better for atomicity.
     try {
-      const { data: currentQData, error: fetchError } = await this.supabase
+      const {data: currentQData, error: fetchError} = await this.supabase
         .from('questions')
         .select('times_correct, times_incorrect, accuracy')
         .eq('id', questionId)
@@ -1193,7 +1323,7 @@ export class DatabaseService implements OnDestroy {
         accuracy: newAccuracy
       };
 
-      const { error: updateError } = await this.supabase
+      const {error: updateError} = await this.supabase
         .from('questions')
         .update(updates)
         .eq('id', questionId);
@@ -1205,7 +1335,7 @@ export class DatabaseService implements OnDestroy {
         throw updateError;
       }
       // Update Dexie if Supabase was successful
-      await this.dexieDB.questions.where({ id: questionId }).modify(q => {
+      await this.dexieDB.questions.where({id: questionId}).modify(q => {
         q.timesCorrect = newTimesCorrect;
         q.timesIncorrect = newTimesIncorrect;
         q.lastAnsweredTimestamp = updates.last_answered_timestamp;
@@ -1228,12 +1358,12 @@ export class DatabaseService implements OnDestroy {
     const operationName = 'getAvailablePublicContests';
     try {
       // Using distinct on public_contest column
-      const { data, error } = await this.supabase
+      const {data, error} = await this.supabase
         .rpc('get_distinct_public_contests'); // Assumes a PL/pgSQL function exists
       if (error || !data) {
         console.error(`Supabase error or no data from RPC in ${operationName}:`, error);
         // Fallback to selecting all and processing client-side if RPC fails or doesn't exist
-        const { data: qData, error: qError } = await this.supabase.from('questions').select('public_contest');
+        const {data: qData, error: qError} = await this.supabase.from('questions').select('public_contest');
         if (qError) {
           console.error(`Supabase error fetching all public_contest values:`, qError);
           if (navigator.onLine === false) {
@@ -1244,12 +1374,16 @@ export class DatabaseService implements OnDestroy {
         }
         const contestSet = new Set<string>();
         if (qData) {
-          qData.forEach(q => { if (q.public_contest && q.public_contest.trim() !== '') contestSet.add(q.public_contest); });
+          qData.forEach(q => {
+            if (q.public_contest && q.public_contest.trim() !== '') contestSet.add(q.public_contest);
+          });
         }
         return Array.from(contestSet).sort();
       }
       // Assuming RPC returns an array of objects like { public_contest: 'ContestName' }
-      return (data as Array<{ public_contest: string }>).map(item => item.public_contest).filter(c => c && c.trim() !== '').sort();
+      return (data as Array<{
+        public_contest: string
+      }>).map(item => item.public_contest).filter(c => c && c.trim() !== '').sort();
 
     } catch (err) {
       console.error(`Error in ${operationName}, falling back to Dexie:`, err);
@@ -1265,9 +1399,12 @@ export class DatabaseService implements OnDestroy {
   private async getAvailablePublicContestsFromDexie(): Promise<string[]> {
     const allDexieQuestions = await this.dexieDB.questions.toArray();
     const contestSet = new Set<string>();
-    allDexieQuestions.forEach(q => { if (q.publicContest && q.publicContest.trim() !== '') contestSet.add(q.publicContest); });
+    allDexieQuestions.forEach(q => {
+      if (q.publicContest && q.publicContest.trim() !== '') contestSet.add(q.publicContest);
+    });
     return Array.from(contestSet).sort();
   }
+
   /*
   Example Supabase RPC function for distinct public_contest:
   CREATE OR REPLACE FUNCTION get_distinct_public_contests()
@@ -1293,7 +1430,7 @@ export class DatabaseService implements OnDestroy {
     }
     const newFavoriteStatus = question.isFavorite ? 0 : 1; // Supabase uses 0/1 for boolean typically
     // Update operation will also update Dexie via updateQuestion's logic
-    await this.updateQuestion(questionId, { isFavorite: newFavoriteStatus });
+    await this.updateQuestion(questionId, {isFavorite: newFavoriteStatus});
     return newFavoriteStatus;
   }
 
@@ -1323,13 +1460,15 @@ export class DatabaseService implements OnDestroy {
     let query = this.supabase.from('quiz_attempts')
       .select('*')
       .eq('status', 'paused')
-      .order('timestamp_start', { ascending: false });
+      .order('timestamp_start', {ascending: false});
     // if (userId) { query = query.eq('user_id', userId); } // For multi-user
 
     return this.handleSupabaseFetch<QuizAttempt>(
       query, // Limit 1 could be added server-side or client-side for "latest"
       this.mapQuizAttemptFromSupabase,
-      async (attempts) => { if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]); }, // Cache if found
+      async (attempts) => {
+        if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]);
+      }, // Cache if found
       async () => {
         console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
         const pausedDexie = await this.dexieDB.quizAttempts.where('status').equals('paused')
@@ -1348,67 +1487,35 @@ export class DatabaseService implements OnDestroy {
     console.log(`Attempting to reset Supabase question stats for contest: ${contestId}`);
     // An RPC function would be more atomic. Client-side: fetch IDs, map to reset objects, then upsert.
     try {
-      const { data: questionsToReset, error: fetchError } = await this.supabase
+      const {data: questionsToReset, error: fetchError} = await this.supabase
         .from('questions')
-        .select('id') // only fetch id
+        .select('*') // only fetch id
         .eq('public_contest', contestId);
 
       if (fetchError) throw fetchError;
 
       if (questionsToReset && questionsToReset.length > 0) {
-        const updates = questionsToReset.map(q => ({
-          id: q.id, // Must match existing ID
+        const updates = questionsToReset.map( (q: Question) => ({
+          ...q, // Spread to include existing fields
           times_correct: 0,
           times_incorrect: 0,
           last_answered_timestamp: null, // Use null for Supabase timestamp reset
           last_answer_correct: false,
           is_favorite: 0,
           accuracy: 0,
-          // Include all other fields from mapQuestionToSupabase to avoid them being nulled if not specified in update
-          // Or ensure your Supabase table columns have defaults / allow nulls appropriately
         }));
 
-        const { error: updateError } = await this.supabase.from('questions').upsert(updates);
+        const {error: updateError} = await this.supabase.from('questions').upsert(updates);
         if (updateError) throw updateError;
 
         // Update Dexie: map back from the reset "Supabase-like" structure
-        const dexieUpdates = updates.map(u => {
-          const mapped = this.mapQuestionFromSupabase(u); // Map to get camelCase and defaults
-          // Ensure all fields are present for Dexie Question model
-          return {
-            ...mapped, // Base mapping
-            text: '', // Placeholder, actual text not reset, only stats
-            topic: '', // Placeholder
-            options: [], // Placeholder
-            correctAnswerIndex: 0, // Placeholder
-            explanation: '', // Placeholder
-            difficulty: '', // Placeholder
-            questionVersion: 0, // Placeholder
-            publicContest: contestId, // Ensure contest ID is set
-            // these are actually reset:
-            timesCorrect: 0,
-            timesIncorrect: 0,
-            isFavorite: 0,
-            lastAnsweredTimestamp: undefined, // Dexie might prefer undefined
-            lastAnswerCorrect: false,
-            accuracy: 0,
-          };
-        });
-
-        // More accurately, fetch existing questions from Dexie and modify them
-        const existingDexieQuestions = await this.dexieDB.questions.where('publicContest').equals(contestId).toArray();
-        const finalDexieUpdates: Question[] = existingDexieQuestions.map(dq => ({
-          ...dq, // Keep original content
-          timesCorrect: 0,
-          timesIncorrect: 0,
-          isFavorite: 0,
-          lastAnsweredTimestamp: undefined,
-          lastAnswerCorrect: false,
-          accuracy: 0,
-        }));
-
-        await this.dexieDB.questions.bulkPut(finalDexieUpdates);
-        console.log(`Stats reset for ${updates.length} questions in contest ${contestId}`);
+        const dexieUpdates = updates.map(u => this.mapQuestionFromSupabase(u));
+        try {
+          await this.dexieDB.questions.bulkPut(dexieUpdates);
+          console.log(`Stats reset for ${updates.length} questions in contest ${contestId}`);
+        } catch (dexieError) {
+          console.error(`Error updating Dexie after Supabase success:`, dexieError);
+        }
       } else {
         console.log(`No questions found in contest ${contestId} to reset stats.`);
       }
@@ -1419,7 +1526,13 @@ export class DatabaseService implements OnDestroy {
         // Attempt Dexie reset anyway
         const existingDexieQuestions = await this.dexieDB.questions.where('publicContest').equals(contestId).toArray();
         const finalDexieUpdates: Question[] = existingDexieQuestions.map(dq => ({
-          ...dq, timesCorrect: 0, timesIncorrect: 0, isFavorite: 0, lastAnsweredTimestamp: undefined, lastAnswerCorrect: false, accuracy: 0,
+          ...dq,
+          timesCorrect: 0,
+          timesIncorrect: 0,
+          isFavorite: 0,
+          lastAnsweredTimestamp: undefined,
+          lastAnswerCorrect: false,
+          accuracy: 0,
         }));
         await this.dexieDB.questions.bulkPut(finalDexieUpdates);
         console.log(`Dexie question stats reset for contest ${contestId} during offline fallback.`);
@@ -1450,7 +1563,7 @@ export class DatabaseService implements OnDestroy {
     let start = 0;
 
     while (true) {
-      const { data, error } = await this.supabase.from('questions').select('*')
+      const {data, error} = await this.supabase.from('questions').select('*')
         .eq('public_contest', contestId)
         .range(start, start + chunkSize - 1);
 
@@ -1468,5 +1581,18 @@ export class DatabaseService implements OnDestroy {
     }
 
     return allRows;
+  }
+
+  mapAnsweredQuestionToQuestion(answered: AnsweredQuestion): Question {
+    return {
+      id: answered.questionId,
+      text: answered.questionSnapshot.text,
+      topic: answered.questionSnapshot.topic,
+      options: answered.questionSnapshot.options,
+      correctAnswerIndex: answered.questionSnapshot.correctAnswerIndex,
+      explanation: answered.questionSnapshot.explanation,
+      isFavorite: answered.questionSnapshot.isFavorite,
+      // Add other fields as needed, possibly with default values or undefined
+    };
   }
 }

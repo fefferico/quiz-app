@@ -8,7 +8,8 @@
          class="mx-1 mb-4 hover:cursor-pointer" title="Amaggica!"/>
   </div>
 
-  <h1 class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Benvenuti su DajeFra!</h1>
+  <h1 *ngIf="!loggedInUser" class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Benvenuti su DajeFra!</h1>
+  <h2 *ngIf="loggedInUser" class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Ciao {{loggedInUser}}, benvenuto su DajeFra!</h2>
 
   <!-- Public Contest Selection - MOVED TO THE TOP -->
   <section class="mb-6">
@@ -79,7 +80,6 @@
             class="flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && (loadingButtonKey === 'public_contest_quiz'))" class="mr-2"
                [icon]="faLandmark"></fa-icon>
-      <!-- Spinner SVG -->
       Nuovo Quiz
     </button>
 
@@ -135,7 +135,6 @@
             class="flex items-center justify-center w-full bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'never_encountered')" class="mr-2"
                [icon]="faQuestion"></fa-icon>
-      <!-- Spinner -->
       Domande Mai Viste {{ selectedPublicContest ? '(' + neverEncounteredQuestionCount + ')' : '' }}
     </button>
 
@@ -144,7 +143,6 @@
             class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'yesterday_problematic')" class="mr-2"
                [icon]="faUndoAlt"></fa-icon>
-      <!-- Spinner -->
       Rivedi Errori di IERI {{ selectedPublicContest ? '(' + yesterdayProblematicQuestionIds.length + ')' : '' }}
     </button>
 
@@ -153,7 +151,6 @@
             class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'today_problematic')" class="mr-2"
                [icon]="faUndoAlt"></fa-icon>
-      <!-- Spinner -->
       Rivedi Errori di OGGI {{ selectedPublicContest ? '(' + todayProblematicQuestionIds.length + ')' : '' }}
     </button>
 
@@ -173,7 +170,6 @@
               class="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white dark:bg-red-600 dark:hover:bg-red-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
         <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'x_day_problematic')" class="mr-2"
                  [icon]="faUndoAlt"></fa-icon>
-        <!-- Spinner -->
         Rivedi del Giorno Selezionato
       </button>
     </div>

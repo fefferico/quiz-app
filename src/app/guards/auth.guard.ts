@@ -1,14 +1,16 @@
 import {Injectable} from '@angular/core';
 import {CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree} from '@angular/router';
 import {Observable} from 'rxjs';
-import {AuthService, UserRole} from '../core/services/auth.service'; // Import UserRole
+import {AuthService, UserRole} from '../core/services/auth.service';
+import {AlertService} from '../services/alert.service'; // Import UserRole
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(private authService: AuthService, private router: Router, private alertService: AlertService) {
+    // Constructor logic if needed
   }
 
   canActivate(
@@ -29,8 +31,9 @@ export class AuthGuard implements CanActivate {
         return true; // User has one of the allowed roles
       } else {
         console.log("AUTHENTICATED but ROLE NOT AUTHORIZED");
-        // Redirect to home page or an 'unauthorized' page if role is not permitted
-        this.router.navigate(['/home']);
+        this.alertService.showAlert("Accesso non autorizzato", "Non disponi dei permessi per poter accedere alla pagina selezionata.").then(() => {
+          this.router.navigate(['/home']);
+        });
         return false;
       }
     }
