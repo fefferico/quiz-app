@@ -61,7 +61,7 @@ jobs:
         # Adjust the base-href to match your GitHub Pages repository name if it's not the root of the domain
         # e.g., /<repository-name>/
         # If your repo is named 'quiz-app' and served at username.github.io/quiz-app/, use --base-href /quiz-app/
-        run: npm run build --configuration production --base-href /${{ github.event.repository.name }}/
+        run: npm run build -- --configuration production --base-href /${{ github.event.repository.name }}/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
