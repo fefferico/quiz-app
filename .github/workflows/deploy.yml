@@ -34,24 +34,14 @@ jobs:
 
       - name: Replace environment placeholders
         run: |
-          echo "Replacing placeholders in environment.prod.ts"
-          # Ensure environment.prod.ts is in the root. If it's in src/environments/, change path.
-          if [ -f "environment.prod.ts" ]; then
-          sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" src/environments/environment.prod.ts
-          sed -i "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" src/environments/environment.prod.ts
+          echo "Replacing placeholders in src/environments/environment.prod.ts"
+          if [ -f "src/environments/environment.prod.ts" ]; then
+            sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" src/environments/environment.prod.ts
+            sed -i "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" src/environments/environment.prod.ts
             echo "Placeholders replaced."
           else
-            echo "environment.prod.ts not found in root!"
-            # If your file is in src/environments/environment.prod.ts, use these lines instead:
-            # if [ -f "src/environments/environment.prod.ts" ]; then
-            #  sed -i "s|__SUPABASE_URL__|${{ secrets.SUPABASE_URL }}|g" src/environments/environment.prod.ts
-            #  sed -i "s|__SUPABASE_KEY__|${{ secrets.SUPABASE_KEY }}|g" src/environments/environment.prod.ts
-            #  echo "Placeholders replaced in src/environments/environment.prod.ts."
-            # else
-            #   echo "environment.prod.ts not found in src/environments/ either!"
-            #   exit 1
-            # fi
-            exit 1 # Exit if the root file is not found, adjust if path is different
+            echo "environment.prod.ts not found in src/environments/!"
+            exit 1
           fi
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
