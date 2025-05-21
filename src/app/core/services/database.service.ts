@@ -31,7 +31,7 @@ export class DatabaseService implements OnDestroy {
     private authService: AuthService,
   ) {
     console.log('DatabaseService constructor called.');
-    this.supabase = this.supabaseService.supabase;
+    this.supabase = this.supabaseService.client; // Changed to use the client getter
 
     // Subscribe to user authentication state
     this.authSubscription = this.authService.currentUser$.subscribe(user => {
@@ -282,7 +282,7 @@ export class DatabaseService implements OnDestroy {
       () => {
         console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
         return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => this.rateofCorrectlyAnswered(q) >= min && this.rateofCorrectlyAnswered(q) <= max) // Corrected Dexie logic
+          .filter(q => this.rateOfCorrectlyAnswered(q) >= min && this.rateOfCorrectlyAnswered(q) <= max) // Corrected Dexie logic
           .toArray();
       },
       operationName
@@ -326,44 +326,12 @@ export class DatabaseService implements OnDestroy {
     ) as Promise<Question[]>;
   }
 
-  rateofCorrectlyAnswered(question: Question): number {
+  rateOfCorrectlyAnswered(question: Question): number {
     const timesCorrect = question.timesCorrect ?? 0;
     const timesIncorrect = question.timesIncorrect ?? 0;
     const totalAnswered = timesCorrect + timesIncorrect;
     if (totalAnswered === 0) return 0; // Or handle as per your preference for never-answered questions
     return (timesCorrect / totalAnswered) * 100;
-  }
-
-  async getAllQuestionWhichYouAreQuiteGoodAt(contestId: string, min: number, max?: number): Promise<Question[]> {
-    let operationName = `getAllQuestionWhichYouAreQuiteGoodAt for contest ${contestId} (min: ${min}`;
-    if (max !== undefined) operationName += `, max: ${max}`;
-    operationName += ")";
-
-    let supabaseQueryBuilder = this.supabase.from('questions').select('*')
-      .eq('public_contest', contestId)
-      .gte('accuracy', min);
-    if (max !== undefined) {
-      supabaseQueryBuilder = supabaseQueryBuilder.lte('accuracy', max);
-    }
-
-    return this.handleSupabaseFetch<Question>(
-      supabaseQueryBuilder,
-      this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => {
-            const accuracy = this.rateofCorrectlyAnswered(q);
-            if (max !== undefined) {
-              return accuracy >= min && accuracy <= max;
-            }
-            return accuracy >= min;
-          })
-          .toArray();
-      },
-      operationName
-    ) as Promise<Question[]>;
   }
 
   async getQuestionsByTopic(contestId: string, topic: string): Promise<Question[]> {
@@ -591,41 +559,6 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-
-  // --- QuizAttempt Table Methods ---
-  async addQuizAttempt(quizAttempt: QuizAttempt): Promise<string> {
-    const operationName = 'addQuizAttempt';
-    try {
-      const supabaseAttemptData = this.mapQuizAttemptToSupabase(quizAttempt);
-      const { data, error } = await this.supabase
-        .from('quiz_attempts')
-        .insert(supabaseAttemptData)
-        .select('id')
-        .single();
-
-      if (error) {
-        console.error(`Supabase error during ${operationName}:`, error);
-        if (navigator.onLine === false) {
-          console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName}.`);
-          return this.dexieDB.quizAttempts.add(quizAttempt);
-        }
-        throw error;
-      }
-      const newId = data!.id;
-      const attemptToCache: QuizAttempt = { ...quizAttempt, id: newId };
-      await this.dexieDB.quizAttempts.put(attemptToCache);
-      return newId;
-
-    } catch (err) {
-      console.error(`Error in ${operationName}, potentially falling back to Dexie:`, err);
-      if (navigator.onLine === false) {
-        console.warn(`[DatabaseService] Offline: Final fallback to Dexie for ${operationName} due to error.`);
-        return this.dexieDB.quizAttempts.add(quizAttempt);
-      }
-      throw err;
-    }
-  }
-
   async getAllQuizAttemptsByContest(contestId: string | null): Promise<QuizAttempt[]> {
     const operationName = `getAllQuizAttemptsByContest for contest ${contestId}`;
     if (!contestId) return Promise.resolve([]);
@@ -647,76 +580,6 @@ export class DatabaseService implements OnDestroy {
     ) as Promise<QuizAttempt[]>;
   }
 
-  async getAllTodayQuizAttempts(contestId: string): Promise<QuizAttempt[]> {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1); // Exclusive end
-    const operationName = `getAllTodayQuizAttempts for contest ${contestId}`;
-
-    return this.handleSupabaseFetch<QuizAttempt>(
-      this.supabase.from('quiz_attempts').select('*')
-        .eq('public_contest_setting', contestId)
-        .gte('timestamp_start', startOfDay.toISOString())
-        .lt('timestamp_start', endOfDay.toISOString())
-        .order('timestamp_start', { ascending: false }),
-      this.mapQuizAttemptFromSupabase,
-      (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.quizAttempts.where('settings.publicContest').equals(contestId)
-          .filter(attempt =>
-            (attempt.timestampStart >= startOfDay && attempt.timestampStart < endOfDay)
-          ) // Simplified filter, original had OR for timestampEnd, which is harder for Supabase primary query
-          .reverse().sortBy('timestampStart');
-      },
-      operationName
-    ) as Promise<QuizAttempt[]>;
-  }
-
-  async getAllYesterdayQuizAttempts(contestId: string): Promise<QuizAttempt[]> {
-    const today = new Date();
-    const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-    const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // Exclusive end
-    const operationName = `getAllYesterdayQuizAttempts for contest ${contestId}`;
-
-    return this.handleSupabaseFetch<QuizAttempt>(
-      this.supabase.from('quiz_attempts').select('*')
-        .eq('public_contest_setting', contestId)
-        .gte('timestamp_start', startOfYesterday.toISOString())
-        .lt('timestamp_start', endOfYesterday.toISOString())
-        .order('timestamp_start', { ascending: false }),
-      this.mapQuizAttemptFromSupabase,
-      (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.quizAttempts.where('settings.publicContest').equals(contestId)
-          .filter(attempt =>
-            (attempt.timestampStart >= startOfYesterday && attempt.timestampStart < endOfYesterday)
-          )
-          .reverse().sortBy('timestampStart');
-      },
-      operationName
-    ) as Promise<QuizAttempt[]>;
-  }
-
-  async getYesterdayProblematicQuestion(contestId: string | null = null): Promise<Question[]> {
-    const ids = await this.getProblematicQuestionsIdsByDate('yesterday', contestId);
-    return this.getQuestionByIds(ids);
-  }
-
-  async getTodayProblematicQuestion(contestId: string | null = null): Promise<Question[]> {
-    const ids = await this.getProblematicQuestionsIdsByDate('today', contestId);
-    return this.getQuestionByIds(ids);
-  }
-
-  async getXDayProblematicQuestion(date: Date, contestId: string | null = null): Promise<Question[]> {
-    const ids = await this.getProblematicQuestionsIdsByDate(date, contestId);
-    return this.getQuestionByIds(ids);
-  }
-
-  public async onUserLoggedIn(): Promise<void> {
-    // await this.db.populateInitialDataIfNeeded();
-  }
 
   async getQuizAttemptsBySpecificDate(contestId: string, date: Date): Promise<QuizAttempt[]> {
     const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1006,7 +869,7 @@ export class DatabaseService implements OnDestroy {
 
       if (attemptsError) {
         console.error(`Supabase error fetching attempts in ${operationName}:`, attemptsError);
-        if (navigator.onLine === false) {
+        if (!navigator.onLine) {
           console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName} (attempts fetch).`);
           // Note: The Dexie fallback here would need to implement the full nuanced logic.
           // For simplicity, the current getProblematicIdsFromDexie is more basic.
