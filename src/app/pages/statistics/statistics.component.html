@@ -101,7 +101,7 @@
           </ng-template>
         </div>
         <div class="text-center mt-4"
-             *ngIf="selectedDateDetailedPerformance && selectedDateDetailedPerformance.wrongAnswerIds.length + (selectedDateDetailedPerformance.skippedAnswerIds?.length ?? 0) > 0">
+             *ngIf="!isStatsViewer && (selectedDateDetailedPerformance && selectedDateDetailedPerformance.wrongAnswerIds.length + (selectedDateDetailedPerformance.skippedAnswerIds?.length ?? 0) > 0)">
           <button (click)="startPracticeQuizForSelectedDateProblematic()"
                   class="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-600 dark:hover:bg-orange-500 font-bold py-3 px-4 sm:px-6 rounded-lg shadow-md hover:shadow-lg transition duration-150">
             Esercitati sulle risposte sbagliate/mancanti del {{ selectedDateForChart | date:'dd/MM/yy' }} ({{
