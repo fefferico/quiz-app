@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1747913324889,
+  "timestamp": 1747915010505,
   "index": "/quiz-app/index.html",
   "assetGroups": [
     {
@@ -21,10 +21,10 @@
         "/quiz-app/chunk-YWK6GFPS.js",
         "/quiz-app/favicon.ico",
         "/quiz-app/index.html",
-        "/quiz-app/main-MBMJ4KFW.js",
+        "/quiz-app/main-TIZCRSGP.js",
         "/quiz-app/manifest.webmanifest",
         "/quiz-app/polyfills-FFHMD2TL.js",
-        "/quiz-app/styles-46YFP54F.css"
+        "/quiz-app/styles-MOFX37AT.css"
       ],
       "patterns": []
     },
@@ -77,15 +77,15 @@
     "/quiz-app/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
     "/quiz-app/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "/quiz-app/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/quiz-app/index.html": "404362488f2bf1cf1b667f80514fed0ddb4a0c5a",
-    "/quiz-app/main-MBMJ4KFW.js": "bd6878e9782fabcfeab371a23eff753e306b67e8",
+    "/quiz-app/index.html": "1b05977e0de72802ca464da9979f8d625017c1a4",
+    "/quiz-app/main-TIZCRSGP.js": "d083beb294157bb2efd718f6ba75ff4131161903",
     "/quiz-app/manifest.webmanifest": "d02a2e99bf6f61248efcd74f2d42b38ddfa00021",
     "/quiz-app/media/fontawesome-webfont-3KIJVIEY.svg": "98a8aa5cf7d62c2eff5f07ede8d844b874ef06ed",
     "/quiz-app/media/fontawesome-webfont-5GKVPAEF.woff2": "d6f48cba7d076fb6f2fd6ba993a75b9dc1ecbf0c",
     "/quiz-app/media/fontawesome-webfont-RJ6LE7IU.ttf": "13b1eab65a983c7a73bc7997c479d66943f7c6cb",
     "/quiz-app/media/fontawesome-webfont-Z4ARLA73.woff": "28b782240b3e76db824e12c02754a9731a167527",
     "/quiz-app/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
-    "/quiz-app/styles-46YFP54F.css": "d8d632057203ddf06b10f0031d50e16c1636a4c5"
+    "/quiz-app/styles-MOFX37AT.css": "46988a9fdec6d05eeca3d1921d51310bc84a7265"
   },
   "navigationUrls": [
     {
