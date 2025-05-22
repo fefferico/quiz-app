@@ -54,6 +54,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   quizAttempt: QuizAttempt | undefined;
   groupedQuestions: GroupedQuestionDisplay[] = [];
   wrongOrUnansweredQuestionIds: string[] = []; // Store IDs of questions that were wrong or unanswered
+  wrongQuestionIds: string[] = [];
   correctQuestionIds: string[] = [];
   maxScore: number = 0;
 
@@ -98,9 +99,10 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
           })
           .map(qInfo => qInfo.questionId);
         this.correctQuestionIds = this.quizAttempt.answeredQuestions.filter(qInfo => qInfo.isCorrect === true)
-
           .map(qInfo => qInfo.questionId);
-        this.maxScore = this.quizAttempt.allQuestions.length * 0.029;
+        this.wrongQuestionIds = this.quizAttempt.answeredQuestions.filter(qInfo => !qInfo.isCorrect)
+          .map(qInfo => qInfo.questionId);
+        this.maxScore = this.quizAttempt.allQuestions.reduce((sum, q) => sum + (q.questionSnapshot.scoreIsCorrect || 0) * 1, 0);
       } else {
         this.errorLoading = 'Tentativo di quiz non trovato. Potrebbe essere stato eliminato o l\'ID non è corretto.';
       }

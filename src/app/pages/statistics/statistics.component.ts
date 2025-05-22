@@ -674,7 +674,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             },
             anchor: 'end',
             align: 'center', // Keeps labels at the top-center of bars, and above line points
-            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#374151', // Theme-aware color
+            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30', // Theme-aware color
             font: {
               weight: 'bold',
               size: 12 // Reduced from 20 for better readability and fit

@@ -95,14 +95,27 @@
               (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
             </p>
             <p class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1">
-              Punteggio: {{ attempt.score }} / {{ attempt.totalQuestionsInQuiz }}
+              Punteggio: {{ attempt.score }} / {{ getMaxResultForAttempt(attempt) }}
               <span class="text-gray-600 dark:text-gray-400 font-normal">
-                ({{ ((attempt?.score ?? 0) / (attempt?.totalQuestionsInQuiz ?? 1) * 100) | number:'1.0-0' }}%)
+                ({{ (getCorrectCountForAttempt(attempt) / (attempt?.totalQuestionsInQuiz ?? 1) * 100) | number:'1.0-0'
+                }}%)
               </span>
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} |
-              {{ attempt.settings.numQuestions }} Domande
+              <span class="font-extrabold border rounded bg-indigo-300 border-indigo-500 px-1 mr-1"> Totali:
+                {{attempt?.totalQuestionsInQuiz}}</span>
+              <span class="font-extrabold border rounded bg-green-300 border-green-500 px-1 mr-1"> Corrette:
+                {{getCorrectCountForAttempt(attempt)}}</span>
+              <span class="font-extrabold border rounded bg-red-300 border-red-500 px-1 mr-1"> Errate:
+                {{getWrongCountForAttempt(attempt)}}</span>
+              <span class="font-extrabold border rounded bg-yellow-300 border-yellow-500 px-1"> Saltate:
+                {{getSkipCountForAttempt(attempt)}}</span>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              ID: {{ attempt.id }}
             </p>
           </div>
 

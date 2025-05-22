@@ -67,6 +67,11 @@ export class DatabaseService implements OnDestroy {
       id: supabaseQuestion.id,
       text: supabaseQuestion.text,
       topic: supabaseQuestion.topic,
+
+      scoreIsCorrect: supabaseQuestion.scoreIsCorrect,
+      scoreIsWrong: supabaseQuestion.scoreIsWrong,
+      scoreIsSkip: supabaseQuestion.scoreIsSkip,
+
       options: supabaseQuestion.options,
       correctAnswerIndex: supabaseQuestion.correct_answer_index,
       explanation: supabaseQuestion.explanation,
@@ -1705,6 +1710,10 @@ export class DatabaseService implements OnDestroy {
       id: answered.questionId,
       text: answered.questionSnapshot.text,
       topic: answered.questionSnapshot.topic,
+      scoreIsCorrect: answered.questionSnapshot.scoreIsCorrect,
+      scoreIsWrong: answered.questionSnapshot.scoreIsWrong,
+      scoreIsSkip: answered.questionSnapshot.scoreIsSkip,
+
       options: answered.questionSnapshot.options,
       correctAnswerIndex: answered.questionSnapshot.correctAnswerIndex,
       explanation: answered.questionSnapshot.explanation,

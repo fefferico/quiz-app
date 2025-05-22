@@ -20,29 +20,35 @@
       <h1 class="text-3xl sm:text-4xl font-bold">Risultato</h1>
       <p class="text-xl sm:text-2xl mt-2">
         Il tuo punteggio
-        <span class="font-extrabold">{{ quizAttempt.score }}</span> /
-        <span class="font-extrabold">{{ maxScore }}</span>
-        <!-- Handle totalQuestionsInQuiz = 0 -->
+        <span class="font-extrabold">{{ quizAttempt.score | number:'1.0-5' }}</span> /
+        <span class="font-extrabold">{{ maxScore | number:'1.0-5' }}</span>
       </p>
       <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
         class="text-xs sm:text-xl mt-2">
-        <span class="font-extrabold text-green-300 dark:text-green-400"> Di cui corrette: {{ correctQuestionIds.length }} ({{ (correctQuestionIds.length /
-        (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
+        <span class="font-extrabold text-green-300 dark:text-green-400"> Di cui corrette: {{ correctQuestionIds.length
+          }} ({{ (correctQuestionIds.length /
+          (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
       </p>
       <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
         class="text-xs sm:text-xl mt-2">
-        <span class="font-extrabold text-red-300 dark:text-red-400"> Di cui errate: {{  wrongOrUnansweredQuestionIds.length }} ({{
-        (wrongOrUnansweredQuestionIds.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
+        <span class="font-extrabold text-red-300 dark:text-red-400"> Di cui errate: {{
+          wrongQuestionIds.length }} ({{
+          (wrongQuestionIds.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
       </p>
       <p *ngIf="quizAttempt && quizAttempt.unansweredQuestions && quizAttempt.unansweredQuestions.length"
         class="text-xs sm:text-xl mt-2">
-         <span class="font-extrabold text-yellow-300 dark:text-yellow-400"> Di cui saltate: {{ quizAttempt.unansweredQuestions.length }} ({{
-        (quizAttempt.unansweredQuestions.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
+        <span class="font-extrabold text-yellow-300 dark:text-yellow-400"> Di cui saltate: {{
+          quizAttempt.unansweredQuestions.length }} ({{
+          (quizAttempt.unansweredQuestions.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1'
+          }}%)</span>
       <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-5">
         Ora di fine: {{ quizAttempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}
       </p>
       <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
         Durata quiz: {{ calcDurataQuiz(quizAttempt) }}
+      </p>
+      <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
+        ID: {{ quizAttempt.id }}
       </p>
 
       <div *ngIf="quizAttempt && !isLoading && !errorLoading" class="flex justify-center mt-4">

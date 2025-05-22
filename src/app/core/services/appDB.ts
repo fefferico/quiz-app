@@ -1,8 +1,8 @@
 import Dexie, { Table } from 'dexie';
-import { Question  } from '../../models/question.model'; // Adjust path if necessary
+import { Question } from '../../models/question.model'; // Adjust path if necessary
 import { QuizAttempt } from '../../models/quiz.model';   // Adjust path if necessary
 import { initialQuestions } from '../../../assets/data/quiz_data';
-import {AuthService} from './auth.service';
+import { AuthService } from './auth.service';
 
 
 // --- IMPORTANT: Increment this version number whenever you update initialQuestions ---
@@ -21,7 +21,7 @@ export class AppDB extends Dexie {
 
   constructor(private authService: AuthService) {
     super('QuizAppDB');
-    if (!authService.getCurrentUserSnapshot()){
+    if (!authService.getCurrentUserSnapshot()) {
       return;
     }
     console.log("here I am logged in")
@@ -81,6 +81,10 @@ export class AppDB extends Dexie {
               accuracy: existingQ_in_db.accuracy,
               // Update questionVersion from the initialQuestions if it's higher
               questionVersion: newVersion,
+              scoreIsCorrect: existingQ_in_db.scoreIsCorrect,
+              scoreIsWrong: existingQ_in_db.scoreIsWrong,
+              scoreIsSkip: existingQ_in_db.scoreIsSkip,
+
             });
           } else {
             // No content update needed based on version or content diff,
@@ -103,6 +107,9 @@ export class AppDB extends Dexie {
             lastAnswerCorrect: undefined,
             accuracy: undefined,
             questionVersion: newQ_from_initial.questionVersion || 1,
+            scoreIsCorrect: 0.029,
+            scoreIsWrong: 0.029,
+            scoreIsSkip: 0,
           });
         }
       }
@@ -150,6 +157,9 @@ export class AppDB extends Dexie {
         lastAnsweredTimestamp: undefined,
         lastAnswerCorrect: undefined,
         accuracy: undefined,
+        scoreIsCorrect: 0.029,// default
+        scoreIsWrong: 0.029,// default
+        scoreIsSkip: 0,// default
         // Ensure all fields defined in the schema have a default or are from initialQuestions
         publicContest: q.publicContest // If publicContest is in your Question model
       }));

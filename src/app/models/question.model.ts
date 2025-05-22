@@ -16,6 +16,9 @@ export interface Question {
   lastAnswerCorrect?: boolean;
   accuracy?: number;
   publicContest?: string;
+  scoreIsCorrect: number;
+  scoreIsWrong: number;
+  scoreIsSkip: number;
 }
 
 export enum QuestionDifficulty {

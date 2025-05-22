@@ -267,6 +267,22 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     return classes;
   }
 
+  getMaxResultForAttempt(quizAttempt: QuizAttempt): number {
+    return Number(quizAttempt.allQuestions.reduce((sum, q) => sum + (q.questionSnapshot.scoreIsCorrect || 0) * 1, 0).toFixed(2));
+  }
+
+  getCorrectCountForAttempt(quizAttempt: QuizAttempt): number {
+    return quizAttempt.answeredQuestions.reduce((sum, q) => sum + (q.isCorrect ? 1 : 0), 0);
+  }
+
+  getWrongCountForAttempt(quizAttempt: QuizAttempt): number {
+    return quizAttempt.answeredQuestions.reduce((sum, q) => sum + (!q.isCorrect ? 1 : 0), 0);
+  }
+
+  getSkipCountForAttempt(quizAttempt: QuizAttempt): number {
+    return quizAttempt.unansweredQuestions.length;
+  }
+
   ngOnDestroy(): void {
     if (this.routeSub) {
       this.routeSub.unsubscribe();

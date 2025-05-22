@@ -10,18 +10,18 @@ import {
   ChangeDetectorRef,
   NgZone
 } from '@angular/core'; // Added NgZone
-import {CommonModule} from '@angular/common';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {Subscription, timer, Observable, Subject} from 'rxjs';
-import {map, takeWhile, finalize, takeUntil} from 'rxjs/operators';
-import {v4 as uuidv4} from 'uuid';
-import {CanComponentDeactivate} from '../../../core/guards/unsaved-changes.guard';
-import {QuestionFeedbackComponent} from '../../../question-feedback/question-feedback.component';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription, timer, Observable, Subject } from 'rxjs';
+import { map, takeWhile, finalize, takeUntil } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
+import { QuestionFeedbackComponent } from '../../../question-feedback/question-feedback.component';
 
-import {DatabaseService} from '../../../core/services/database.service';
-import {Question} from '../../../models/question.model';
-import {QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus} from '../../../models/quiz.model';
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { DatabaseService } from '../../../core/services/database.service';
+import { Question } from '../../../models/question.model';
+import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus, QuestionSnapshotInfo } from '../../../models/quiz.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 // IMPORT faCog for the new button
 import {
   IconDefinition,
@@ -36,13 +36,13 @@ import {
   faCog,
   faVolumeUp
 } from '@fortawesome/free-solid-svg-icons'; // Added faCog
-import {AlertService} from '../../../services/alert.service';
-import {AlertButton} from '../../../models/alert.model';
-import {SoundService} from '../../../core/services/sound.service';
-import {GenericData} from '../../../models/statistics.model';
-import {ContestSelectionService} from '../../../core/services/contest-selection.service';
-import {Spinner} from '@angular-devkit/build-angular/src/utils/spinner';
-import {SpinnerService} from '../../../core/services/spinner.service';
+import { AlertService } from '../../../services/alert.service';
+import { AlertButton } from '../../../models/alert.model';
+import { SoundService } from '../../../core/services/sound.service';
+import { GenericData } from '../../../models/statistics.model';
+import { ContestSelectionService } from '../../../core/services/contest-selection.service';
+import { Spinner } from '@angular-devkit/build-angular/src/utils/spinner';
+import { SpinnerService } from '../../../core/services/spinner.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -117,10 +117,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   readonly fontSizeIncrement = 0.1;
 
   availableFonts: FontOption[] = [
-    {name: 'Predefinito', cssClass: 'font-default'},
-    {name: 'OpenDyslexic', cssClass: 'font-opendyslexic', styleValue: "'OpenDyslexic', sans-serif"},
-    {name: 'Verdana', cssClass: 'font-verdana', styleValue: "Verdana, sans-serif"},
-    {name: 'Arial', cssClass: 'font-arial', styleValue: "Arial, sans-serif"},
+    { name: 'Predefinito', cssClass: 'font-default' },
+    { name: 'OpenDyslexic', cssClass: 'font-opendyslexic', styleValue: "'OpenDyslexic', sans-serif" },
+    { name: 'Verdana', cssClass: 'font-verdana', styleValue: "Verdana, sans-serif" },
+    { name: 'Arial', cssClass: 'font-arial', styleValue: "Arial, sans-serif" },
   ];
   currentFontIndex: number = 0;
   currentFont: FontOption = this.availableFonts[0];
@@ -461,6 +461,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionSnapshot: {
             text: this.questions[this.currentQuestionIndex].text,
             topic: this.questions[this.currentQuestionIndex].topic,
+            scoreIsCorrect: this.questions[this.currentQuestionIndex].scoreIsCorrect,
+            scoreIsWrong: this.questions[this.currentQuestionIndex].scoreIsWrong,
+            scoreIsSkip: this.questions[this.currentQuestionIndex].scoreIsSkip,
             options: [...this.questions[this.currentQuestionIndex].options], // Original options
             correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
             explanation: this.questions[this.currentQuestionIndex].explanation,
@@ -490,6 +493,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             questionSnapshot: {
               text: originalQuestionData.text,
               topic: originalQuestionData.topic,
+              scoreIsCorrect: originalQuestionData.scoreIsCorrect,
+              scoreIsWrong: originalQuestionData.scoreIsWrong,
+              scoreIsSkip: originalQuestionData.scoreIsSkip,
               options: [...originalQuestionData.options],
               correctAnswerIndex: originalQuestionData.correctAnswerIndex,
               explanation: originalQuestionData.explanation,
@@ -679,6 +685,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       questionSnapshot: {
         text: this.currentQuestion.text,
         topic: this.currentQuestion.topic,
+        scoreIsCorrect: this.currentQuestion.scoreIsCorrect,
+        scoreIsWrong: this.currentQuestion.scoreIsWrong,
+        scoreIsSkip: this.currentQuestion.scoreIsSkip,
+
         options: [...this.currentQuestion.options], // To preserve the original shuffled option
         correctAnswerIndex: this.currentQuestion.correctAnswerIndex, // Snapshot original correct index
         explanation: this.currentQuestion.explanation,
@@ -776,6 +786,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionSnapshot: {
             text: this.questions[this.currentQuestionIndex].text,
             topic: this.questions[this.currentQuestionIndex].topic,
+
+            scoreIsCorrect: this.questions[this.currentQuestionIndex].scoreIsCorrect,
+            scoreIsWrong: this.questions[this.currentQuestionIndex].scoreIsWrong,
+            scoreIsSkip: this.questions[this.currentQuestionIndex].scoreIsSkip,
+
             options: [...this.currentQuestion.options],
             correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
             explanation: this.currentQuestion.explanation,
@@ -829,7 +844,13 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       return;
     }
     const quizEndTime = new Date();
-    const score = (this.userAnswers.filter(ans => ans.isCorrect).length * 0.029) - (this.userAnswers.filter(ans => !ans.isCorrect).length * (0.029));
+
+    const correctScore = this.userAnswers.reduce((sum, q) => sum + (q.isCorrect ? ((q.questionSnapshot.scoreIsCorrect || 0) * 1) : 0), 0);
+    const wrongScore = this.userAnswers.reduce((sum, q) => sum + (!q.isCorrect ? ((q.questionSnapshot.scoreIsWrong || 0) * -1) : 0), 0);
+    const skipScore = this.unansweredQuestions
+      .filter((q): q is AnsweredQuestion => q !== undefined)
+      .reduce((sum, q) => sum + ((q.questionSnapshot.scoreIsSkip || 0) * -1), 0);
+    const score = Number((correctScore + wrongScore + skipScore).toFixed(2));
 
     this.questions.forEach((q) => {
       const isAnswered = this.userAnswers.some(ans => ans.questionId === q.id);
@@ -843,6 +864,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionSnapshot: {
             text: originalQuestionData.text,
             topic: originalQuestionData.topic,
+            scoreIsCorrect: originalQuestionData.scoreIsCorrect,
+            scoreIsWrong: originalQuestionData.scoreIsWrong,
+            scoreIsSkip: originalQuestionData.scoreIsSkip,
+
             options: [...originalQuestionData.options],
             correctAnswerIndex: originalQuestionData.correctAnswerIndex,
             explanation: originalQuestionData.explanation,
@@ -852,7 +877,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }
     });
 
-    const finalQuizSettings = {...this.quizSettings};
+    const finalQuizSettings = { ...this.quizSettings };
     if (this.isTimerEnabled) {
       finalQuizSettings.enableTimer = true;
       finalQuizSettings.timerDurationSeconds = this.quizSettings.timerDurationSeconds; // Use original duration from settings
@@ -882,12 +907,17 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           questionSnapshot: {
             text: originalQuestionData.text,
             topic: originalQuestionData.topic,
+
+            scoreIsCorrect: originalQuestionData.scoreIsCorrect,
+            scoreIsWrong: originalQuestionData.scoreIsWrong,
+            scoreIsSkip: originalQuestionData.scoreIsSkip,
+
             options: [...originalQuestionData.options],
             correctAnswerIndex: originalQuestionData.correctAnswerIndex,
             explanation: originalQuestionData.explanation,
             isFavorite: originalQuestionData.isFavorite || 0
-          }
-        };
+          } as QuestionSnapshotInfo
+        } as AnsweredQuestion;
       }),
       status: isTimeUp ? 'timed-out' : 'completed',
       currentQuestionIndex: this.currentQuestionIndex,
@@ -908,7 +938,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       await this.dbService.saveQuizAttempt(quizAttempt);
       await this.dbService.updateQuestionsStatsBulk(this.userAnswers);
       // for (const answeredQ of this.userAnswers) {
-        // await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);
+      // await this.dbService.updateQuestionStats(answeredQ.questionId, answeredQ.isCorrect);
       // }
       this.spinnerService.hide();
       this.router.navigate(['/quiz/results', quizAttempt.id]);
@@ -956,11 +986,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       role: 'cancel',
       cssClass: 'bg-gray-300 hover:bg-gray-500' // Example custom class
     } as AlertButton,
-      {
-        text: 'ESCI',
-        role: 'confirm',
-        data: 'ok_confirmed'
-      } as AlertButton];
+    {
+      text: 'ESCI',
+      role: 'confirm',
+      data: 'ok_confirmed'
+    } as AlertButton];
 
     if (!this.forceExit) {
       return this.alertService.showConfirmationDialog("Si è sicuri di voler abbandonare il quiz?", "Il tuo progresso attuale NON verrà salvato a meno che non metti in pausa.", customBtns).then(result => {
@@ -994,6 +1024,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           id: snapshotItem.questionId,
           text: snapshotItem.questionSnapshot.text,
           topic: snapshotItem.questionSnapshot.topic,
+
+          scoreIsCorrect: snapshotItem.questionSnapshot.scoreIsCorrect,
+          scoreIsWrong: snapshotItem.questionSnapshot.scoreIsWrong,
+          scoreIsSkip: snapshotItem.questionSnapshot.scoreIsSkip,
+
           options: [...snapshotItem.questionSnapshot.options],
           correctAnswerIndex: snapshotItem.questionSnapshot.correctAnswerIndex,
           explanation: snapshotItem.questionSnapshot.explanation,

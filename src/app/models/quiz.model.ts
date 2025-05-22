@@ -24,6 +24,9 @@ export interface QuestionSnapshotInfo {
   text: string;
   topic: string;
   options: string[];
+  scoreIsCorrect: number;
+  scoreIsWrong: number;
+  scoreIsSkip: number;
   correctAnswerIndex: number;
   explanation?: string;
   isFavorite?: number; // <-- NEW: To show if the question was marked as favorite
