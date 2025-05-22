@@ -1399,6 +1399,11 @@ export class DatabaseService implements OnDestroy {
             if (q.public_contest && q.public_contest.trim() !== '') contestSet.add(q.public_contest);
           });
         }
+        // remove specific topic
+        if (contestSet.has('itil') && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico'){
+          contestSet.delete('itil');
+        }
+        return Array.from(contestSet).sort();
         return Array.from(contestSet).sort();
       }
       // Assuming RPC returns an array of objects like { public_contest: 'ContestName' }
