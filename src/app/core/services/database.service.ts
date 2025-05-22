@@ -1,12 +1,12 @@
 // src/app/core/services/database.service.ts
-import {Injectable, OnDestroy} from '@angular/core';
-import {Question} from '../../models/question.model'; // Adjust path if necessary
-import {AnsweredQuestion, QuizAttempt, TopicCount} from '../../models/quiz.model';   // Adjust path if necessary
-import {AppDB} from './appDB';
-import {SupabaseService} from './supabase-service.service'; // Your Supabase client wrapper
-import {PostgrestError, SupabaseClient} from '@supabase/supabase-js';
-import {AuthService} from './auth.service';
-import {Subscription} from 'rxjs'; // Added import
+import { Injectable, OnDestroy } from '@angular/core';
+import { Question } from '../../models/question.model'; // Adjust path if necessary
+import { AnsweredQuestion, QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
+import { AppDB } from './appDB';
+import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
+import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import { AuthService } from './auth.service';
+import { Subscription } from 'rxjs'; // Added import
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -252,9 +252,9 @@ export class DatabaseService implements OnDestroy {
   }
 
   async getAllQuestionCorrectlyAnsweredAtLeastOnceCount(contestId: string): Promise<number> {
-    const {count, error} = await this.supabase
+    const { count, error } = await this.supabase
       .from('questions')
-      .select('id', {count: 'exact', head: true})
+      .select('id', { count: 'exact', head: true })
       .eq('public_contest', contestId)
       .gt('times_correct', 0);
 
@@ -309,7 +309,7 @@ export class DatabaseService implements OnDestroy {
     let allRows: any[] = [];
     let start = 0;
     while (true) {
-      const {data, error} = await this.supabase.from('questions').select('id')
+      const { data, error } = await this.supabase.from('questions').select('id')
         .eq('public_contest', contestId)
         .eq('times_correct', 0)
         .eq('times_incorrect', 0)
@@ -596,7 +596,7 @@ export class DatabaseService implements OnDestroy {
     const operationName = `getAllQuizAttemptsByContest for contest ${contestId}`;
     if (!contestId) return Promise.resolve([]);
 
-    const {data, error} = await this.supabase.from('quiz_attempts')
+    const { data, error } = await this.supabase.from('quiz_attempts')
       .select('*')
       .eq('public_contest_setting', contestId);
 
@@ -617,7 +617,7 @@ export class DatabaseService implements OnDestroy {
         .eq('public_contest_setting', contestId)
         .gte('timestamp_start', startOfDay.toISOString())
         .lt('timestamp_start', endOfDay.toISOString())
-        .order('timestamp_start', {ascending: false}),
+        .order('timestamp_start', { ascending: false }),
       this.mapQuizAttemptFromSupabase,
       (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
       () => {
@@ -696,7 +696,7 @@ export class DatabaseService implements OnDestroy {
     // This method primarily writes; fallback for write is more complex (queueing)
     // For now, prioritize Supabase write, then update Dexie.
     const supabaseData = this.mapQuestionToSupabase(questionData);
-    const {data, error} = await this.supabase
+    const { data, error } = await this.supabase
       .from('questions')
       .insert(supabaseData)
       .select()
@@ -714,7 +714,7 @@ export class DatabaseService implements OnDestroy {
 
   async updateQuestion(id: string, changes: Partial<Question>): Promise<Question> {
     const supabaseChanges = this.mapQuestionToSupabase(changes);
-    const {data, error} = await this.supabase
+    const { data, error } = await this.supabase
       .from('questions')
       .update(supabaseChanges)
       .eq('id', id)
@@ -731,7 +731,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   async deleteQuestion(id: string): Promise<void> {
-    const {error} = await this.supabase
+    const { error } = await this.supabase
       .from('questions')
       .delete()
       .eq('id', id);
@@ -745,7 +745,7 @@ export class DatabaseService implements OnDestroy {
   // --- QuizAttempt Table Methods (Supabase-first from original) ---
   async saveQuizAttempt(quizAttempt: QuizAttempt): Promise<QuizAttempt> {
     const supabaseAttemptData = this.mapQuizAttemptToSupabase(quizAttempt);
-    const {data, error} = await this.supabase
+    const { data, error } = await this.supabase
       .from('quiz_attempts')
       .upsert(supabaseAttemptData)
       .select()
@@ -796,7 +796,7 @@ export class DatabaseService implements OnDestroy {
       // For this example, let's assume a direct user_id column if provided.
       // query = query.eq('user_id', userId); // Uncomment and adjust if you have a user_id column
     }
-    query = query.order('timestamp_start', {ascending: false});
+    query = query.order('timestamp_start', { ascending: false });
 
     return this.handleSupabaseFetch<QuizAttempt>(
       query,
@@ -819,7 +819,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   async deleteQuizAttempt(id: string): Promise<void> {
-    const {error} = await this.supabase
+    const { error } = await this.supabase
       .from('quiz_attempts')
       .delete()
       .eq('id', id);
@@ -832,7 +832,7 @@ export class DatabaseService implements OnDestroy {
 
   async clearAllQuizAttempts(contestId: string): Promise<void> {
     console.log(`Attempting to clear Supabase quiz attempts for contest: ${contestId}`);
-    const {error: supabaseError} = await this.supabase
+    const { error: supabaseError } = await this.supabase
       .from('quiz_attempts')
       .delete()
       .eq('public_contest_setting', contestId); // Standardized
@@ -895,7 +895,7 @@ export class DatabaseService implements OnDestroy {
       }
       // if (userId) { attemptsQuery = attemptsQuery.eq('user_id', userId); }
 
-      const {data: attemptsData, error: attemptsError} = await attemptsQuery;
+      const { data: attemptsData, error: attemptsError } = await attemptsQuery;
 
       if (attemptsError) {
         console.error(`Supabase error fetching attempts in ${operationName}:`, attemptsError);
@@ -1140,7 +1140,7 @@ export class DatabaseService implements OnDestroy {
     // userId not used here as it's about global "never answered" based on question stats
 
     try {
-      const {data, error} = await supabaseQuery;
+      const { data, error } = await supabaseQuery;
       if (error) {
         console.error(`Supabase error in ${operationName}:`, error);
         if (!navigator.onLine) {
@@ -1166,7 +1166,7 @@ export class DatabaseService implements OnDestroy {
 
   async getNeverAnsweredQuestionCount(contestId: string | null = null, userId?: string): Promise<number> {
     const operationName = `getNeverAnsweredQuestionCount` + (contestId ? ` for contest ${contestId}` : '');
-    let supabaseQuery = this.supabase.from('questions').select('id', {count: 'exact', head: true})
+    let supabaseQuery = this.supabase.from('questions').select('id', { count: 'exact', head: true })
       .eq('times_correct', 0)
       .eq('times_incorrect', 0);
     if (contestId) {
@@ -1175,7 +1175,7 @@ export class DatabaseService implements OnDestroy {
     // userId not used here as it's about global "never answered" based on question stats
 
     try {
-      const {count, error} = await supabaseQuery;
+      const { count, error } = await supabaseQuery;
       if (error) {
         console.error(`Supabase error in ${operationName}:`, error);
         if (!navigator.onLine) {
@@ -1211,7 +1211,7 @@ export class DatabaseService implements OnDestroy {
       const questionIds = [...new Set(answers.map(a => a.questionId))];
 
       // 1. Fetch current stats for all relevant questions from Supabase
-      const {data: currentQuestionsData, error: fetchError} = await this.supabase
+      const { data: currentQuestionsData, error: fetchError } = await this.supabase
         .from('questions')
         .select('id, times_correct, times_incorrect') // Only fetch what's needed for calculation
         .in('id', questionIds);
@@ -1274,9 +1274,9 @@ export class DatabaseService implements OnDestroy {
       }
 
       // 2. Perform bulk update/insert to Supabase
-      const {data: updatedSupabaseQuestions, error: upsertError} = await this.supabase
+      const { data: updatedSupabaseQuestions, error: upsertError } = await this.supabase
         .from('questions')
-        .upsert(supabaseUpdatePayloads, {onConflict: 'id'}) // Explicitly state conflict column
+        .upsert(supabaseUpdatePayloads, { onConflict: 'id' }) // Explicitly state conflict column
         .select(); // Important: select() to get the updated/inserted rows back
 
       if (upsertError) {
@@ -1315,7 +1315,7 @@ export class DatabaseService implements OnDestroy {
     // For now, it directly attempts Supabase and then updates Dexie.
     // An RPC function in Supabase is better for atomicity.
     try {
-      const {data: currentQData, error: fetchError} = await this.supabase
+      const { data: currentQData, error: fetchError } = await this.supabase
         .from('questions')
         .select('times_correct, times_incorrect, accuracy')
         .eq('id', questionId)
@@ -1344,7 +1344,7 @@ export class DatabaseService implements OnDestroy {
         accuracy: newAccuracy
       };
 
-      const {error: updateError} = await this.supabase
+      const { error: updateError } = await this.supabase
         .from('questions')
         .update(updates)
         .eq('id', questionId);
@@ -1356,7 +1356,7 @@ export class DatabaseService implements OnDestroy {
         throw updateError;
       }
       // Update Dexie if Supabase was successful
-      await this.dexieDB.questions.where({id: questionId}).modify(q => {
+      await this.dexieDB.questions.where({ id: questionId }).modify(q => {
         q.timesCorrect = newTimesCorrect;
         q.timesIncorrect = newTimesIncorrect;
         q.lastAnsweredTimestamp = updates.last_answered_timestamp;
@@ -1379,12 +1379,12 @@ export class DatabaseService implements OnDestroy {
     const operationName = 'getAvailablePublicContests';
     try {
       // Using distinct on public_contest column
-      const {data, error} = await this.supabase
+      const { data, error } = await this.supabase
         .rpc('get_distinct_public_contests'); // Assumes a PL/pgSQL function exists
       if (error || !data) {
         console.error(`Supabase error or no data from RPC in ${operationName}:`, error);
         // Fallback to selecting all and processing client-side if RPC fails or doesn't exist
-        const {data: qData, error: qError} = await this.supabase.from('questions').select('public_contest');
+        const { data: qData, error: qError } = await this.supabase.from('questions').select('public_contest');
         if (qError) {
           console.error(`Supabase error fetching all public_contest values:`, qError);
           if (!navigator.onLine) {
@@ -1400,12 +1400,21 @@ export class DatabaseService implements OnDestroy {
           });
         }
         // remove specific topic
-        if (contestSet.has('itil') && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico'){
+        if (contestSet.has('itil') && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico') {
           contestSet.delete('itil');
         }
         return Array.from(contestSet).sort();
-        return Array.from(contestSet).sort();
       }
+
+      // remove specific topic
+      const objectFound: any = data.find((el: any) => el.public_contest === 'itil');
+      if (objectFound && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico') {
+        const index = data.indexOf(objectFound);
+        if (index !== -1) {
+          data.splice(index, 1);
+        }
+      }
+
       // Assuming RPC returns an array of objects like { public_contest: 'ContestName' }
       return (data as Array<{
         public_contest: string
@@ -1455,14 +1464,14 @@ export class DatabaseService implements OnDestroy {
     // 12% INGLESE - Lingua Inglese (12 questions)
     // 8% INFORMATICA - Informatica (8 questions)
     const topicDistribution: { topic: string | string[]; count: number }[] = [
-      {topic: 'CULTURA GENERALE', count: 20},
-      {topic: 'Letteratura', count: 12},
-      {topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12},
-      {topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12},
-      {topic: 'STORIA', count: 12},
-      {topic: 'COSTITUZIONE', count: 12},
-      {topic: 'INGLESE', count: 12},
-      {topic: 'INFORMATICA', count: 8}
+      { topic: 'CULTURA GENERALE', count: 20 },
+      { topic: 'Letteratura', count: 12 },
+      { topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12 },
+      { topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12 },
+      { topic: 'STORIA', count: 12 },
+      { topic: 'COSTITUZIONE', count: 12 },
+      { topic: 'INGLESE', count: 12 },
+      { topic: 'INFORMATICA', count: 8 }
     ];
 
     // Try to fetch all questions that have never been encountered
@@ -1473,12 +1482,12 @@ export class DatabaseService implements OnDestroy {
       let candidates: Question[];
       if (Array.isArray(dist.topic)) {
         candidates = allQuestions.filter(q =>
-          (Array.isArray(dist.topic)
-            ? dist.topic.some((t: string) => (q.topic ?? '').trim().toLowerCase().indexOf((t as string).trim().toLowerCase())>=0)
-            : (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase())>=0)
+        (Array.isArray(dist.topic)
+          ? dist.topic.some((t: string) => (q.topic ?? '').trim().toLowerCase().indexOf((t as string).trim().toLowerCase()) >= 0)
+          : (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0)
         );
       } else {
-        candidates = allQuestions.filter(q => (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase())>=0);
+        candidates = allQuestions.filter(q => (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0);
       }
       // Shuffle candidates
       candidates = candidates.sort(() => 0.5 - Math.random());
@@ -1509,7 +1518,7 @@ export class DatabaseService implements OnDestroy {
     }
     const newFavoriteStatus = question.isFavorite ? 0 : 1; // Supabase uses 0/1 for boolean typically
     // Update operation will also update Dexie via updateQuestion's logic
-    await this.updateQuestion(questionId, {isFavorite: newFavoriteStatus});
+    await this.updateQuestion(questionId, { isFavorite: newFavoriteStatus });
     return newFavoriteStatus;
   }
 
@@ -1539,7 +1548,7 @@ export class DatabaseService implements OnDestroy {
     let query = this.supabase.from('quiz_attempts')
       .select('*')
       .eq('status', 'paused')
-      .order('timestamp_start', {ascending: false});
+      .order('timestamp_start', { ascending: false });
     // if (userId) { query = query.eq('user_id', userId); } // For multi-user
 
     return this.handleSupabaseFetch<QuizAttempt>(
@@ -1566,7 +1575,7 @@ export class DatabaseService implements OnDestroy {
     console.log(`Attempting to reset Supabase question stats for contest: ${contestId}`);
     // An RPC function would be more atomic. Client-side: fetch IDs, map to reset objects, then upsert.
     try {
-      const {data: questionsToReset, error: fetchError} = await this.supabase
+      const { data: questionsToReset, error: fetchError } = await this.supabase
         .from('questions')
         .select('*') // only fetch id
         .eq('public_contest', contestId);
@@ -1584,7 +1593,7 @@ export class DatabaseService implements OnDestroy {
           accuracy: 0,
         }));
 
-        const {error: updateError} = await this.supabase.from('questions').upsert(updates);
+        const { error: updateError } = await this.supabase.from('questions').upsert(updates);
         if (updateError) throw updateError;
 
         // Update Dexie: map back from the reset "Supabase-like" structure
@@ -1642,12 +1651,12 @@ export class DatabaseService implements OnDestroy {
     let start = 0;
 
     while (true) {
-      const {data, error} = await this.supabase.from('questions').select('*')
+      const { data, error } = await this.supabase.from('questions').select('*')
         .eq('public_contest', contestId)
         .eq('times_correct', 0)
         .eq('times_incorrect', 0)
         .range(start, start + chunkSize - 1)
-        .order('id', {ascending: true});
+        .order('id', { ascending: true });
 
       if (error) {
         console.error('Error fetching rows:', error);
@@ -1671,7 +1680,7 @@ export class DatabaseService implements OnDestroy {
     let start = 0;
 
     while (true) {
-      const {data, error} = await this.supabase.from('questions').select('*')
+      const { data, error } = await this.supabase.from('questions').select('*')
         .eq('public_contest', contestId)
         .range(start, start + chunkSize - 1);
 
