@@ -96,8 +96,7 @@ interface DailyMap {
   quizzes: number,
   correct: number,
   incorrect: number,
-  skipped: number,
-  attempted: number
+  skipped: number
 }
 
 
@@ -420,7 +419,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0};
       dayData.quizzes++;
       dayData.correct += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => aq.isCorrect).length : 0;
-      dayData.attempted += attempt.totalQuestionsInQuiz;
+      dayData.incorrect += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => !aq.isCorrect).length : 0;
       dayData.skipped += attempt.unansweredQuestions ? attempt.unansweredQuestions.length : 0;
       dailyMap.set(dateKey, dayData);
     });
@@ -429,9 +428,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         date: date,
         quizzesTaken: data.quizzes,
         totalCorrect: data.correct,
-        totalIncorrect: data.attempted - data.correct,
-        totalAttemptedInDay: data.attempted,
-        averageAccuracy: data.attempted > 0 ? (data.correct / data.attempted) : 0
+        totalIncorrect: data.incorrect,
+        totalSkipped: data.skipped,
+        totalAttemptedInDay: data.correct + data.incorrect + data.skipped,
+        averageAccuracy: (data.correct + data.incorrect + data.skipped) > 0 ? (data.correct / (data.correct + data.incorrect + data.skipped)) : 0
       } as DailyPerformanceData)).slice(-30);
   }
 
