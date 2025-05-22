@@ -14,7 +14,7 @@ import {Router, RouterLink, ActivatedRoute} from '@angular/router'; // Import Ac
 import {Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement} from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'chartjs-adapter-date-fns';
-import { it } from 'date-fns/locale';
+import {it} from 'date-fns/locale';
 
 import {FormsModule} from '@angular/forms'; // Import FormsModule for ngModel
 
@@ -418,9 +418,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
       const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0};
       dayData.quizzes++;
-      dayData.correct += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => aq.isCorrect).length : 0;
-      dayData.incorrect += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => !aq.isCorrect).length : 0;
-      dayData.skipped += attempt.unansweredQuestions ? attempt.unansweredQuestions.length : 0;
+      dayData.correct += attempt.answeredQuestions
+        ? attempt.answeredQuestions.filter(aq => aq.isCorrect && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey)).length
+        : 0;
+      dayData.incorrect += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => !aq.isCorrect && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey)).length
+        : 0;
+      dayData.skipped += attempt.unansweredQuestions && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey) ? attempt.unansweredQuestions.length : 0;
+      const total = dayData.correct + dayData.incorrect + dayData.skipped;
       dailyMap.set(dateKey, dayData);
     });
     this.dailyPerformance = Array.from(dailyMap.entries())
@@ -1142,9 +1146,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const dateStr = this.datePipe.transform(date, 'yyyy-MM-dd')!;
     let correctCount = 0;
-    const correctIds = new Set<string>();
-    const wrongIds = new Set<string>();
-    const skippedIds = new Set<string>();
+    const correctIds: string[] = [];
+    const wrongIds: string[] = [];
+    const skippedIds: string[] = [];
     let totalQuestionsInAttempts = 0;
 
     attemptsForDate.forEach(attempt => {
@@ -1152,29 +1156,27 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       attempt.answeredQuestions.forEach(aq => {
         if (aq.questionId) {
           if (aq.isCorrect) {
-            correctCount++;
-            correctIds.add(aq.questionId);
+            correctIds.push(aq.questionId);
           } else {
-            wrongIds.add(aq.questionId);
+            wrongIds.push(aq.questionId);
           }
         }
       });
-      const allQuestionIdsInAttempt = new Set(attempt.allQuestions.map(qInfo => qInfo.questionId).filter(id => !!id) as string[]);
-      const answeredQuestionIdsInAttempt = new Set(attempt.answeredQuestions.map(aq => aq.questionId).filter(id => !!id) as string[]);
-
-      allQuestionIdsInAttempt.forEach(qid => {
-        if (!answeredQuestionIdsInAttempt.has(qid)) {
-          skippedIds.add(qid);
-        }
-      });
+      if (attempt.unansweredQuestions && attempt.unansweredQuestions.length > 0) {
+        attempt.unansweredQuestions.forEach(aq => {
+          if (aq?.questionId && (aq.userAnswerIndex === -1 || aq.userAnswerIndex === undefined)) {
+            skippedIds.push(aq.questionId);
+          }
+        });
+      }
     });
 
     return {
       date: dateStr,
       quizzesTaken: attemptsForDate.length,
-      correctAnswerCount: correctCount,
-      wrongAnswerCount: wrongIds.size,
-      skippedAnswerCount: skippedIds.size,
+      correctAnswerCount: correctIds.length,
+      wrongAnswerCount: wrongIds.length,
+      skippedAnswerCount: skippedIds.length,
       correctAnswerIds: Array.from(correctIds),
       wrongAnswerIds: Array.from(wrongIds),
       skippedAnswerIds: Array.from(skippedIds),
@@ -1291,7 +1293,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             ticks: {
               stepSize: 1
             },
-            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0) ) + 2 // Add 2 to the max value for top space
+            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0)) + 2 // Add 2 to the max value for top space
           }
         },
         plugins: {
@@ -1330,7 +1332,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async handleSelectedDateChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
-    if (this.isStatsViewer){
+    if (this.isStatsViewer) {
       return;
     }
     if (elements.length > 0 && this.selectedDateDetailedPerformance) {
@@ -1462,7 +1464,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             ticks: {
               stepSize: 1
             },
-            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0) ) + 2 // Add 2 to the max value for top space
+            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0)) + 2 // Add 2 to the max value for top space
           }
         },
         plugins: {
@@ -1501,7 +1503,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async handleTodayChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
-    if (this.isStatsViewer){
+    if (this.isStatsViewer) {
       return;
     }
     if (elements.length > 0 && this.todayDetailedPerformance) {
