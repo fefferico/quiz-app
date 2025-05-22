@@ -58,6 +58,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
 
   selectAllTopics = true;
   randomQuestions = false;
+  hideCorrectAnswer = false;
   useDetailedTopicCounts = false;
 
   keywordsInput = '';
@@ -293,6 +294,9 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       ? this.preloadedFixedQuestionIds
       : this.fixedQuestionIdsInput.split(',').map(id => id.trim()).filter(id => id);
 
+    queryParams.publicContest = this.selectedPublicContest;
+    queryParams.hideCorrectAnswer = this.hideCorrectAnswer;
+
     if (effectiveFixedQuestionIds.length > 0) {
       queryParams.fixedQuestionIds = effectiveFixedQuestionIds.join(',');
       // Number of questions is implicitly the count of fixed IDs
@@ -342,7 +346,6 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         queryParams.timerDurationSeconds = timerDurationSeconds || 0;
         queryParams.keywords = keywords.join(',');
         queryParams.enableStreakSounds = this.enableStreakSoundsInput; // Add sound setting
-        queryParams.publicContest = this.selectedPublicContest;
 
         if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
           queryParams.totalQuestionsInQuiz = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);
@@ -483,7 +486,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     }
   }
 
-  toggleAccordion(topic: string): void {
+  toggleAdvancedSettings(topic: string): void {
     const currentState = this.accordionState.get(topic);
     this.accordionState.set(topic, !currentState);
   }

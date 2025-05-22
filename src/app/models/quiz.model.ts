@@ -67,6 +67,7 @@ export interface QuizSettings {
   timerDurationSeconds?: number; // <-- NEW (total duration in seconds
   questionIDs?: string[];
   publicContest: string;
+  hideCorrectAnswer?: boolean;
 }
 
 export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out';

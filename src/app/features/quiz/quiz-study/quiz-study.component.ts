@@ -11,6 +11,7 @@ import { QuizSettings } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome, faArrowRight, faArrowLeft, faGears } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
+import { SpinnerService } from '../../../core/services/spinner.service';
 
 @Component({
   selector: 'app-quiz-study',
@@ -26,6 +27,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   private routeSub!: Subscription;
   private destroy$ = new Subject<void>();
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
+  private spinnerService = inject(SpinnerService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -74,6 +76,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     this.routeSub = this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(async queryOnlyParams => { // Renamed to avoid confusion
@@ -100,6 +103,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   async loadStudyQuestions(quizSettings: Partial<QuizSettings>): Promise<void> {
     this.isLoading = true;
     this.errorLoading = '';
+    this.spinnerService.show("Recupero domande da studiare in corso...");
     try {
       console.log('[StudyMode] Loading questions with settings:', this.studySettings);
       // Use getRandomQuestions, but 'count' might be very high to fetch all matching
@@ -123,6 +127,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       if (this.questions.length === 0) {
         this.errorLoading = "Nessuna domanda trovata per i criteri selezionati.";
         this.isLoading = false;
+        this.spinnerService.hide();
         return;
       }
       this.currentQuestionIndex = 0;
@@ -132,6 +137,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       this.errorLoading = 'Failed to load questions for study. Please try again.';
     } finally {
       this.isLoading = false;
+      this.spinnerService.hide();
     }
   }
 

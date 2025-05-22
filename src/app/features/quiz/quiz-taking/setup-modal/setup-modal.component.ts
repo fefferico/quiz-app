@@ -25,6 +25,7 @@ export class SetupModalComponent implements OnInit {
   @Input() timerDurationSeconds: number = 0;
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
+  hideCorrectAnswer = false;
 
   // icons
   military: IconDefinition = faPersonMilitaryRifle;
@@ -68,7 +69,8 @@ export class SetupModalComponent implements OnInit {
         })),
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
-        publicContest: this.contestName
+        publicContest: this.contestName,
+        hideCorrectAnswer: this.hideCorrectAnswer
       };
     } else {
       quizSettings = {
@@ -76,7 +78,8 @@ export class SetupModalComponent implements OnInit {
         selectedTopics: [], // Empty means all if selectAllTopics is true
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
-        publicContest: this.contestName
+        publicContest: this.contestName,
+        hideCorrectAnswer: this.hideCorrectAnswer
       };
     }
     quizSettings.keywords = []; // Add keywords to both modes
@@ -100,7 +103,8 @@ export class SetupModalComponent implements OnInit {
         timerDurationSeconds: quizSettings.timerDurationSeconds,
         // get specific question id
         fixedQuestionIds: fixedQuestionIds,
-        publicContest: this.contestName
+        publicContest: this.contestName,
+        hideCorrectAnswer: this.hideCorrectAnswer
       };
 
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);

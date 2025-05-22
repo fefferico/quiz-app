@@ -284,6 +284,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   forceExit: boolean = false;
+  hideCorrectAnswer: boolean = false;
 
   private checkForContest(): void {
     if (!this.selectedPublicContest) {
@@ -297,6 +298,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   ngOnInit(): void {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     this.checkForContest();
     this.loadAvailableVoices(); // Attempt to load voices initially
 
@@ -311,6 +313,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
         const resumeAttemptId = actualParams['resumeAttemptId'];
         const randomQuestions = actualParams['randomQuestions'];
+        this.hideCorrectAnswer = actualParams['hideCorrectAnswer'];
         let fixedQuestionIds: string[] = [];
 
         // check if it's an array or a string
@@ -341,6 +344,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this.quizStatus = 'in-progress';
 
           const publicContest = actualParams['publicContest'] ? actualParams['publicContest'] : '';
+          const hideCorrectAnswer = actualParams['hideCorrectAnswer'] ? actualParams['hideCorrectAnswer'] : false;
           const totalQuestionsInQuiz = actualParams['totalQuestionsInQuiz'] ? +actualParams['totalQuestionsInQuiz'] : 10;
           const topicsParam = actualParams['topics'] || '';
           const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
@@ -354,7 +358,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
               selectedKeywords = keywordsParam.split(',').map((kw: string) => kw.trim()).filter((kw: string) => kw);
             }
           }
-          
+
           const topicDistributionParam = actualParams['topicDistribution'] || '';
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
           if (topicDistributionParam) {
@@ -372,6 +376,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
           this.quizSettings = {
             publicContest,
+            hideCorrectAnswer,
             totalQuestionsInQuiz,
             selectedTopics,
             keywords: selectedKeywords,
@@ -618,9 +623,15 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       // shuffle options just for not yet answered questions
       if (!this.userAnswers || !this.userAnswers.some((answ: AnsweredQuestion) => answ.questionId === this.currentQuestion?.id)) {
         this.currentQuestion.options = this.shuffleArray(this.currentQuestion.options);
+        const foundQuestion = this.questions.find(qst => qst.id === this.currentQuestion?.id);
+        if (foundQuestion) {
+          foundQuestion.options = this.currentQuestion.options;
+          foundQuestion.correctAnswerIndex = this.currentQuestion.options.findIndex(
+            option => option === originalCorrectAnswerText
+          );
+        }
       } else {
         const previousAnswer: AnsweredQuestion | undefined = this.userAnswers.find(answ => answ.questionId === this.currentQuestion?.id);
-
         if (previousAnswer && previousAnswer.questionSnapshot.options) {
           this.currentQuestion.options = previousAnswer.questionSnapshot.options;
         }
@@ -679,7 +690,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   selectAnswer(optionIndex: number): void {
-    if (this.isAnswerSubmitted || !this.currentQuestion || optionIndex < 0 || optionIndex >= this.currentQuestion.options.length) return;
+    if ((this.isAnswerSubmitted && !this.hideCorrectAnswer) || !this.currentQuestion || optionIndex < 0 || optionIndex >= this.currentQuestion.options.length) return;
 
     this.selectedAnswerIndex = optionIndex;
     this.isAnswerSubmitted = true;
@@ -695,10 +706,15 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     const actualQuestionId = this.questions[this.currentQuestionIndex].id;
     const originalQuestionData = this.questions[this.currentQuestionIndex];
 
-
-    this.userAnswers.push({
+    const existingAnswer = this.userAnswers.find(ans => ans.questionId === actualQuestionId);
+    if (existingAnswer) {
+      // Update only the necessary fields
+      existingAnswer.userAnswerIndex = optionIndex;
+      existingAnswer.isCorrect = isCorrect;
+    } else {
+      this.userAnswers.push({
       questionId: actualQuestionId,
-      userAnswerIndex: optionIndex, // This index is relative to the *currently shuffled* options for this display
+      userAnswerIndex: optionIndex,
       isCorrect: isCorrect,
       questionSnapshot: {
         text: this.currentQuestion.text,
@@ -706,13 +722,14 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         scoreIsCorrect: this.currentQuestion.scoreIsCorrect,
         scoreIsWrong: this.currentQuestion.scoreIsWrong,
         scoreIsSkip: this.currentQuestion.scoreIsSkip,
-
-        options: [...this.currentQuestion.options], // To preserve the original shuffled option
-        correctAnswerIndex: this.currentQuestion.correctAnswerIndex, // Snapshot original correct index
+        options: [...this.currentQuestion.options],
+        correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
         explanation: this.currentQuestion.explanation,
         isFavorite: this.currentQuestion.isFavorite || 0
       }
-    });
+      });
+    }
+
 
     if (this.isReadingModeEnabled && this.currentQuestion?.explanation && this.synth) {
       // Give a moment for UI to update (e.g., show feedback) before reading explanation

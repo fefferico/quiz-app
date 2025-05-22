@@ -1,5 +1,23 @@
 <!-- This is now the content that goes INSIDE app-simple-modal -->
 <h5 class="bg-white dark:text-gray-600">Tipologia: <strong>{{modalTitle}}</strong></h5>
+
+<!--  Nascondi risposta esatta  -->
+<div class="my-4 flex w-50 justify-center h-50">
+    <div class="flex items-left h-full bg-gray-500 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow p-2">
+        <label for="hideCorrectAnswerToggle" class="relative flex-shrink-0 ml-2 cursor-pointer">
+            <input type="checkbox" id="hideCorrectAnswerToggle" class="sr-only" [(ngModel)]="hideCorrectAnswer"
+                name="hideCorrectAnswerToggle">
+            <div class="block bg-gray-200 dark:bg-gray-600 w-14 h-8 rounded-full"></div>
+            <div class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
+                [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': hideCorrectAnswer}"></div>
+        </label>
+        <label for="hideCorrectAnswerToggle"
+            class="ml-3 block text-sm font-medium text-white dark:text-gray-600 flex items-center">
+            Nascondi risposta esatta
+        </label>
+    </div>
+</div>
+
 <div *ngIf="topics.length > 0" class="space-y-3 border-t pt-4 mt-4">
     <h4 class="text-md font-medium text-gray-600 mb-2">Imposta il numero di domande per argomento:</h4>
     <div *ngFor="let topic of clonedTopics; let i = index" class="p-3 border rounded-md bg-gray-50">
@@ -37,9 +55,8 @@
     <button (click)="resetCount()" aria-label="Imposta a 0 il numero totale dei quiz"
         title="Imposta a 0 il numero totale dei quiz"
         class="w-50 inline-block bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-700 dark:hover:bg-gray-500 font-bold py-2 px-2 my-2 rounded-lg text-l sm:text-l shadow-md hover:shadow-lg transition duration-150 text-center">
-        <fa-icon class="px-2 fa-lg" [icon]="faTrashBin"
-            aria-label="Imposta a 0 il numero totale dei quiz"></fa-icon>
-            {{ 'Resetta tutti i totali' }}
+        <fa-icon class="px-2 fa-lg" [icon]="faTrashBin" aria-label="Imposta a 0 il numero totale dei quiz"></fa-icon>
+        {{ 'Resetta tutti i totali' }}
     </button>
 </div>
 <p *ngIf="clonedTopics.length > 0" class="text-sm text-gray-600 mt-3">

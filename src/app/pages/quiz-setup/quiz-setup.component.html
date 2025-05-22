@@ -53,11 +53,12 @@
     </div>
 
     <!-- Detailed Topic Selection (disabled if fixed IDs are set) -->
-    <div *ngIf="!selectAllTopics && availableTopics.length > 0"
-      class="mb-8 border-t dark:border-gray-700 pt-6"
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0" class="mb-8 border-t dark:border-gray-700 pt-6"
       [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
-      <h3 *ngIf="isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
-      <h3 *ngIf="!isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di
+      <h3 *ngIf="isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da
+        studiare:</h3>
+      <h3 *ngIf="!isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti
+        e il numero di
         domande per argomento (Modalità personalizzata):</h3>
       <div class="space-y-2 mb-4">
         <div *ngFor="let topic of availableTopics" class="flex items-center">
@@ -97,7 +98,7 @@
     </div>
 
     <div class="mb-4">
-      <button (click)="toggleAccordion('main'); $event.preventDefault()"
+      <button (click)="toggleAdvancedSettings('main'); $event.preventDefault()"
         class="w-full rounded flex justify-between items-center p-3 sm:p-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none transition-colors duration-150">
         <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
           <fa-icon class="ml-2 fa-lg" [icon]="faGears"></fa-icon>
@@ -112,7 +113,7 @@
         <!--  Domande casuali  -->
         <div class="mb-6"
           [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
-          <div class="flex items-left h-full bg-indigo-200 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow p-4">
+          <div class="flex items-left h-full bg-gray-500 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow p-4">
             <label for="randomQuestionsToggle" class="relative flex-shrink-0 ml-2 cursor-pointer">
               <input type="checkbox" id="randomQuestionsToggle" class="sr-only" [(ngModel)]="randomQuestions"
                 name="randomQuestionsToggle"
@@ -123,10 +124,28 @@
                 [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': randomQuestions}"></div>
             </label>
             <label for="randomQuestionsToggle"
-              class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+              class="ml-3 block text-sm font-medium text-white dark:text-gray-600 flex items-center">
               Domande casuali
-              <span class="block sm:inline text-xs text-gray-500 dark:text-gray-400 ml-2">(potrebbero capitarne di già
+              <span class="block sm:inline text-xs text-gray-500 dark:text-gray-500 ml-2">(potrebbero capitarne di già
                 fatte)</span>
+            </label>
+          </div>
+        </div>
+
+        <!--  Nascondi risposta esatta  -->
+        <div class="mb-6">
+          <div class="flex items-left h-full bg-gray-500 dark:bg-indigo-900 dark:bg-opacity-30 rounded-lg shadow p-4">
+            <label for="hideCorrectAnswerToggle" class="relative flex-shrink-0 ml-2 cursor-pointer">
+              <input type="checkbox" id="hideCorrectAnswerToggle" class="sr-only" [(ngModel)]="hideCorrectAnswer"
+                name="hideCorrectAnswerToggle">
+              <div class="block bg-gray-200 dark:bg-gray-600 w-14 h-8 rounded-full"></div>
+              <div
+                class="dot absolute left-1 top-1 bg-white dark:bg-gray-400 w-6 h-6 rounded-full transition-transform duration-300 ease-in-out"
+                [ngClass]="{'translate-x-6 !bg-indigo-600 dark:!bg-indigo-500': hideCorrectAnswer}"></div>
+            </label>
+            <label for="hideCorrectAnswerToggle"
+              class="ml-3 block text-sm font-medium text-white dark:text-gray-600 flex items-center">
+              Nascondi risposta esatta
             </label>
           </div>
         </div>
