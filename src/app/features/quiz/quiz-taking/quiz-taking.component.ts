@@ -829,7 +829,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       return;
     }
     const quizEndTime = new Date();
-    const score = this.userAnswers.filter(ans => ans.isCorrect).length;
+    const score = (this.userAnswers.filter(ans => ans.isCorrect).length * 0.029) - (this.userAnswers.filter(ans => !ans.isCorrect).length * (0.029));
 
     this.questions.forEach((q) => {
       const isAnswered = this.userAnswers.some(ans => ans.questionId === q.id);

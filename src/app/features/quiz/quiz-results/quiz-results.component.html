@@ -20,15 +20,24 @@
       <h1 class="text-3xl sm:text-4xl font-bold">Risultato</h1>
       <p class="text-xl sm:text-2xl mt-2">
         Il tuo punteggio
-        <span class="font-extrabold text-green-300 dark:text-green-400">{{ quizAttempt.score }}</span> /
-        <span class="font-extrabold">{{ quizAttempt.totalQuestionsInQuiz }}</span>
-        ({{ ((quizAttempt?.score ?? 0) / (quizAttempt.totalQuestionsInQuiz || 1) * 100) | number:'1.0-1' }}%)
+        <span class="font-extrabold">{{ quizAttempt.score }}</span> /
+        <span class="font-extrabold">{{ maxScore }}</span>
         <!-- Handle totalQuestionsInQuiz = 0 -->
+      </p>
+      <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
+        class="text-xs sm:text-xl mt-2">
+        <span class="font-extrabold text-green-300 dark:text-green-400"> Di cui corrette: {{ correctQuestionIds.length }} ({{ (correctQuestionIds.length /
+        (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
+      </p>
+      <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
+        class="text-xs sm:text-xl mt-2">
+        <span class="font-extrabold text-red-300 dark:text-red-400"> Di cui errate: {{  wrongOrUnansweredQuestionIds.length }} ({{
+        (wrongOrUnansweredQuestionIds.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
       </p>
       <p *ngIf="quizAttempt && quizAttempt.unansweredQuestions && quizAttempt.unansweredQuestions.length"
         class="text-xs sm:text-xl mt-2">
-        {{"Di cui saltate: " + quizAttempt.unansweredQuestions.length }}
-      </p>
+         <span class="font-extrabold text-yellow-300 dark:text-yellow-400"> Di cui saltate: {{ quizAttempt.unansweredQuestions.length }} ({{
+        (quizAttempt.unansweredQuestions.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
       <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-5">
         Ora di fine: {{ quizAttempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}
       </p>
@@ -94,7 +103,8 @@
               [ngClass]="getOptionClass(q, optIndex)">
               <span class="dark:text-gray-100">{{ option }}</span>
               <!-- Ensure span text color contrasts with its specific bg -->
-              <span *ngIf="optIndex === q.userAnswerIndex" class="ml-2 text-xs font-semibold dark:text-gray-200 text-bold">(La tua
+              <span *ngIf="optIndex === q.userAnswerIndex"
+                class="ml-2 text-xs font-semibold dark:text-gray-200 text-bold">(La tua
                 risposta)</span>
             </div>
           </div>
@@ -115,7 +125,8 @@
         <fa-icon class="mr-2" [icon]="repeatIcon"></fa-icon>
         {{ 'Ripeti intero quiz' }}
       </button>
-      <button (click)="repeatWrongQuiz()" [disabled]="wrongOrUnansweredQuestionIds && wrongOrUnansweredQuestionIds.length === 0"
+      <button (click)="repeatWrongQuiz()"
+        [disabled]="wrongOrUnansweredQuestionIds && wrongOrUnansweredQuestionIds.length === 0"
         class="text-sm sm:text-base w-full inline-block sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white dark:bg-yellow-500 dark:hover:bg-yellow-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
         <fa-icon class="mr-1" [icon]="segnala"></fa-icon>
         <fa-icon class="mr-2" [icon]="repeatIcon"></fa-icon>

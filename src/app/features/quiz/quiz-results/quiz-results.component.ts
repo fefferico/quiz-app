@@ -1,13 +1,13 @@
 // src/app/features/quiz/quiz-results/quiz-results.component.ts
-import {Component, OnInit, OnDestroy, inject, ChangeDetectorRef} from '@angular/core'; // Added ChangeDetectorRef
-import {CommonModule, DatePipe, DecimalPipe, PercentPipe} from '@angular/common';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {Subscription} from 'rxjs';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core'; // Added ChangeDetectorRef
+import { CommonModule, DatePipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import jsPDF from 'jspdf';
 
-import {DatabaseService} from '../../../core/services/database.service';
-import {QuizAttempt, AnsweredQuestion} from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { DatabaseService } from '../../../core/services/database.service';
+import { QuizAttempt, AnsweredQuestion } from '../../../models/quiz.model'; // Ensure QuestionSnapshotInfo is imported if used directly
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition,
   faExclamation,
@@ -19,7 +19,7 @@ import {
   faBarChart,
   faLandmark
 } from '@fortawesome/free-solid-svg-icons';
-import {AlertService} from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
+import { AlertService } from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -54,6 +54,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   quizAttempt: QuizAttempt | undefined;
   groupedQuestions: GroupedQuestionDisplay[] = [];
   wrongOrUnansweredQuestionIds: string[] = []; // Store IDs of questions that were wrong or unanswered
+  correctQuestionIds: string[] = [];
+  maxScore: number = 0;
 
   isLoading = true;
   errorLoading = '';
@@ -95,6 +97,10 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
             return !answeredInfo || !answeredInfo.isCorrect; // Not in answeredQuestions OR isCorrect is false
           })
           .map(qInfo => qInfo.questionId);
+        this.correctQuestionIds = this.quizAttempt.answeredQuestions.filter(qInfo => qInfo.isCorrect === true)
+
+          .map(qInfo => qInfo.questionId);
+        this.maxScore = this.quizAttempt.allQuestions.length * 0.029;
       } else {
         this.errorLoading = 'Tentativo di quiz non trovato. Potrebbe essere stato eliminato o l\'ID non è corretto.';
       }
@@ -143,7 +149,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   getOptionClass(question: AnsweredQuestion, optionIndex: number): string {
-    const {userAnswerIndex, questionSnapshot, isCorrect} = question;
+    const { userAnswerIndex, questionSnapshot, isCorrect } = question;
     const correctAnswerIndex = questionSnapshot.correctAnswerIndex;
 
     // Default styles for an option that is not selected and not the correct answer
@@ -236,7 +242,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Risultati Quiz', pageWidth / 2, yPos, {align: 'center'});
+    doc.text('Risultati Quiz', pageWidth / 2, yPos, { align: 'center' });
     yPos += lineHeight * 2;
 
     doc.setFontSize(12);
@@ -324,7 +330,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
-      doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin - 5, pageHeight - 10, {align: 'right'});
+      doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin - 5, pageHeight - 10, { align: 'right' });
     }
 
     doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
@@ -422,7 +428,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
 
   }
 
