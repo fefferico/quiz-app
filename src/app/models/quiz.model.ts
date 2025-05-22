@@ -4,7 +4,7 @@ import { Question } from './question.model';
 
 // Settings chosen by the user for a particular quiz session
 export interface QuizSettings {
-  numQuestions: number;
+  totalQuestionsInQuiz: number;
   selectedTopics: string[]; // Array of topic names. Empty array or a special value like 'ALL_TOPICS' could mean all topics.
   difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Any'; // Optional: Filter by difficulty,
   isFavoriteOnly?: boolean; // Optional: Filter to show only favorite questions
@@ -56,7 +56,7 @@ export interface QuizAttempt {
 }
 
 export interface QuizSettings {
-  numQuestions: number;
+  totalQuestionsInQuiz: number;
   selectedTopics: string[];
   difficulty?: 'Easy' | 'Medium' | 'Hard' | 'Any';
   keywords?: string[];

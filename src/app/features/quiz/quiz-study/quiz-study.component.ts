@@ -1,15 +1,15 @@
 // src/app/features/quiz/quiz-study/quiz-study.component.ts
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 
 import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
 // QuizSettings and TopicCount might be needed if complex filtering is passed
 import { QuizSettings } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faArrowRight, faArrowLeft, faGears } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 
 @Component({
@@ -24,13 +24,17 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private dbService = inject(DatabaseService);
   private routeSub!: Subscription;
+  private destroy$ = new Subject<void>();
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  next: IconDefinition = faArrowRight;
+  back: IconDefinition = faArrowLeft;
+  faGears: IconDefinition = faGears;
 
   // Re-use parts of QuizSettings for fetching
-  studySettings!: Partial<QuizSettings>; // numQuestions, selectedTopics, keywords
+  studySettings!: Partial<QuizSettings>; // totalQuestionsInQuiz, selectedTopics, keywords
   questions: Question[] = [];
   currentQuestionIndex = 0;
   currentQuestion: Question | undefined;
@@ -43,24 +47,54 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
-  ngOnInit(): void {
-    this.routeSub = this.route.queryParams.subscribe(params => {
-      const numQuestionsParam = params['numQuestions'] ? +params['numQuestions'] : 9999; // Default to many for "all"
-      const topicsParam = params['topics'] || '';
-      const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
-      const keywordsParam = params['keywords'] || '';
-      const fixedQuestionIds = params['fixedQuestionIds'] || '';
-      const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
-      const selectedQuestions = fixedQuestionIds ? fixedQuestionIds.split(',').filter((kw: any) => kw) : [];
+  private navigationState: any; // Added to store navigation state
+  constructor() {
+    // Access navigation state in the constructor
+    const currentNavigation = this.router.getCurrentNavigation();
+    this.navigationState = currentNavigation?.extras.state;
+  }
 
-      this.studySettings = {
-        numQuestions: numQuestionsParam,
-        selectedTopics,
-        keywords: selectedKeywords,
-        questionIDs: selectedQuestions
-      };
-      this.loadStudyQuestions(this.studySettings);
-    });
+  // --- HostListeners for Keyboard Navigation ---
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    // Prevent default for keys we handle to avoid page scroll, etc.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', '1', '2', '3', '4', '5'].includes(event.key)) {
+      event.preventDefault();
+    }
+    switch (event.key) {
+      case 'ArrowRight':
+        this.nextQuestion();
+        break;
+      case 'ArrowLeft':
+        if (this.currentQuestionIndex > 0) {
+          this.previousQuestion();
+        }
+        break;
+    }
+  }
+
+  ngOnInit(): void {
+    this.routeSub = this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async queryOnlyParams => { // Renamed to avoid confusion
+        // Use the stored navigationState first, then fallback to queryParams
+        const actualParams = this.navigationState?.['quizParams'] || queryOnlyParams;
+        const numQuestionsParam = actualParams['totalQuestionsInQuiz'] ? +actualParams['totalQuestionsInQuiz'] : 9999; // Default to many for "all"
+        const topicsParam = actualParams['topics'] || '';
+        const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
+        const keywordsParam = actualParams['keywords'] || '';
+        const fixedQuestionIds = actualParams['fixedQuestionIds'] || '';
+        const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
+        const selectedQuestions = fixedQuestionIds ? fixedQuestionIds.split(',').filter((kw: any) => kw) : [];
+
+        this.studySettings = {
+          totalQuestionsInQuiz: numQuestionsParam,
+          selectedTopics,
+          keywords: selectedKeywords,
+          questionIDs: selectedQuestions
+        };
+        this.loadStudyQuestions(this.studySettings);
+      });
   }
 
   async loadStudyQuestions(quizSettings: Partial<QuizSettings>): Promise<void> {
@@ -72,17 +106,17 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
       // Or create a new DB method: getFilteredQuestions(topics, keywords) that returns all matches
       let fetchedQuestions = await this.dbService.getRandomQuestions(
         this.selectedPublicContest,
-        quizSettings.numQuestions!, // Non-null assertion as we set a default
+        quizSettings.totalQuestionsInQuiz!, // Non-null assertion as we set a default
         quizSettings.selectedTopics,
         quizSettings.keywords,
         quizSettings.questionIDs,
         // No topicDistribution for simple study mode for now
       );
 
-      // If numQuestions was set high for "all", slice if you only want to show a certain max,
+      // If totalQuestionsInQuiz was set high for "all", slice if you only want to show a certain max,
       // or just take all that were returned.
       // For study mode, usually we want all that match the criteria.
-      // So, `this.studySettings.numQuestions` might be better interpreted as a "max limit" if not "all".
+      // So, `this.studySettings.totalQuestionsInQuiz` might be better interpreted as a "max limit" if not "all".
       // Let's assume getRandomQuestions already handles slicing if count is less than available.
       this.questions = fetchedQuestions;
 
@@ -120,7 +154,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
     console.log("errorLoading", this.errorLoading);
   }
 
-  prevQuestion(): void {
+  previousQuestion(): void {
     if (this.currentQuestionIndex > 0) {
       this.currentQuestionIndex--;
       this.setCurrentStudyQuestion();
@@ -144,5 +178,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
     if (this.routeSub) {
       this.routeSub.unsubscribe();
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

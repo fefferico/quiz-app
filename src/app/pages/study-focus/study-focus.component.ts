@@ -135,7 +135,7 @@ export class StudyFocusComponent implements OnInit {
 
     let quizSettings: Partial<QuizSettings> = {}; // Use Partial as some fields are mode-dependent
     quizSettings = {
-      numQuestions: questionIds.length,
+      totalQuestionsInQuiz: questionIds.length,
       selectedTopics: [], // Empty means all if selectAllTopics is true
       enableTimer: false,
       timerDurationSeconds: 0
@@ -143,13 +143,13 @@ export class StudyFocusComponent implements OnInit {
 
     this.router.navigate([navigateToPath], { // Use dynamic path
       queryParams: {
-        numQuestions: quizSettings.numQuestions, // Could be very large for "all" in study mode
+        totalQuestionsInQuiz: quizSettings.totalQuestionsInQuiz, // Could be very large for "all" in study mode
         topics: quizSettings.selectedTopics?.join(','),
         keywords: '',
         // For quiz mode, pass other relevant params
         topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
         enableTimer: false,
-        timerDuration: 0,
+        timerDurationSeconds: 0,
         // get specific question id
         fixedQuestionIds: questionIds
       }

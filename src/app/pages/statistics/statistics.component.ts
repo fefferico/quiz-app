@@ -800,7 +800,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const queryParams = {
       quizTitle: `Pratica: ${topic}${this.activeContestId ? ` (${this.activeContestId})` : ''}`,
       fixedQuestionIds: finalQuestionIds.join(','), // Use fixedQuestionIds
-      numQuestions: finalQuestionIds.length,
+      totalQuestionsInQuiz: finalQuestionIds.length,
       publicContest: this.activeContestId // Pass contest context
     };
 
@@ -1103,13 +1103,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const queryParams: any = {
       quizTitle: this.quizSetupModalTitle || 'Quiz di Pratica',
-      numQuestions: quizConfig.numQuestions,
+      totalQuestionsInQuiz: quizConfig.totalQuestionsInQuiz,
       topics: quizConfig.selectedTopics?.join(','),
       topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
       // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
       fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
       enableTimer: quizConfig.enableTimer || false, // Default to false for practice
-      timerDuration: quizConfig.timerDurationSeconds || 0,
+      timerDurationSeconds: quizConfig.timerDurationSeconds || 0,
       publicContest: this.selectedPublicContest,
     };
 

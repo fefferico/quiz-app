@@ -94,7 +94,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   private currentLocalContestId: string | null = null;
 
   isTimerEnabled: boolean = false;
-  timerDuration: number = 0;
+  timerDurationSeconds: number = 0;
   // Getter to easily access the contest from the template
   get selectedPublicContest(): string {
     return this.contestSelectionService.getCurrentSelectedContest() || '';
@@ -352,7 +352,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       return;
     }
     this.isTimerEnabled = true;
-    this.timerDuration = 5400; // 90 minutes in seconds
+    this.timerDurationSeconds = 5400; // 90 minutes in seconds
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null
       `Simulazione Concorso: ${this.selectedPublicContest}`,
@@ -379,12 +379,12 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.closeQuizSetupModal();
     const queryParams: any = {
       quizTitle: this.quizSetupModalTitle || 'Quiz',
-      numQuestions: quizConfig.numQuestions,
+      totalQuestionsInQuiz: quizConfig.totalQuestionsInQuiz,
       topics: quizConfig.selectedTopics?.join(','),
       topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
       fixedQuestionIds: quizConfig.fixedQuestionIds?.join(','),
       enableTimer: quizConfig.enableTimer ?? false,
-      timerDuration: quizConfig.timerDurationSeconds ?? 0,
+      timerDurationSeconds: quizConfig.timerDurationSeconds ?? 0,
       enableStreakSounds: quizConfig.enableStreakSounds ?? false,
       // Pass selected contest if this quiz is derived from one
       publicContest: this.selectedPublicContest && this.quizSetupModalTitle.includes(this.selectedPublicContest)

@@ -76,7 +76,7 @@ export class FavoriteQuestionsComponent implements OnInit {
     // Navigate to QuizSetup with parameters to load these specific IDs
     // This requires QuizSetupComponent and subsequently QuizTakingComponent to handle a 'fixedQuestionIds' param
     const queryParams = {
-        // numQuestions: questionIds.length, // numQuestions will be derived from IDs length
+        // totalQuestionsInQuiz: questionIds.length, // totalQuestionsInQuiz will be derived from IDs length
         fixedQuestionIds: questionIds
         // We can also set a default title or context for this type of quiz
       };

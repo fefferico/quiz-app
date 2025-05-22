@@ -1,32 +1,29 @@
 <!-- src/app/features/quiz/quiz-taking/quiz-taking.component.html -->
 <div class="max-w-3xl mx-auto p-2 sm:p-4 bg-white dark:bg-gray-800 dark:text-gray-200 shadow-2xl rounded-lg">
 
-  <!-- NEW: Toggle Button for Accessibility Controls -->
   <div class="text-right mb-2">
     <button (click)="toggleAccessibilityControls()"
-            [title]="showAccessibilityControls ? 'Nascondi Controlli Accessibilità' : 'Mostra Controlli Accessibilità'"
-            class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+      [title]="showAccessibilityControls ? 'Nascondi Controlli Accessibilità' : 'Mostra Controlli Accessibilità'"
+      class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
       <fa-icon [icon]="faCog"
-               class="text-lg {{ showAccessibilityControls ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400' }}"></fa-icon>
+        class="text-lg {{ showAccessibilityControls ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400' }}"></fa-icon>
       {{ 'Impostazioni accessibilità' }}
     </button>
   </div>
-  <!-- END NEW -->
 
-  <!-- Accessibility Controls - NOW CONDITIONALLY RENDERED -->
   <div *ngIf="showAccessibilityControls"
-       class="accessibility-controls flex flex-col sm:flex-wrap sm:justify-around items-center gap-2 p-2 mb-4 border-b border-gray-200 dark:border-gray-700">
+    class="accessibility-controls flex flex-col sm:flex-wrap sm:justify-around items-center gap-2 p-2 mb-4 border-b border-gray-200 dark:border-gray-700">
 
     <div class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start">
       <span class="text-xs font-medium mr-1">Dim. Testo:</span>
       <button (click)="decreaseFontSize()" [disabled]="fontSizeStep <= minFontSizeStep"
-              aria-label="Diminuisci dimensione testo" class="p-1.5 sm:p-2 text-xs leading-none">-
+        aria-label="Diminuisci dimensione testo" class="p-1.5 sm:p-2 text-xs leading-none">-
       </button>
       <button (click)="resetFontSize()" aria-label="Resetta dimensione testo"
-              class="p-1.5 sm:p-2 text-xs leading-none">A
+        class="p-1.5 sm:p-2 text-xs leading-none">A
       </button>
       <button (click)="increaseFontSize()" [disabled]="fontSizeStep >= maxFontSizeStep"
-              aria-label="Aumenta dimensione testo" class="p-1.5 sm:p-2 text-xs leading-none">+
+        aria-label="Aumenta dimensione testo" class="p-1.5 sm:p-2 text-xs leading-none">+
       </button>
     </div>
 
@@ -34,7 +31,7 @@
       class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Font:</span>
       <button (click)="cycleFontFamily()" aria-label="Cambia font"
-              class="p-1.5 sm:p-2 text-xs leading-none min-w-[70px]">{{ currentFont.name }}
+        class="p-1.5 sm:p-2 text-xs leading-none min-w-[70px]">{{ currentFont.name }}
       </button>
     </div>
 
@@ -42,49 +39,40 @@
       class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Suoni Quiz:</span>
       <button (click)="toggleQuizSounds()" [disabled]="isReadingModeEnabled"
-              title="{{ quizSpecificSoundsEnabled ? 'Disattiva Suoni Quiz' : 'Attiva Suoni Quiz' }} {{ isReadingModeEnabled ? '(Disabilitato in modalità lettura)' : '' }}"
-              class="p-1.5 sm:p-2 text-xs leading-none"
-              [ngClass]="{'opacity-50 cursor-not-allowed': isReadingModeEnabled}">
+        title="{{ quizSpecificSoundsEnabled ? 'Disattiva Suoni Quiz' : 'Attiva Suoni Quiz' }} {{ isReadingModeEnabled ? '(Disabilitato in modalità lettura)' : '' }}"
+        class="p-1.5 sm:p-2 text-xs leading-none" [ngClass]="{'opacity-50 cursor-not-allowed': isReadingModeEnabled}">
         <fa-icon [icon]="quizSpecificSoundsEnabled && !isReadingModeEnabled ? faSoundOn : faSoundOff"
-                 class="text-lg {{ quizSpecificSoundsEnabled && !isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
+          class="text-lg {{ quizSpecificSoundsEnabled && !isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
         </fa-icon>
       </button>
     </div>
 
-    <!-- NEW: Reading Mode (TTS) Toggle Button -->
     <div
       class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Lettura Vocale:</span>
       <button (click)="toggleReadingMode()"
-              [title]="isReadingModeEnabled ? 'Disattiva Lettura Vocale' : 'Attiva Lettura Vocale'"
-              class="p-1.5 sm:p-2 text-xs leading-none flex items-center">
+        [title]="isReadingModeEnabled ? 'Disattiva Lettura Vocale' : 'Attiva Lettura Vocale'"
+        class="p-1.5 sm:p-2 text-xs leading-none flex items-center">
         <fa-icon [icon]="isReadingModeEnabled ? faVolumeUp : faSoundOff"
-                 class="text-lg mr-1 {{ isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
+          class="text-lg mr-1 {{ isReadingModeEnabled ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
         </fa-icon>
         <span>{{ isReadingModeEnabled ? 'On' : 'Off' }}</span>
       </button>
     </div>
-    <!-- END NEW -->
 
-    <!-- NEW: Voice Selector Dropdown -->
     <div *ngIf="isReadingModeEnabled && voiceSelectionAvailable && availableVoices.length > 0"
-         class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
+      class="control-group flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0 sm:ml-0 md:ml-4">
       <span class="text-xs font-medium mr-1">Voce:</span>
       <select (change)="setSelectedVoice($any($event.target).value)" aria-label="Seleziona voce per lettura"
-              class="p-1.5 sm:p-2 text-xs leading-none bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+        class="p-1.5 sm:p-2 text-xs leading-none bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
         <option *ngFor="let voice of availableVoices" [value]="voice.name"
-                [selected]="selectedVoice?.name === voice.name">
+          [selected]="selectedVoice?.name === voice.name">
           {{ voice.name }} ({{ voice.lang }})
         </option>
       </select>
     </div>
-    <!-- END NEW -->
 
   </div>
-  <!-- End Accessibility Controls -->
-  <!-- End Accessibility Controls -->
-
-  <!-- ... rest of your template ... -->
 
   <div *ngIf="isLoading" class="text-center py-10">
     <p class="text-xl text-indigo-600 dark:text-indigo-400">Caricamento domande in corso...</p>
@@ -94,7 +82,7 @@
     <p class="text-xl text-red-600 dark:text-red-400 font-semibold">Errore!</p>
     <p class="text-gray-700 dark:text-gray-300 mt-2">{{ errorLoading }}</p>
     <button routerLink="/quiz/setup"
-            class="mt-6 w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-2 px-4 rounded">
+      class="mt-6 w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-2 px-4 rounded">
       Prova configurazioni diverse
     </button>
   </div>
@@ -109,7 +97,8 @@
       <div class="flex flex-col sm:flex-row justify-between items-center mb-1">
 
         <span class="text-sm sm:text-base font-medium text-indigo-700 dark:text-indigo-400 mb-1 sm:mb-0">
-          Domanda <strong>{{ currentQuestionIndex + 1 }}</strong> di <strong>{{ questions.length }}</strong> - {{ quizTitle }}
+          Domanda <strong>{{ currentQuestionIndex + 1 }}</strong> di <strong>{{ questions.length }}</strong> - {{
+          quizTitle }}
         </span>
 
         <div *ngIf="isCronometerEnabled">
@@ -120,21 +109,21 @@
         <ng-container *ngIf="isTimerEnabled">
           <div *ngIf="timeLeft$ | async as timeLeft; else timerInitialDisplay">
             <div *ngIf="timeLeft > 0" class="text-sm sm:text-base font-semibold"
-                 [ngClass]="{'text-red-600 dark:text-red-400 animate-pulse': timeLeft <= 10 && timeLeft > 0, 'text-gray-700 dark:text-gray-300': timeLeft > 10}">
+              [ngClass]="{'text-red-600 dark:text-red-400 animate-pulse': timeLeft <= 10 && timeLeft > 0, 'text-gray-700 dark:text-gray-300': timeLeft > 10}">
               Tempo rimanente: {{ formatTimeLeft(timeLeft) }}
             </div>
             <div *ngIf="timeLeft === 0 && !quizIsOverByTime"
-                 class="text-sm sm:text-base font-semibold text-red-600 dark:text-red-400 animate-pulse">
+              class="text-sm sm:text-base font-semibold text-red-600 dark:text-red-400 animate-pulse">
               Time's Up!
             </div>
             <div *ngIf="timeLeft === 0 && quizIsOverByTime"
-                 class="text-sm sm:text-base font-semibold text-red-500 dark:text-red-400">
+              class="text-sm sm:text-base font-semibold text-red-500 dark:text-red-400">
               Quiz Ended by Timer
             </div>
           </div>
           <ng-template #timerInitialDisplay>
             <div *ngIf="_timeLeftSeconds > 0"
-                 class="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300">
+              class="text-sm sm:text-base font-semibold text-gray-700 dark:text-gray-300">
               Tempo rimanente: {{ formatTimeLeft(_timeLeftSeconds) }}
             </div>
           </ng-template>
@@ -143,7 +132,7 @@
 
       <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
         <div class="bg-indigo-600 dark:bg-indigo-500 h-2.5 rounded-full"
-             [style.width.%]="((currentQuestionIndex + 1) / questions.length) * 100">
+          [style.width.%]="((currentQuestionIndex + 1) / questions.length) * 100">
         </div>
       </div>
 
@@ -151,7 +140,7 @@
         <div class="progress red h-full" [style.width.%]="(getNumberOfIncorrectAnswers() / questions.length) * 100">
         </div>
         <div class="progress yellow h-full"
-             [style.width.%]="(getNumberOfUnansweredQuestions() / questions.length) * 100">
+          [style.width.%]="(getNumberOfUnansweredQuestions() / questions.length) * 100">
         </div>
         <div class="progress green h-full" [style.width.%]="(getNumberOfCorrectAnswers() / questions.length) * 100">
         </div>
@@ -161,7 +150,7 @@
         *ngIf="!quizCompleted && questions.length > 0 && !isLoading && !errorLoading && quizStatus === 'in-progress' && userAnswers.length < questions.length"
         class="mt-3 text-center sm:text-right">
         <button #pauseButton (click)="pauseQuiz()"
-                class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-semibold py-2 px-4 rounded-md text-sm shadow">
+          class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-500 dark:text-gray-900 font-semibold py-2 px-4 rounded-md text-sm shadow">
           <fa-icon class="ml-2 fa-lg" [icon]="pause"></fa-icon>
           Sospendi Quiz
         </button>
@@ -171,25 +160,25 @@
     <div class="bg-gray-100 border border-gray-200 dark:bg-gray-700 p-2 sm:p-4 rounded-lg shadow mb-2">
       <div class="flex justify-between items-start">
         <div class="flex-grow">
-          <h2 class="flex-grow h-32 overflow-y-auto text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100 leading-tight"
-              [innerHTML]="currentQuestion.text"></h2>
+          <h2
+            class="flex-grow h-32 overflow-y-auto text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-100 leading-tight"
+            [innerHTML]="currentQuestion.text"></h2>
           <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">ID:
             {{ currentQuestion.id + (currentQuestion.topic ? ' - Argomento: ' + currentQuestion.topic : '') }}</p>
         </div>
         <button *ngIf="currentQuestion" (click)="toggleFavoriteCurrentQuestion()"
-                [title]="currentQuestion.isFavorite ? 'Remove from Favorites' : 'Aggiungi ai Preferiti'"
-                class="p-2 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-700 dark:hover:bg-opacity-30 transition-colors focus:outline-none flex-shrink-0 ml-2">
+          [title]="currentQuestion.isFavorite ? 'Remove from Favorites' : 'Aggiungi ai Preferiti'"
+          class="p-2 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-700 dark:hover:bg-opacity-30 transition-colors focus:outline-none flex-shrink-0 ml-2">
           <svg *ngIf="!currentQuestion.isFavorite" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 dark:text-yellow-500" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" stroke-width="2">
+            class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 dark:text-yellow-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.827 3.522a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.827-3.522a1 1 0 00-1.176 0l-4.827 3.522c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.1c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z"/>
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.827 3.522a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.827-3.522a1 1 0 00-1.176 0l-4.827 3.522c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.1c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z" />
           </svg>
           <svg *ngIf="currentQuestion.isFavorite" xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 dark:text-yellow-400" viewBox="0 0 20 20"
-               fill="currentColor">
+            class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 dark:text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
             <path
-              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         </button>
       </div>
@@ -197,9 +186,9 @@
 
     <div class="space-y-3 mb-2">
       <button *ngFor="let option of currentQuestion.options; let i = index"
-              (click)="selectAnswer(i); handleAutoAdvance();"
-              [attr.aria-pressed]="selectedAnswerIndex === i && isAnswerSubmitted" [attr.data-option-index]="i"
-              [disabled]="isAnswerSubmitted || quizIsOverByTime" class="w-full text-left p-1 sm:p-1 rounded-lg border-2 transition-all duration-150 ease-in-out
+        (click)="selectAnswer(i); handleAutoAdvance();"
+        [attr.aria-pressed]="selectedAnswerIndex === i && isAnswerSubmitted" [attr.data-option-index]="i"
+        [disabled]="isAnswerSubmitted || quizIsOverByTime" class="w-full text-left p-1 sm:p-1 rounded-lg border-2 transition-all duration-150 ease-in-out
                focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-500" [ngClass]="{
           'bg-white text-gray-800 dark:bg-gray-700 dark:text-gray-800 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500': answerStates[i] === AnswerStateEnum.UNANSWERED && !isAnswerSubmitted,
           'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 border-gray-300 dark:border-gray-600 cursor-not-allowed': answerStates[i] === AnswerStateEnum.UNANSWERED && (isAnswerSubmitted || quizIsOverByTime) && selectedAnswerIndex !== i && currentQuestion.correctAnswerIndex !== i,
@@ -212,8 +201,6 @@
       </button>
     </div>
 
-    <!-- <app-question-feedback [questionId]="currentQuestion.id"></app-question-feedback> -->
-
     <div *ngIf="isAnswerSubmitted && currentQuestion?.explanation && !quizIsOverByTime" class="p-3 sm:p-4 mb-6 bg-yellow-50 border border-yellow-300 rounded-md text-yellow-700 text-sm sm:text-base
              dark:bg-yellow-900 dark:bg-opacity-30 dark:border-yellow-700 dark:text-yellow-300">
       <h4 class="font-semibold">Spiegazione:</h4>
@@ -222,32 +209,32 @@
 
     <div class="mt-3 space-y-3 sm:space-y-0 sm:flex sm:justify-center sm:gap-4">
       <button *ngIf="!quizIsOverByTime && currentQuestionIndex > 0" (click)="previousQuestion()"
-              class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+        class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
         <fa-icon class="ml-2 fa-lg" [icon]="back"></fa-icon>
         {{ 'Domanda precedente' }}
       </button>
       <button *ngIf="!quizIsOverByTime && currentQuestionIndex < questions.length - 1" (click)="nextQuestion()"
-              class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+        class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
         {{ 'Domanda successiva' }}
         <fa-icon class="ml-2 fa-lg" [icon]="next"></fa-icon>
       </button>
       <button *ngIf="!quizIsOverByTime && currentQuestionIndex >= questions.length - 1" (click)="nextQuestion()"
-              [disabled]="isSavingAttempt"
-              class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150  disabled:opacity-50 disabled:cursor-not-allowed">
+        [disabled]="isSavingAttempt"
+        class="text-sm sm:text-base w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150  disabled:opacity-50 disabled:cursor-not-allowed">
         <svg *ngIf="isSavingAttempt" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
           </path>
         </svg>
         {{ isSavingAttempt ? 'Salvataggio...' : 'Termina il quiz' }}
       </button>
     </div>
     <div class="mt-4 text-center"
-         *ngIf="!quizIsOverByTime && currentQuestionIndex === questions.length - 1 && getNumberOfUnansweredQuestions() > 0 && getNumberOfUnansweredQuestions() !== questions.length">
+      *ngIf="!quizIsOverByTime && currentQuestionIndex === questions.length - 1 && getNumberOfUnansweredQuestions() > 0 && getNumberOfUnansweredQuestions() !== questions.length">
       <button (click)="goToFirstUnansweredQuestion()"
-              class="text-sm sm:text-base w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
+        class="text-sm sm:text-base w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white dark:bg-orange-500 dark:hover:bg-orange-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
         {{ 'Torna alla prima domanda non risposta' }}
       </button>
     </div>
@@ -259,7 +246,7 @@
 
     <div class="mt-6 text-center">
       <button routerLink="/home"
-              class="w-full sm:w-auto bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-2 px-4 rounded">
+        class="w-full sm:w-auto bg-gray-500 hover:bg-gray-700 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-bold py-2 px-4 rounded">
         <fa-icon class="ml-2 fa-lg" [icon]="home"></fa-icon>
         Torna alla Dashboard
       </button>
@@ -267,14 +254,13 @@
   </div>
 
   <div *ngIf="!isLoading && !errorLoading && (questions.length === 0 || !currentQuestion) && !quizIsOverByTime"
-       class="text-center py-10">
+    class="text-center py-10">
     <p class="text-xl text-gray-700 dark:text-gray-300">Quiz terminato o nessuna domanda trovata.</p>
 
     <button routerLink="/home"
-            class="mt-6 w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-2 px-4 rounded">
+      class="mt-6 w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-2 px-4 rounded">
       <fa-icon class="ml-2 fa-lg" [icon]="home"></fa-icon>
       Torna alla Dashboard
     </button>
   </div>
 </div>
-

@@ -22,7 +22,7 @@ export class SetupModalComponent implements OnInit {
   @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
   @Input() contestName: string = '';
   @Input() enableTimer: boolean = false;
-  @Input() timerDuration: number = 0;
+  @Input() timerDurationSeconds: number = 0;
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
 
@@ -60,22 +60,22 @@ export class SetupModalComponent implements OnInit {
     let navigateToPath = '/quiz/take'; // Default path
     if (this.useDetailedTopicCounts && this.clonedTopics.length > 0) {
       quizSettings = {
-        numQuestions: this.clonedTopics.reduce((sum, tc) => sum + tc.count, 0),
+        totalQuestionsInQuiz: this.clonedTopics.reduce((sum, tc) => sum + tc.count, 0),
         selectedTopics: [],
         topicDistribution: this.clonedTopics.map(tc => ({
           topic: tc.topic,
           count: tc.count
         })),
         enableTimer: this.enableTimer,
-        timerDurationSeconds: this.timerDuration,
+        timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName
       };
     } else {
       quizSettings = {
-        numQuestions: this.selectedNumQuestions,
+        totalQuestionsInQuiz: this.selectedNumQuestions,
         selectedTopics: [], // Empty means all if selectAllTopics is true
         enableTimer: this.enableTimer,
-        timerDurationSeconds: this.timerDuration,
+        timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName
       };
     }
@@ -87,17 +87,17 @@ export class SetupModalComponent implements OnInit {
       .filter(_topic => _topic.count > 0)
       .map(q => q.questionIds)
       .flat()
-      .slice(0, quizSettings.numQuestions ?? 0);
+      .slice(0, quizSettings.totalQuestionsInQuiz ?? 0);
 
     const
       queryParams = {
-        numQuestions: quizSettings.numQuestions, // Could be very large for "all" in study mode
+        totalQuestionsInQuiz: quizSettings.totalQuestionsInQuiz, // Could be very large for "all" in study mode
         topics: quizSettings.selectedTopics?.join(','),
         keywords: quizSettings.keywords.join(','),
         // For quiz mode, pass other relevant params
         topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
         enableTimer: quizSettings.enableTimer,
-        timerDuration: quizSettings.timerDurationSeconds,
+        timerDurationSeconds: quizSettings.timerDurationSeconds,
         // get specific question id
         fixedQuestionIds: fixedQuestionIds,
         publicContest: this.contestName

@@ -95,7 +95,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         this.preloadedFixedQuestionIds = ids.split(',').map((id: string) => id.trim()).filter((id: string) => id);
         if (this.preloadedFixedQuestionIds.length > 0) {
           // If fixed IDs are present, potentially disable other controls
-          // and set numQuestions to the count of fixed IDs.
+          // and set totalQuestionsInQuiz to the count of fixed IDs.
           this.selectedNumQuestions = this.preloadedFixedQuestionIds.length;
           this.selectAllTopics = false; // Or some other logic to indicate fixed mode
           this.useDetailedTopicCounts = false;
@@ -296,7 +296,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     if (effectiveFixedQuestionIds.length > 0) {
       queryParams.fixedQuestionIds = effectiveFixedQuestionIds.join(',');
       // Number of questions is implicitly the count of fixed IDs
-      queryParams.numQuestions = effectiveFixedQuestionIds.length;
+      queryParams.totalQuestionsInQuiz = effectiveFixedQuestionIds.length;
       // Other filters like topics, keywords are ignored if fixedQuestionIds are present
       queryParams.topics = '';
       queryParams.keywords = '';
@@ -312,20 +312,20 @@ export class QuizSetupComponent implements OnInit, DoCheck {
             this.alertService.showAlert("Attenzione", "Il Timer deve avere una durata di almeno 1 secondo");
             return;
           }
-          queryParams.timerDuration = timerDurationSeconds;
+          queryParams.timerDurationSeconds = timerDurationSeconds;
         } else {
-          queryParams.timerDuration = 0;
+          queryParams.timerDurationSeconds = 0;
         }
       }
     } else { // --- Normal Quiz Setup Logic ---
       if (this.isStudyMode) {
-        queryParams.numQuestions = this.selectAllTopics ? 9999 : (this.selectedNumQuestions || 9999);
+        queryParams.totalQuestionsInQuiz = this.selectAllTopics ? 9999 : (this.selectedNumQuestions || 9999);
         queryParams.topics = this.selectAllTopics ? '' : this.selectedTopicsForDisplay.join(',');
         queryParams.keywords = keywords.join(',');
         // No timer/cronometer for study mode
         queryParams.enableTimer = false;
         queryParams.enableCronometer = false;
-        queryParams.timerDuration = 0;
+        queryParams.timerDurationSeconds = 0;
         queryParams.enableStreakSounds = false; // Add sound setting
       } else { // Quiz Mode
         let timerDurationSeconds: number | undefined = undefined;
@@ -339,17 +339,17 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         queryParams.enableTimer = this.enableTimerInput;
         queryParams.randomQuestions = this.randomQuestions;
         queryParams.enableCronometer = this.enableCronometerInput;
-        queryParams.timerDuration = timerDurationSeconds || 0;
+        queryParams.timerDurationSeconds = timerDurationSeconds || 0;
         queryParams.keywords = keywords.join(',');
         queryParams.enableStreakSounds = this.enableStreakSoundsInput; // Add sound setting
         queryParams.publicContest = this.selectedPublicContest;
 
         if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
-          queryParams.numQuestions = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);
+          queryParams.totalQuestionsInQuiz = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);
           queryParams.topics = this.selectAllTopics ? '' : this.selectedTopicsForDisplay.join(','); // Still relevant if not all topics selected
           queryParams.topicDistribution = JSON.stringify(this.topicCounts);
         } else {
-          queryParams.numQuestions = this.selectedNumQuestions;
+          queryParams.totalQuestionsInQuiz = this.selectedNumQuestions;
           queryParams.topics = this.selectAllTopics ? '' : this.selectedTopicsForDisplay.join(','); // All selected or specific few
           queryParams.topicDistribution = '';
         }

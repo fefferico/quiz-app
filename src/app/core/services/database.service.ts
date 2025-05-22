@@ -133,7 +133,7 @@ export class DatabaseService implements OnDestroy {
     if (appAttempt.timestampEnd !== undefined) supabaseAttempt.timestamp_end = appAttempt.timestampEnd?.toISOString();
     if (appAttempt.settings !== undefined) {
       supabaseAttempt.settings = appAttempt.settings;
-      supabaseAttempt.num_questions_setting = appAttempt.settings.numQuestions;
+      supabaseAttempt.num_questions_setting = appAttempt.settings.totalQuestionsInQuiz;
       supabaseAttempt.selected_topics_setting = appAttempt.settings.selectedTopics;
       supabaseAttempt.difficulty_setting = appAttempt.settings.difficulty;
       supabaseAttempt.keywords_setting = appAttempt.settings.keywords;

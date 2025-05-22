@@ -153,7 +153,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   // Timer related properties
   isTimerEnabled = false;
   isCronometerEnabled = false;
-  timerDuration = 0;
+  timerDurationSeconds = 0;
   timeLeft$: Observable<number> | undefined;
   timeElapsed$: Observable<number> | undefined;
   private timerSubscription: Subscription | undefined;
@@ -311,7 +311,16 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
         const resumeAttemptId = actualParams['resumeAttemptId'];
         const randomQuestions = actualParams['randomQuestions'];
-        const fixedQuestionIds = actualParams['fixedQuestionIds'] ? actualParams['fixedQuestionIds'].toString().split(',') : [];
+        let fixedQuestionIds: string[] = [];
+
+        // check if it's an array or a string
+        if (actualParams['fixedQuestionIds']) {
+          if (Array.isArray(actualParams['fixedQuestionIds'])) {
+            fixedQuestionIds = actualParams['fixedQuestionIds'];
+          } else if (typeof actualParams['fixedQuestionIds'] === 'string') {
+            fixedQuestionIds = actualParams['fixedQuestionIds'].split(',').map((id: string) => id.trim()).filter(Boolean);
+          }
+        }
         this.quizTitle = actualParams['quizTitle'] || 'Quiz';
 
         this.quizSpecificSoundsEnabled = actualParams['enableStreakSounds'] === 'true';
@@ -332,11 +341,20 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           this.quizStatus = 'in-progress';
 
           const publicContest = actualParams['publicContest'] ? actualParams['publicContest'] : '';
-          const numQuestions = actualParams['numQuestions'] ? +actualParams['numQuestions'] : 10;
+          const totalQuestionsInQuiz = actualParams['totalQuestionsInQuiz'] ? +actualParams['totalQuestionsInQuiz'] : 10;
           const topicsParam = actualParams['topics'] || '';
           const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
+
           const keywordsParam = actualParams['keywords'] || '';
-          const selectedKeywords = keywordsParam ? keywordsParam.split(',').filter((kw: any) => kw) : [];
+          let selectedKeywords: string[] = [];
+          if (keywordsParam) {
+            if (Array.isArray(keywordsParam)) {
+              selectedKeywords = keywordsParam.filter((kw: any) => kw);
+            } else if (typeof keywordsParam === 'string') {
+              selectedKeywords = keywordsParam.split(',').map((kw: string) => kw.trim()).filter((kw: string) => kw);
+            }
+          }
+          
           const topicDistributionParam = actualParams['topicDistribution'] || '';
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
           if (topicDistributionParam) {
@@ -349,18 +367,18 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
           this.isTimerEnabled = actualParams['enableTimer'] == true || actualParams['enableTimer'] === 'true';
           this.isCronometerEnabled = actualParams['enableCronometer'] === 'true';
-          this.timerDuration = actualParams['timerDuration'] ? +actualParams['timerDuration'] : 0;
-          this._timeLeftSeconds = this.timerDuration;
+          this.timerDurationSeconds = actualParams['timerDurationSeconds'] ? +actualParams['timerDurationSeconds'] : 0;
+          this._timeLeftSeconds = this.timerDurationSeconds;
 
           this.quizSettings = {
             publicContest,
-            numQuestions,
+            totalQuestionsInQuiz,
             selectedTopics,
             keywords: selectedKeywords,
             topicDistribution: selectedTopicDistribution,
             enableTimer: this.isTimerEnabled,
             enableCronometer: this.isCronometerEnabled,
-            timerDurationSeconds: this.timerDuration,
+            timerDurationSeconds: this.timerDurationSeconds,
             questionIDs: fixedQuestionIds
           };
           if (fixedQuestionIds && fixedQuestionIds.length > 0) {
@@ -395,16 +413,16 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       if (!isResumeLoad) {
         this.questions = await this.dbService.getRandomQuestions(
           this.quizSettings.publicContest,
-          this.quizSettings.numQuestions,
+          this.quizSettings.totalQuestionsInQuiz,
           this.quizSettings.selectedTopics,
           this.quizSettings.keywords,
           this.quizSettings.questionIDs,
           this.quizSettings.topicDistribution
         );
         if (this.quizSettings.topicDistribution && this.quizSettings.topicDistribution.length > 0) {
-          this.quizSettings.numQuestions = this.questions.length;
+          this.quizSettings.totalQuestionsInQuiz = this.questions.length;
         } else {
-          this.questions = this.questions.slice(0, this.quizSettings.numQuestions);
+          this.questions = this.questions.slice(0, this.quizSettings.totalQuestionsInQuiz);
         }
       }
 
@@ -414,7 +432,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         return;
       }
 
-      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDuration > 0 && !this.timerSubscription && (!isResumeLoad || (isResumeLoad && this._timeLeftSeconds > 0))) {
+      if (this.questions.length > 0 && this.isTimerEnabled && this.timerDurationSeconds > 0 && !this.timerSubscription && (!isResumeLoad || (isResumeLoad && this._timeLeftSeconds > 0))) {
         // Only start new timer if not resuming OR if resuming and there's time left
         this.startTimer();
       }
@@ -1047,7 +1065,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
         if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds > 0) {
           this._timeLeftSeconds = pausedAttempt.timeLeftOnPauseSeconds;
-          this.timerDuration = this._timeLeftSeconds; // Important for startTimer logic
+          this.timerDurationSeconds = this._timeLeftSeconds; // Important for startTimer logic
           // Timer will be started in loadQuestions if conditions met
         } else if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds <= 0) {
           this.quizIsOverByTime = true; // Quiz had already timed out
@@ -1532,7 +1550,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   async loadNeverEncounteredQuestionIds(): Promise<void> {
     this.neverEncounteredQuestions = await this.dbService.getNeverEncounteredRandomQuestionsByParams(
       this.quizSettings.publicContest ?? '',
-      this.quizSettings.numQuestions,
+      this.quizSettings.totalQuestionsInQuiz,
       this.quizSettings.selectedTopics,
       this.quizSettings.keywords,
       this.quizSettings.questionIDs,

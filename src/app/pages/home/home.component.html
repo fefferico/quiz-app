@@ -180,7 +180,7 @@
       <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [modalTitle]="quizSetupModalTitle"
                        [contestName]="selectedPublicContest" (submitFeedback)="handleQuizSetupSubmitted($event)"
                        [enableTimer]="isTimerEnabled"
-                       [timerDuration]="timerDuration"
+                       [timerDurationSeconds]="timerDurationSeconds"
                        (cancelFeedback)="closeQuizSetupModal()">
       </app-setup-modal>
     </app-simple-modal>

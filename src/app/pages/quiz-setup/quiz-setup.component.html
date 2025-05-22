@@ -53,10 +53,11 @@
     </div>
 
     <!-- Detailed Topic Selection (disabled if fixed IDs are set) -->
-    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && !isStudyMode"
+    <div *ngIf="!selectAllTopics && availableTopics.length > 0"
       class="mb-8 border-t dark:border-gray-700 pt-6"
       [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
-      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di
+      <h3 *ngIf="isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
+      <h3 *ngIf="!isStudyMode" class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona gli argomenti e il numero di
         domande per argomento (Modalità personalizzata):</h3>
       <div class="space-y-2 mb-4">
         <div *ngFor="let topic of availableTopics" class="flex items-center">
@@ -93,24 +94,6 @@
         Totale domande impostate: <strong class="text-indigo-700 dark:text-indigo-400">{{ selectedNumQuestions
           }}</strong>
       </p>
-    </div>
-
-    <!-- Simple Topic Selection for Study Mode (disabled if fixed IDs are set) -->
-    <div *ngIf="!selectAllTopics && availableTopics.length > 0 && isStudyMode"
-      class="mb-8 border-t dark:border-gray-700 pt-6"
-      [ngClass]="{'opacity-60 pointer-events-none': preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''}">
-      <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona l'argomento da studiare:</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-        <div *ngFor="let topic of availableTopics" class="flex items-center">
-          <input id="study-topic-cb-{{topic}}" name="study-topic-cb-{{topic}}" type="checkbox"
-            [checked]="isTopicSelectedForDisplay(topic)" (change)="toggleTopicCheckbox(topic)"
-            [disabled]="preloadedFixedQuestionIds.length > 0 || fixedQuestionIdsInput.trim() !== ''"
-            class="h-4 w-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
-          <label for="study-topic-cb-{{topic}}" class="ml-2 block text-sm text-gray-900 dark:text-gray-200 break-words">
-            {{ topic }}
-          </label>
-        </div>
-      </div>
     </div>
 
     <div class="mb-4">
@@ -290,6 +273,7 @@
             </path>
           </svg>
           <fa-icon *ngIf="!isExportingPDF && !isStudyMode" class="mx-2 fa-lg" [icon]="military"></fa-icon>
+          <fa-icon *ngIf="!isExportingPDF && isStudyMode" class="mx-2 fa-lg" [icon]="faBook"></fa-icon>
           <span *ngIf="isExportingPDF">Esecuzione in corso...</span>
           <span *ngIf="!isExportingPDF">{{ isStudyMode ? 'Inizia a studiare' : 'Inizia il Quiz' }}</span>
         </button>

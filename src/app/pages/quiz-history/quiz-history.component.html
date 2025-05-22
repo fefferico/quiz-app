@@ -101,14 +101,14 @@
                 }}%)
               </span>
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span class="font-extrabold border rounded bg-indigo-300 border-indigo-500 px-1 mr-1"> Totali:
+            <p class="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span class="font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1"> Totali:
                 {{attempt?.totalQuestionsInQuiz}}</span>
-              <span class="font-extrabold border rounded bg-green-300 border-green-500 px-1 mr-1"> Corrette:
+              <span class="font-extrabold border rounded bg-green-300 dark:bg-green-500 dark:text-white border-green-500 px-1 mr-1"> Corrette:
                 {{getCorrectCountForAttempt(attempt)}}</span>
-              <span class="font-extrabold border rounded bg-red-300 border-red-500 px-1 mr-1"> Errate:
+              <span class="font-extrabold border rounded bg-red-300 dark:bg-red-500 dark:text-white border-red-500 px-1 mr-1"> Errate:
                 {{getWrongCountForAttempt(attempt)}}</span>
-              <span class="font-extrabold border rounded bg-yellow-300 border-yellow-500 px-1"> Saltate:
+              <span class="font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1"> Saltate:
                 {{getSkipCountForAttempt(attempt)}}</span>
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
