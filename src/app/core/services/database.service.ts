@@ -532,7 +532,7 @@ export class DatabaseService implements OnDestroy {
     return (data ?? []).map(this.mapQuizAttemptFromSupabase);
   }
 
-  async getQuizAttemptsBySpecificDate(contestId: number, date: Date): Promise<QuizAttempt[]> {
+  async getQuizAttemptsBySpecificDate(contestId: number, date: Date, userId: number): Promise<QuizAttempt[]> {
     const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1); // Exclusive end
     const operationName = `getQuizAttemptsBySpecificDate for contest ${contestId}, date ${date.toDateString()}`;
@@ -540,6 +540,7 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<QuizAttempt>(
       this.supabase.from('quiz_attempts').select('*')
         .eq('fk_contest_id', contestId)
+        .eq('fk_user_id', userId)
         .gte('timestamp_start', startOfDay.toISOString())
         .lt('timestamp_start', endOfDay.toISOString())
         .order('timestamp_start', { ascending: false }),
@@ -720,7 +721,7 @@ export class DatabaseService implements OnDestroy {
   async getProblematicQuestionsIdsByDate(
     dateSpecifier: 'today' | 'yesterday' | Date,
     contestId: number | null = null,
-    userId?: string
+    userId: number
   ): Promise<string[]> {
     const operationName = `getProblematicQuestionsIdsByDate for ${typeof dateSpecifier === 'string' ? dateSpecifier : dateSpecifier.toDateString()}` + (contestId ? `, contest ${contestId}` : '');
 
@@ -756,7 +757,7 @@ export class DatabaseService implements OnDestroy {
         .lt('timestamp_start', endDateIsoExclusive); // Attempts started within the day
 
       if (contestId) {
-        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId);
+        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId).eq('fk_user_id',userId);
       }
       // if (userId) { attemptsQuery = attemptsQuery.eq('user_id', userId); }
 

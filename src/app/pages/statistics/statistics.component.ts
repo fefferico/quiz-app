@@ -300,7 +300,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
         this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.authService.getCurrentUserId()),
         this.dbService.fetchAllRows(currentContest.id) // Assuming this method filters by publicContest
-        //this.dbService.getAllQuestions(this.selectedPublicContest.id) // Assumes this method filters by publicContest
       ]);
 
       this.quizAttempts = quizAttempts;
@@ -730,9 +729,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async resetStatistics(): Promise<void> {
-      const currentContest = this.contestSelectionService.checkForContest();
+    const currentContest = this.contestSelectionService.checkForContest();
     if (currentContest === null) {
-        this.router.navigate(['/home']);
+      this.router.navigate(['/home']);
       return;
     }
 
@@ -764,9 +763,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startPracticeQuizForTopicOLD(topic: string): void {
-      const currentContest = this.contestSelectionService.checkForContest();
+    const currentContest = this.contestSelectionService.checkForContest();
     if (currentContest === null) {
-        this.router.navigate(['/home']);
+      this.router.navigate(['/home']);
       return;
     }
 
@@ -1161,7 +1160,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Pass this.selectedPublicContest.id to the dbService call
-    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(currentContest.id, date);
+    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(currentContest.id, date, this.getUserId());
     if (attemptsForDate.length === 0) {
       return { // Return a shell object if no attempts, so chart shows "0"
         date: this.datePipe.transform(date, 'yyyy-MM-dd')!,
@@ -1638,5 +1637,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.alertService.showAlert("Info", "Nessun dato disponibile per oggi!");
     }
+  }
+
+  getUserId(): number {
+    let userId = this.authService.getCurrentUserId();
+    if (userId === 3) {
+      userId = 2;
+    }
+    return userId;
   }
 }

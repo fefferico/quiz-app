@@ -153,9 +153,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       this.loadingButtonKey = 'all_contest_data';
       try {
         await Promise.all([
-          this.loadTodayProblematicQuestions(contest),
-          this.loadYesterdayProblematicQuestions(contest),
-          this.countNeverEncounteredQuestion(contest),
+          this.loadTodayProblematicQuestions(contest,this.getUserId()),
+          this.loadYesterdayProblematicQuestions(contest,this.getUserId()),
+          this.countNeverEncounteredQuestion(contest,this.getUserId()),
           this.checkForPausedQuiz()
         ]);
       } catch (error) {
@@ -194,15 +194,15 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
   }
 
-  async loadYesterdayProblematicQuestions(contest: Contest | null): Promise<void> {
+  async loadYesterdayProblematicQuestions(contest: Contest | null, userId: number): Promise<void> {
     this.loadingButtonKey = 'yesterday_problematic';
-    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contest?.id);
+    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contest?.id, userId);
     this.loadingButtonKey = null;
   }
 
-  async loadTodayProblematicQuestions(contest: Contest | null): Promise<void> {
+  async loadTodayProblematicQuestions(contest: Contest | null, userId: number): Promise<void> {
     this.loadingButtonKey = 'today_problematic';
-    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contest?.id);
+    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contest?.id, userId);
     this.loadingButtonKey = null;
   }
 
@@ -258,7 +258,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.loadingButtonIndex = -1;
   }
 
-  async countNeverEncounteredQuestion(contest: Contest | null): Promise<void> {
+  async countNeverEncounteredQuestion(contest: Contest | null, userId: number): Promise<void> {
     const currentContest = this.contestSelectionService.checkForContest();
     if (currentContest === null) {
       return;
@@ -266,7 +266,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     this.loadingButtonKey = 'never_encountered';
     // Assuming getNeverAnsweredQuestionCount takes contest ID (string|undefined)
-    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(currentContest.id, this.authService.getCurrentUserId());
+    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(currentContest.id, userId);
     this.loadingButtonKey = null;
   }
 
@@ -286,7 +286,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.prepareAndOpenModal(
       async () => {
         // selectedPublicContest is confirmed not null by the guard above
-        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest!.id);
+        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest!.id, this.getUserId());
         return this.dbService.getQuestionByIds(ids);
       },
       `Errori del ${formattedDate} (${this.selectedPublicContest?.name || 'Generale'})`,
@@ -481,5 +481,13 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   compareWithFn(obj1: Contest | null, obj2: Contest | null): boolean { // Allow nulls
     if (obj1 === null && obj2 === null) return true; // Both null, consider them same for placeholder
     return obj1 && obj2 ? obj1.id === obj2.id : obj1 === obj2;
+  }
+
+  getUserId(): number {
+    let userId = this.authService.getCurrentUserId();
+    if (userId === 3){
+      userId = 2;
+    }
+    return userId;
   }
 }
