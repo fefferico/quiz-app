@@ -29,7 +29,7 @@
           <fa-icon class="ml-2 fa-lg" [icon]="faLandmark"></fa-icon>
           Nuovo Quiz
         </button>
-        <button *ngIf="authService.isAuthenticated() && !authService.isStatsViewer()"
+        <button *ngIf="authService.isAuthenticated()"
           class="px-3 py-2 rounded hover:bg-indigo-700 dark:hover:bg-indigo-500 text-center sm:text-left transition-colors duration-150"
           [routerLink]="'/quiz/history'" routerLinkActive="active">
           <fa-icon class="ml-2 fa-lg" [icon]="faHistory"></fa-icon>
@@ -79,7 +79,7 @@
           <fa-icon class="ml-2 fa-lg" [icon]="faLandmark"></fa-icon>
           Nuovo Quiz
         </button>
-        <button *ngIf="authService.isAuthenticated() && !authService.isStatsViewer()"
+        <button *ngIf="authService.isAuthenticated()"
           class="block w-full px-3 py-2 rounded hover:bg-indigo-700 dark:hover:bg-indigo-500 text-left transition-colors duration-150 text-center"
           [routerLink]="'/quiz/history'" routerLinkActive="active" (click)="closeMenu()">
           <fa-icon class="ml-2 fa-lg" [icon]="faHistory"></fa-icon>

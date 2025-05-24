@@ -183,9 +183,9 @@
     <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="quizSetupModalTitle || 'Configurazione quiz'"
       (close)="closeQuizSetupModal()">
       <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [modalTitle]="quizSetupModalTitle"
-        [contestName]="selectedPublicContest === null ? undefined : selectedPublicContest" (submitFeedback)="handleQuizSetupSubmitted($event)"
-        [enableTimer]="isTimerEnabled" [timerDurationSeconds]="timerDurationSeconds"
-        (cancelFeedback)="closeQuizSetupModal()">
+        [contestName]="selectedPublicContest === null ? undefined : selectedPublicContest"
+        (submitFeedback)="handleQuizSetupSubmitted($event)" [enableTimer]="isTimerEnabled"
+        [timerDurationSeconds]="timerDurationSeconds" (cancelFeedback)="closeQuizSetupModal()">
       </app-setup-modal>
     </app-simple-modal>
   </div>
@@ -200,10 +200,17 @@
       <fa-icon class="mr-2" [icon]="faBarChart"></fa-icon>
       Statistiche
     </button>
-    <button [disabled]="true"
+    <button [routerLink]="'/quiz/history'"
+      [queryParams]="selectedPublicContest ? { contest: selectedPublicContest } : null"
       [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
       [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
       [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+      class="w-full inline-block bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 text-center"
+      [ngClass]="{'opacity-50': isLoadingPageData || !selectedPublicContest}">
+      <fa-icon class="mr-2" [icon]="faHistory"></fa-icon>
+      Storico Quiz
+    </button>
+    <button [disabled]="true"
       class="flex items-center justify-center w-full bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'never_encountered')" class="mr-2"
         [icon]="faQuestion"></fa-icon>
