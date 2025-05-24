@@ -1,5 +1,6 @@
 const fs = require('fs'); // Node.js File System module
 const path = require('path'); // Node.js Path module
+let startId = 20000;
 
 // The function from the previous example
 function jsArrayToSupabaseBulkInsertSQL(tableName, dataArray) {
@@ -8,7 +9,10 @@ function jsArrayToSupabaseBulkInsertSQL(tableName, dataArray) {
   }
   const columns = Object.keys(dataArray[0]);
 
-  function formatValue(value) {
+  function formatValue(value, col) {
+    if (col === 'id') {
+      return Number(value)+20000;
+    }
     if (value === null || typeof value === 'undefined') {
       return 'NULL';
     }
@@ -33,7 +37,7 @@ function jsArrayToSupabaseBulkInsertSQL(tableName, dataArray) {
   const columnNamesSQL = columns.map(col => `"${col}"`).join(', '); // Quote column names for safety
 
   const valueStrings = dataArray.map(obj => {
-    const rowValues = columns.map(col => formatValue(obj[col]));
+    const rowValues = columns.map(col => formatValue(obj[col], col));
     return `(${rowValues.join(', ')})`;
   });
 
@@ -63,8 +67,8 @@ function main() {
     console.log(`Reading data from: ${absolutePath}`);
 
     if (!fs.existsSync(absolutePath)) {
-        console.error(`Error: Data file not found at ${absolutePath}`);
-        process.exit(1);
+      console.error(`Error: Data file not found at ${absolutePath}`);
+      process.exit(1);
     }
 
     const fileExtension = path.extname(absolutePath).toLowerCase();
@@ -90,8 +94,8 @@ function main() {
     }
 
     if (!Array.isArray(dataArray)) {
-        console.error("Error: The data file did not resolve to an array.");
-        process.exit(1);
+      console.error("Error: The data file did not resolve to an array.");
+      process.exit(1);
     }
 
     const sqlStatement = jsArrayToSupabaseBulkInsertSQL(tableName, dataArray);

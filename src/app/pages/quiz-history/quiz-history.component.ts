@@ -13,6 +13,8 @@ import { IconDefinition, faHome, faTrashCan, faLandmark } from '@fortawesome/fre
 import { AlertService } from '../../services/alert.service';
 import { AlertButton } from '../../models/alert.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
+import { Contest } from '../../models/contes.model';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-quiz-history',
@@ -28,6 +30,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef); // For triggering change detection if needed
   private route = inject(ActivatedRoute); // Inject ActivatedRoute
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
+  private authService = inject(AuthService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -55,7 +58,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   // --- End Filter Properties ---
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
+  get selectedPublicContest(): Contest | null {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
@@ -85,11 +88,17 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   async loadQuizHistory(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.isLoading = true;
     this.errorLoading = null;
     try {
       // Pass currentContestId to filter attempts if a contest is selected
-      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(this.selectedPublicContest);
+      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.authService.getCurrentUserId());
       this.applyFilters();
     } catch (error) {
       console.error('Error loading quiz history:', error);
@@ -101,9 +110,16 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   async loadAvailableTopics(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+
     try {
       // Filter questions by contest before extracting topics
-      const questions = await this.dbService.getAllQuestions(this.selectedPublicContest);
+      const questions = await this.dbService.getAllQuestions(currentContest.id);
       const topicsFromQuestions = new Set(questions.map(q => q.topic).filter(t => !!t) as string[]);
 
       const topicsFromAttempts = this.allQuizAttempts // allQuizAttempts is already contest-filtered
@@ -180,7 +196,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   getTopicsSummary(topics: string[] | undefined): string {
     if (!topics || topics.length === 0) {
       // If a contest is selected and no specific topics, it implies all topics of that contest
-      return this.selectedPublicContest ? `Tutti (Concorso: ${this.selectedPublicContest})` : 'Tutti gli argomenti';
+      return this.selectedPublicContest ? `Tutti (Concorso: ${this.selectedPublicContest.name})` : 'Tutti gli argomenti';
     }
     const MAX_DISPLAY_TOPICS = 2;
     if (topics.length > MAX_DISPLAY_TOPICS) {
@@ -207,6 +223,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   async clearAllHistory(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+
     const customBtns: AlertButton[] = [{
       text: 'Annulla',
       role: 'cancel',
@@ -229,7 +252,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       }
       try {
         // Pass currentContestId to clear history only for that contest
-        await this.dbService.clearAllQuizAttempts(this.selectedPublicContest);
+        await this.dbService.clearAllQuizAttempts(currentContest.id);
         this.allQuizAttempts = []; // Or reload: await this.loadQuizHistory();
         this.quizAttempts = [];
         this.applyFilters();

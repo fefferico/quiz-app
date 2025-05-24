@@ -20,6 +20,8 @@ import {
   faLandmark
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
+import { Contest } from '../../../models/contes.model';
+import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -39,7 +41,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   private dbService = inject(DatabaseService);
   private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef); // For manual change detection if needed
-
+  private contestSelectionService = inject(ContestSelectionService); // Inject the new service
   // Icons
   segnala: IconDefinition = faExclamation;
   repeatIcon: IconDefinition = faRepeat;
@@ -66,6 +68,11 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   // --- END NEW ---
 
   private routeSub!: Subscription;
+
+    // Getter to easily access the contest from the template
+    get selectedPublicContest(): Contest | null {
+      return this.contestSelectionService.getCurrentSelectedContest();
+    }
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
@@ -115,6 +122,11 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   groupQuestionsByTopic(): void {
+    if (this.selectedPublicContest === null ){
+      this.alertService.showAlert("Errore", "Non è stata selezionata alcuna banca dati valida.");
+      return;
+    }
+
     if (!this.quizAttempt || !this.quizAttempt.allQuestions) {
       this.groupedQuestions = [];
       return;
@@ -138,6 +150,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         questionSnapshot: qInfo.questionSnapshot,
         userAnswerIndex: answeredVersion ? answeredVersion.userAnswerIndex : -1, // -1 indicates unanswered
         isCorrect: answeredVersion ? answeredVersion.isCorrect : false, // Treat unanswered as incorrect for results
+        contestId: this.selectedPublicContest.id
       };
       groups[topic].push(displayQuestion);
     }

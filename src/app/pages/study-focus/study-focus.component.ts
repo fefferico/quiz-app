@@ -9,6 +9,7 @@ import { IconDefinition, faHome, faBarChart, faLandmark } from '@fortawesome/fre
 import { QuizSettings } from '../../models/quiz.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { AlertService } from '../../services/alert.service';
+import { Contest } from '../../models/contes.model';
 
 interface CategorizedQuestion extends Question {
   failureRate: number;
@@ -48,8 +49,8 @@ export class StudyFocusComponent implements OnInit {
   questionGroups: QuestionGroup[] = [];
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
-    return this.contestSelectionService.getCurrentSelectedContest() || '';
+  get selectedPublicContest(): Contest | null {
+    return this.contestSelectionService.getCurrentSelectedContest();
   }
 
   // Define categories and their thresholds (failure rate: 0.0 to 1.0)
@@ -62,21 +63,17 @@ export class StudyFocusComponent implements OnInit {
   ];
   protected readonly MIN_ATTEMPTS_FOR_CATEGORY = 3; // Min attempts before categorizing a question
 
-
-  private checkForContest(): void {
-    if (!this.selectedPublicContest) {
-      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
-        this.router.navigate(['/home']);
-      })
-    }
-  }
-
   ngOnInit(): void {
-    this.checkForContest();
-    this.loadAndCategorizeQuestions(this.selectedPublicContest);
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+    this.loadAndCategorizeQuestions(currentContest.id);
   }
 
-  async loadAndCategorizeQuestions(contestId: string): Promise<void> {
+  async loadAndCategorizeQuestions(contestId: number): Promise<void> {
     this.isLoading = true;
     try {
       const questionsFromDb = await this.dbService.getAllQuestions(contestId);

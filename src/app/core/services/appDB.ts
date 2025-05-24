@@ -84,7 +84,7 @@ export class AppDB extends Dexie {
               scoreIsCorrect: existingQ_in_db.scoreIsCorrect,
               scoreIsWrong: existingQ_in_db.scoreIsWrong,
               scoreIsSkip: existingQ_in_db.scoreIsSkip,
-
+              contestId: existingQ_in_db.contestId
             });
           } else {
             // No content update needed based on version or content diff,
@@ -110,6 +110,7 @@ export class AppDB extends Dexie {
             scoreIsCorrect: 0.029,
             scoreIsWrong: 0.029,
             scoreIsSkip: 0,
+            contestId: 1 // default
           });
         }
       }
@@ -161,7 +162,8 @@ export class AppDB extends Dexie {
         scoreIsWrong: 0.029,// default
         scoreIsSkip: 0,// default
         // Ensure all fields defined in the schema have a default or are from initialQuestions
-        publicContest: q.publicContest // If publicContest is in your Question model
+        publicContest: q.publicContest, // If publicContest is in your Question model
+        contestId: 1
       }));
       try {
         await this.questions.bulkAdd(questionsWithDefaults);

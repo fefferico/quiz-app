@@ -14,6 +14,7 @@ import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevron
 import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
+import { Contest } from '../../models/contes.model';
 
 @Component({
   selector: 'app-quiz-setup',
@@ -73,7 +74,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private previousUseDetailedTopicCounts = false;
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
+  get selectedPublicContest(): Contest | null {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
@@ -130,8 +131,15 @@ export class QuizSetupComponent implements OnInit, DoCheck {
 
 
   async loadTopics(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+
     try {
-      const questions = await this.dbService.getAllQuestions(this.selectedPublicContest);
+      const questions = await this.dbService.getAllQuestions(currentContest.id);
       const topics = new Set(questions.map(q => q.topic || 'Uncategorized')); // Ensure topic is string
       this.availableTopics = Array.from(topics).sort();
       if (this.preloadedFixedQuestionIds.length === 0) { // Only update if not in fixed ID mode
@@ -283,6 +291,13 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       return;
     }
 
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+
     const keywords = this.keywordsInput.split(/[\s,]+/).map(kw => kw.trim()).filter(kw => kw.length > 0);
     let quizSettings: Partial<QuizSettings> = {};
     let queryParams: any = {};
@@ -294,7 +309,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       ? this.preloadedFixedQuestionIds
       : this.fixedQuestionIdsInput.split(',').map(id => id.trim()).filter(id => id);
 
-    queryParams.publicContest = this.selectedPublicContest;
+    queryParams.publicContest = currentContest.id;
     queryParams.hideCorrectAnswer = this.hideCorrectAnswer;
 
     if (effectiveFixedQuestionIds.length > 0) {
@@ -371,6 +386,12 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   }
 
   async exportQuestionsToPDF(includeAnswers: boolean = false): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     // This method would also need to respect preloadedFixedQuestionIds if they are set
     const effectiveFixedQuestionIds = this.preloadedFixedQuestionIds.length > 0
       ? this.preloadedFixedQuestionIds
@@ -405,7 +426,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         }
         if (this.isStudyMode && this.selectAllTopics && !keywords.length) numQuestionsForFetch = 9999;
 
-        questionsToFetch = await this.dbService.getRandomQuestions(this.selectedPublicContest,
+        questionsToFetch = await this.dbService.getRandomQuestions(currentContest.id,
           numQuestionsForFetch, topicsForFetch, keywords, qstIDs, topicDistributionForFetch
         );
       }
@@ -489,6 +510,16 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   toggleAdvancedSettings(topic: string): void {
     const currentState = this.accordionState.get(topic);
     this.accordionState.set(topic, !currentState);
+  }
+
+  checkForContest(): Contest | null {
+    if (this.selectedPublicContest === null) {
+      this.alertService.showAlert("Errore", "Non è stata selezionata alcuna banca dati valida. Si verrà ora rediretti alla pagina principale").then(() => {
+        this.router.navigate(['/home']);
+      });
+      return this.selectedPublicContest;
+    }
+    return null;
   }
 
   ngOnDestroy(): void { // Ensure to unsubscribe

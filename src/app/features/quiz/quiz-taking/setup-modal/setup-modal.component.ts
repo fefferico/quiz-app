@@ -6,6 +6,7 @@ import { GenericData } from '../../../../models/statistics.model';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser } from '@fortawesome/free-solid-svg-icons';
+import { Contest } from '../../../../models/contes.model';
 
 @Component({
   selector: 'app-setup-modal', // Changed selector to avoid confusion
@@ -20,7 +21,7 @@ export class SetupModalComponent implements OnInit {
   @Input() topics: GenericData[] = []; // Placeholder for topic counts if needed
   clonedTopics: GenericData[] = []; // Placeholder for topic counts if needed
   @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
-  @Input() contestName: string = '';
+  @Input() contestName: Contest | undefined; // MODIFIED HERE
   @Input() enableTimer: boolean = false;
   @Input() timerDurationSeconds: number = 0;
   @Output() submitFeedback = new EventEmitter<any>();
@@ -69,7 +70,7 @@ export class SetupModalComponent implements OnInit {
         })),
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
-        publicContest: this.contestName,
+        publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer
       };
     } else {
@@ -78,7 +79,7 @@ export class SetupModalComponent implements OnInit {
         selectedTopics: [], // Empty means all if selectAllTopics is true
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
-        publicContest: this.contestName,
+        publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer
       };
     }

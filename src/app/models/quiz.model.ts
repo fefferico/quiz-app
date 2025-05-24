@@ -1,5 +1,6 @@
 // src/app/models/quiz.model.ts
 
+import { Contest } from './contes.model';
 import { Question } from './question.model';
 
 // Settings chosen by the user for a particular quiz session
@@ -17,7 +18,8 @@ export interface AnsweredQuestion {
   isCorrect: boolean;
   // Snapshot of the question at the time of the quiz for robust review
   // This is important if questions in the main bank can be edited
-  questionSnapshot: QuestionSnapshotInfo
+  questionSnapshot: QuestionSnapshotInfo,
+  contestId: number
 }
 
 export interface QuestionSnapshotInfo {
@@ -53,6 +55,8 @@ export interface QuizAttempt {
   currentQuestionIndex?: number; // <-- NEW: For resuming
   timeLeftOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
   timeElapsedOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
+  contestId: number;
+  userId: number;
 }
 
 export interface QuizSettings {
@@ -66,7 +70,7 @@ export interface QuizSettings {
   enableStreakSounds?: boolean;      // <-- NEW
   timerDurationSeconds?: number; // <-- NEW (total duration in seconds
   questionIDs?: string[];
-  publicContest: string;
+  publicContest: number;
   hideCorrectAnswer?: boolean;
 }
 

@@ -3,6 +3,8 @@ import {Injectable} from '@angular/core';
 import {SupabaseClient, User as SupabaseUser} from '@supabase/supabase-js'; // Renamed User to SupabaseUser
 import {BehaviorSubject, Observable} from 'rxjs';
 import {SupabaseService} from './supabase-service.service';
+import { DatabaseService } from './database.service';
+import { User } from '../../models/user.model';
 
 // Define User Roles and AppUser interface
 export enum UserRole {
@@ -14,6 +16,7 @@ export enum UserRole {
 
 export interface AppUser {
   id: string; // username for local users, or Supabase ID
+  userId?: number;
   role: UserRole;
   email?: string;
   // Include other fields if needed, mirroring SupabaseUser for potential compatibility
@@ -46,7 +49,7 @@ export class AuthService {
     federico: { hashedPassword: 'c254d572ea30ad1e1a51082304a0ffc46fc25baff396f655a5cfd85f578c6e62', role: UserRole.Admin, email: 'federico@example.com' },
   };
 
-  constructor(private supabaseService: SupabaseService) {
+  constructor(private supabaseService: SupabaseService, private dbService: DatabaseService) {
     this.supabase = this.supabaseService.client;
 
     const cachedUser = this.getUserFromCache();
@@ -170,11 +173,14 @@ export class AuthService {
     // @ts-ignore
     const specialUserEntry = this.specialUsers[username];
 
-    if (specialUserEntry) {
+    const foundUser: User = await this.dbService.getUserByUsername(username);
+
+    if (foundUser) {
       const hashedPassword = await this._hashPassword(password);
-      if (specialUserEntry.hashedPassword === hashedPassword) {
+      if (foundUser.hashedPassword === hashedPassword) {
         const user: AppUser = {
           id: username,
+          userId: foundUser.id,
           role: specialUserEntry.role,
           email: specialUserEntry.email,
           app_metadata: { provider: 'local_special_user' },
@@ -235,6 +241,10 @@ export class AuthService {
 
   getCurrentUserSnapshot(): AppUser | null {
     return this._currentUser.value;
+  }
+
+  getCurrentUserId(): number {
+    return this.getCurrentUserSnapshot()?.userId ?? -1;
   }
 
   isAuthenticated(): boolean {

@@ -5,8 +5,10 @@ import { AnsweredQuestion, QuizAttempt, TopicCount } from '../../models/quiz.mod
 import { AppDB } from './appDB';
 import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import { AuthService } from './auth.service';
 import { Subscription } from 'rxjs'; // Added import
+import { User } from '../../models/user.model';
+import { Contest } from '../../models/contes.model';
+import { error } from 'console';
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -21,36 +23,15 @@ interface BaseSupabaseResponse {
   providedIn: 'root' // Ensures this service is a singleton
 })
 export class DatabaseService implements OnDestroy {
-  private dexieDB!: AppDB; // Changed: Definite assignment assertion
   private supabase: SupabaseClient;
   private isDbInitialized = false; // Added: Flag to track DB initialization
   private authSubscription: Subscription | undefined; // Added: For managing subscription
 
   constructor(
     private supabaseService: SupabaseService,
-    private authService: AuthService,
   ) {
     console.log('DatabaseService constructor called.');
     this.supabase = this.supabaseService.client; // Changed to use the client getter
-
-    // Subscribe to user authentication state
-    this.authSubscription = this.authService.currentUser$.subscribe(user => {
-      if (user && !this.isDbInitialized) {
-        console.log('User authenticated, initializing AppDB in DatabaseService.');
-        this.dexieDB = new AppDB(this.authService); // Initialize Dexie
-        this.dexieDB.open().then(() => {
-          console.log('DexieDB opened successfully by DatabaseService.');
-          this.isDbInitialized = true;
-        }).catch(err => {
-          console.error('Failed to open DexieDB from DatabaseService: ', err.stack || err);
-          // Optionally, reset isDbInitialized or handle error state more robustly
-        });
-      } else if (!user && this.isDbInitialized) {
-        // User logged out, and DB was initialized
-        console.log('User logged out. DexieDB was initialized. Consider cleanup if needed.');
-        this.isDbInitialized = false;
-      }
-    });
   }
 
   // Added: ngOnDestroy lifecycle hook to unsubscribe
@@ -67,11 +48,9 @@ export class DatabaseService implements OnDestroy {
       id: supabaseQuestion.id,
       text: supabaseQuestion.text,
       topic: supabaseQuestion.topic,
-
       scoreIsCorrect: supabaseQuestion.scoreIsCorrect,
       scoreIsWrong: supabaseQuestion.scoreIsWrong,
       scoreIsSkip: supabaseQuestion.scoreIsSkip,
-
       options: supabaseQuestion.options,
       correctAnswerIndex: supabaseQuestion.correct_answer_index,
       explanation: supabaseQuestion.explanation,
@@ -84,6 +63,7 @@ export class DatabaseService implements OnDestroy {
       lastAnswerCorrect: supabaseQuestion.last_answer_correct,
       accuracy: supabaseQuestion.accuracy,
       publicContest: supabaseQuestion.public_contest,
+      contestId: supabaseQuestion.fk_contest_id
     };
   }
 
@@ -123,6 +103,8 @@ export class DatabaseService implements OnDestroy {
       currentQuestionIndex: supabaseAttempt.current_question_index,
       timeLeftOnPauseSeconds: supabaseAttempt.time_left_on_pause_seconds,
       timeElapsedOnPauseSeconds: supabaseAttempt.time_elapsed_on_pause_seconds,
+      contestId: supabaseAttempt.fk_contest_id,
+      userId: supabaseAttempt.fk_user_id
     };
   }
 
@@ -154,6 +136,8 @@ export class DatabaseService implements OnDestroy {
     if (appAttempt.currentQuestionIndex !== undefined) supabaseAttempt.current_question_index = appAttempt.currentQuestionIndex;
     if (appAttempt.timeLeftOnPauseSeconds !== undefined) supabaseAttempt.time_left_on_pause_seconds = appAttempt.timeLeftOnPauseSeconds;
     if (appAttempt.timeElapsedOnPauseSeconds !== undefined) supabaseAttempt.time_elapsed_on_pause_seconds = appAttempt.timeElapsedOnPauseSeconds;
+    if (appAttempt.contestId !== undefined) supabaseAttempt.fk_contest_id = appAttempt.contestId;
+    if (appAttempt.userId !== undefined) supabaseAttempt.fk_user_id = appAttempt.userId;
     return supabaseAttempt;
   }
 
@@ -220,47 +204,39 @@ export class DatabaseService implements OnDestroy {
 
   // --- Question Table Methods ---
 
-  async getAllQuestionAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
-    const operationName = `getAllQuestionAnsweredAtLeastOnce for contest ${contestId}`;
-    return this.handleSupabaseFetch<Question>(
-      this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
-        .or('times_correct.gt.0,times_incorrect.gt.0'),
-      this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => (q.timesCorrect ?? 0) > 0 || (q.timesIncorrect ?? 0) > 0)
-          .toArray();
-      },
-      operationName
-    ) as Promise<Question[]>;
-  }
+  async getAllQuestionAnsweredAtLeastOnce(contestId: number): Promise<Question[]> {
+  const { data, error } = await this.supabase
+    .from('questions')
+    .select('*')
+    .eq('fk_contest_id', contestId)
+    .or('times_correct.gt.0,times_incorrect.gt.0');
 
-  async getAllQuestionCorrectlyAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
+  if (error) {
+    console.error('Supabase error in getAllQuestionAnsweredAtLeastOnce:', error);
+    throw error;
+  }
+  return (data ?? []).map(this.mapQuestionFromSupabase);
+}
+
+
+  async getAllQuestionCorrectlyAnsweredAtLeastOnce(contestId: number): Promise<Question[]> {
     const operationName = `getAllQuestionCorrectlyAnsweredAtLeastOnce for contest ${contestId}`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
-        .gt('times_correct', 0),
+      .eq('fk_contest_id', contestId)
+      .gt('times_correct', 0),
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => (q.timesCorrect ?? 0) > 0)
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
 
-  async getAllQuestionCorrectlyAnsweredAtLeastOnceCount(contestId: string): Promise<number> {
+  async getAllQuestionCorrectlyAnsweredAtLeastOnceCount(contestId: number): Promise<number> {
     const { count, error } = await this.supabase
       .from('questions')
       .select('id', { count: 'exact', head: true })
-      .eq('public_contest', contestId)
+      .eq('fk_contest_id', contestId)
       .gt('times_correct', 0);
 
     if (error) {
@@ -270,52 +246,42 @@ export class DatabaseService implements OnDestroy {
     return count ?? 0;
   }
 
-  async getOnlyQuestionCorrectlyAnswered(contestId: string): Promise<Question[]> {
+  async getOnlyQuestionCorrectlyAnswered(contestId: number): Promise<Question[]> {
     const operationName = `getOnlyQuestionCorrectlyAnswered for contest ${contestId}`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
-        .gt('times_correct', 0)
-        .eq('times_incorrect', 0),
+      .eq('fk_contest_id', contestId)
+      .gt('times_correct', 0)
+      .eq('times_incorrect', 0),
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => (q.timesCorrect ?? 0) > 0 && (q.timesIncorrect ?? 0) === 0)
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
 
-  async getQuestionsByCorrectnessRange(contestId: string, min: number, max: number): Promise<Question[]> {
+  async getQuestionsByCorrectnessRange(contestId: number, min: number, max: number): Promise<Question[]> {
     const operationName = `getQuestionsByCorrectnessRange for contest ${contestId} (min: ${min}, max: ${max})`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .gte('accuracy', min)
         .lte('accuracy', max),
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => this.rateOfCorrectlyAnswered(q) >= min && this.rateOfCorrectlyAnswered(q) <= max) // Corrected Dexie logic
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
 
-  async getAllQuestionNeverAnswered(contestId: string): Promise<string[]> {
+  async getAllQuestionNeverAnswered(contestId: number): Promise<string[]> {
     const operationName = `getAllQuestionNeverAnswered for contest ${contestId}`;
     const chunkSize = 1000; // Supabase limit
     let allRows: any[] = [];
     let start = 0;
     while (true) {
       const { data, error } = await this.supabase.from('questions').select('id')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .eq('times_correct', 0)
         .eq('times_incorrect', 0)
         .range(start, start + chunkSize - 1);
@@ -332,20 +298,15 @@ export class DatabaseService implements OnDestroy {
     return allRows.map(q => q.id); // Return only the IDs
   }
 
-  async getAllQuestionWronglyAnsweredAtLeastOnce(contestId: string): Promise<Question[]> {
+  async getAllQuestionWronglyAnsweredAtLeastOnce(contestId: number): Promise<Question[]> {
     const operationName = `getAllQuestionWronglyAnsweredAtLeastOnce for contest ${contestId}`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .gt('times_incorrect', 0),
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => (q.timesIncorrect ?? 0) > 0)
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
@@ -358,25 +319,20 @@ export class DatabaseService implements OnDestroy {
     return (timesCorrect / totalAnswered) * 100;
   }
 
-  async getQuestionsByTopic(contestId: string, topic: string): Promise<Question[]> {
+  async getQuestionsByTopic(contestId: number, topic: string): Promise<Question[]> {
     const operationName = `getQuestionsByTopic for contest ${contestId}, topic '${topic}'`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .ilike('topic', topic), // Case-insensitive match for topic
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => topic.toLowerCase() === (q.topic ?? '').toLowerCase())
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
 
-  async getQuestionsByTopics(contestId: string, topics: string[]): Promise<Question[]> {
+  async getQuestionsByTopics(contestId: number, topics: string[]): Promise<Question[]> {
     if (!topics || topics.length === 0) {
       return this.getAllQuestions(contestId);
     }
@@ -388,23 +344,17 @@ export class DatabaseService implements OnDestroy {
 
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .or(orConditions),
       this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        const lowerTopics = topics.map(t => t.toLowerCase());
-        return this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => lowerTopics.includes((q.topic ?? '').toLowerCase()))
-          .toArray();
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<Question[]>;
   }
 
   async getRandomQuestions(
-    contestId: string,
+    contestId: number,
     count: number,
     topics: string[] = [],
     keywords: string[] = [],
@@ -431,7 +381,7 @@ export class DatabaseService implements OnDestroy {
             // Fetch by specific IDs, then filter by topic client-side
             const questionsById = await this.getQuestionByIds(questionIDs.filter(id => id)); // ensure no undefined ids
             topicSpecificQuestions = questionsById.filter(q =>
-              q.publicContest === contestId &&
+              q.contestId === contestId &&
               dist.topic.toLowerCase() === (q.topic ?? '').toLowerCase()
             );
 
@@ -454,7 +404,7 @@ export class DatabaseService implements OnDestroy {
         if (questionIDs && questionIDs.length > 0) {
           filteredQuestions = await this.getQuestionByIds(questionIDs.filter(id => id));
           if (contestId) { // Ensure contest ID matches if provided
-            filteredQuestions = filteredQuestions.filter(q => q.publicContest === contestId);
+            filteredQuestions = filteredQuestions.filter(q => q.contestId === contestId);
           }
         } else if (topics && topics.length > 0) {
           filteredQuestions = await this.getQuestionsByTopics(contestId, topics);
@@ -478,24 +428,12 @@ export class DatabaseService implements OnDestroy {
 
     } catch (error) {
       console.error(`[DBService] Error in getRandomQuestions, falling back to empty array or simpler Dexie logic if applicable:`, error);
-      // Fallback logic for getRandomQuestions is complex.
-      // For now, just returning empty or rethrowing.
-      // A full Dexie-only version of this function would be needed here for a true fallback.
-      // Given the constituent calls (getQuestionsByTopic etc.) handle their own fallbacks,
-      // this catch might be for errors during the combination/filtering logic.
-      if (!navigator.onLine) {
-        console.warn(`[DBService] Offline during getRandomQuestions. Results might be incomplete or based on stale local data.`);
-        // Attempt a simplified Dexie version if primary fetches failed severely
-        // This is a placeholder for a more robust Dexie-only getRandomQuestions
-        const allDexieQuestions = await this.dexieDB.questions.where('publicContest').equals(contestId).toArray();
-        return allDexieQuestions.sort(() => 0.5 - Math.random()).slice(0, count);
-      }
       throw error;
     }
   }
 
   async getNeverEncounteredRandomQuestionsByParams(
-    contestId: string,
+    contestId: number,
     count: number,
     topics: string[] = [],
     keywords: string[] = [],
@@ -510,7 +448,8 @@ export class DatabaseService implements OnDestroy {
       topics,
       keywords,
       questionIDs,
-      topicDistribution
+      topicDistribution,
+      contestId
     });
     let allPotentialQuestions: Question[] = [];
 
@@ -524,7 +463,7 @@ export class DatabaseService implements OnDestroy {
           if (questionIDs && questionIDs.length > 0) {
             const questionsById = await this.getQuestionByIds(questionIDs.filter(id => id));
             topicSpecificQuestions = questionsById.filter(q =>
-              q.publicContest === contestId &&
+              q.contestId === contestId &&
               dist.topic.toLowerCase() === (q.topic ?? '').toLowerCase() &&
               (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0
             );
@@ -548,7 +487,7 @@ export class DatabaseService implements OnDestroy {
         if (questionIDs && questionIDs.length > 0) {
           baseQuestions = await this.getQuestionByIds(questionIDs.filter(id => id));
           if (contestId) {
-            baseQuestions = baseQuestions.filter(q => q.publicContest === contestId);
+            baseQuestions = baseQuestions.filter(q => q.contestId === contestId);
           }
         } else if (topics && topics.length > 0) {
           baseQuestions = await this.getQuestionsByTopics(contestId, topics);
@@ -573,37 +512,18 @@ export class DatabaseService implements OnDestroy {
 
     } catch (error) {
       console.error(`[DBService] Error in getNeverEncounteredRandomQuestionsByParams:`, error);
-      if (!navigator.onLine) {
-        console.warn(`[DBService] Offline during getNeverEncounteredRandomQuestionsByParams. Using Dexie fallback.`);
-        // Simplified Dexie fallback
-        let dexieQuery = this.dexieDB.questions.where('publicContest').equals(contestId)
-          .filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
-
-        // Basic topic and keyword filtering for Dexie fallback
-        if (topics.length > 0) {
-          const lowerTopics = topics.map(t => t.toLowerCase());
-          dexieQuery = dexieQuery.filter(q => lowerTopics.includes((q.topic ?? '').toLowerCase()));
-        }
-        let dexieCandidates = await dexieQuery.toArray();
-        if (keywords.length > 0) {
-          dexieCandidates = dexieCandidates.filter(q => {
-            const questionTextLower = q.text.toLowerCase();
-            return keywords.some(kw => questionTextLower.includes(kw.toLowerCase()));
-          });
-        }
-        return dexieCandidates.sort(() => 0.5 - Math.random()).slice(0, count);
-      }
       throw error;
     }
   }
 
-  async getAllQuizAttemptsByContest(contestId: string | null): Promise<QuizAttempt[]> {
+  async getAllQuizAttemptsByContest(contestId: number | null, userId: number): Promise<QuizAttempt[]> {
     const operationName = `getAllQuizAttemptsByContest for contest ${contestId}`;
     if (!contestId) return Promise.resolve([]);
 
     const { data, error } = await this.supabase.from('quiz_attempts')
       .select('*')
-      .eq('public_contest_setting', contestId);
+      .eq('fk_contest_id', contestId)
+      .eq('fk_user_id',userId);
 
     if (error) {
       console.error(`[DatabaseService] Supabase error in ${operationName}:`, error);
@@ -612,53 +532,39 @@ export class DatabaseService implements OnDestroy {
     return (data ?? []).map(this.mapQuizAttemptFromSupabase);
   }
 
-  async getQuizAttemptsBySpecificDate(contestId: string, date: Date): Promise<QuizAttempt[]> {
+  async getQuizAttemptsBySpecificDate(contestId: number, date: Date): Promise<QuizAttempt[]> {
     const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1); // Exclusive end
     const operationName = `getQuizAttemptsBySpecificDate for contest ${contestId}, date ${date.toDateString()}`;
 
     return this.handleSupabaseFetch<QuizAttempt>(
       this.supabase.from('quiz_attempts').select('*')
-        .eq('public_contest_setting', contestId)
+        .eq('fk_contest_id', contestId)
         .gte('timestamp_start', startOfDay.toISOString())
         .lt('timestamp_start', endOfDay.toISOString())
         .order('timestamp_start', { ascending: false }),
       this.mapQuizAttemptFromSupabase,
-      (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.quizAttempts.where('settings.publicContest').equals(contestId)
-          .filter(attempt =>
-            attempt.timestampStart >= startOfDay && attempt.timestampStart < endOfDay
-          )
-          .reverse().sortBy('timestampStart');
-      },
+      async () => {},
+      async () => [],
       operationName
     ) as Promise<QuizAttempt[]>;
   }
 
   // --- Question Table Methods (Supabase-first from original) ---
-  async getAllQuestions(contestId?: string | null): Promise<Question[]> {
+  async getAllQuestions(contestId?: number | null): Promise<Question[]> {
     const operationName = `getAllQuestions` + (contestId ? ` for contest ${contestId}` : '');
     let supabaseQuery = this.supabase.from('questions').select('*');
     if (contestId) {
-      supabaseQuery = supabaseQuery.eq('public_contest', contestId);
+      supabaseQuery = supabaseQuery.eq('fk_contest_id', contestId);
     }
 
-    return this.handleSupabaseFetch<Question>(
-      supabaseQuery,
-      this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        let dexieQueryBuilder = this.dexieDB.questions;
-        if (contestId) {
-          return dexieQueryBuilder.where('publicContest').equals(contestId).toArray();
-        }
-        return dexieQueryBuilder.toArray(); // Fetch all if no contestId
-      },
-      operationName
-    ) as Promise<Question[]>;
+    const { data, error } = await supabaseQuery;
+
+    if (error) {
+      console.error('Supabase error in getAllQuestions:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuestionFromSupabase);    
   }
 
   async getQuestionById(id: string): Promise<Question | undefined> {
@@ -666,13 +572,8 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*').eq('id', id).single(),
       this.mapQuestionFromSupabase,
-      async (questions) => {
-        if (questions.length > 0) await this.dexieDB.questions.put(questions[0]);
-      },
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.questions.get(id);
-      },
+      async () => {},
+      async () => [],
       operationName,
       true // isSingleItem
     ) as Promise<Question | undefined>;
@@ -684,17 +585,13 @@ export class DatabaseService implements OnDestroy {
     const validIds = ids.filter(id => id);
     if (validIds.length === 0) return [];
 
-    const operationName = `getQuestionByIds for IDs [${validIds.join(', ')}]`;
-    return this.handleSupabaseFetch<Question>(
-      this.supabase.from('questions').select('*').in('id', validIds),
-      this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return (await this.dexieDB.questions.bulkGet(validIds)).filter(q => q !== undefined) as Question[];
-      },
-      operationName
-    ) as Promise<Question[]>;
+    const { data, error } = await this.supabase.from('questions').select('*').in('id', validIds);
+
+    if (error) {
+      console.error('Supabase error in getAllQuestionAnsweredAtLeastOnce:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuestionFromSupabase);
   }
 
   async addQuestion(questionData: Question): Promise<Question> {
@@ -713,7 +610,6 @@ export class DatabaseService implements OnDestroy {
       throw error;
     }
     const newQuestion = this.mapQuestionFromSupabase(data);
-    await this.dexieDB.questions.add(newQuestion); // Add to Dexie after successful Supabase add
     return newQuestion;
   }
 
@@ -731,7 +627,6 @@ export class DatabaseService implements OnDestroy {
       throw error;
     }
     const updatedQuestion = this.mapQuestionFromSupabase(data);
-    await this.dexieDB.questions.put(updatedQuestion);
     return updatedQuestion;
   }
 
@@ -744,7 +639,6 @@ export class DatabaseService implements OnDestroy {
       console.error('Supabase error deleting question:', error);
       throw error;
     }
-    await this.dexieDB.questions.delete(id);
   }
 
   // --- QuizAttempt Table Methods (Supabase-first from original) ---
@@ -758,42 +652,27 @@ export class DatabaseService implements OnDestroy {
 
     if (error) {
       console.error('Supabase error saving quiz attempt:', error);
-      // Optionally try to save to Dexie if offline to sync later
-      if (!navigator.onLine) {
-        console.warn('[DatabaseService] Offline: Saving quiz attempt to Dexie only. Will need sync later.');
-        await this.dexieDB.quizAttempts.put(quizAttempt); // Save original attempt to Dexie
-        return quizAttempt; // Return original attempt as Supabase failed
-      }
       throw error;
     }
     const savedAttempt = this.mapQuizAttemptFromSupabase(data);
-    await this.dexieDB.quizAttempts.put(savedAttempt);
     return savedAttempt;
   }
 
   async getQuizAttemptById(id: string): Promise<QuizAttempt | undefined> {
-    const operationName = `getQuizAttemptById for ID ${id}`;
-    return this.handleSupabaseFetch<QuizAttempt>(
-      this.supabase.from('quiz_attempts').select('*').eq('id', id).single(),
-      this.mapQuizAttemptFromSupabase,
-      async (attempts) => {
-        if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]);
-      },
-      () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        return this.dexieDB.quizAttempts.get(id);
-      },
-      operationName,
-      true // isSingleItem
-    ) as Promise<QuizAttempt | undefined>;
+    const { data, error } = await this.supabase.from('quiz_attempts').select('*').eq('id', id).single();
+    if (error) {
+      console.error(`Supabase error in getQuizAttemptById for ID ${id}:`, error);
+      throw error;
+    }
+    return data ? this.mapQuizAttemptFromSupabase(data) : undefined;
   }
 
-  async getAllQuizAttempts(contestId?: string | null, userId?: string): Promise<QuizAttempt[]> {
+  async getAllQuizAttempts(contestId?: number | null, userId?: string): Promise<QuizAttempt[]> {
     const operationName = `getAllQuizAttempts` + (contestId ? ` for contest ${contestId}` : '') + (userId ? ` for user ${userId}` : '');
     let query = this.supabase.from('quiz_attempts').select('*');
 
     if (contestId) {
-      query = query.eq('public_contest_setting', contestId); // Standardized to use this column
+      query = query.eq('fk_contest_id', contestId); // Standardized to use this column
     }
     if (userId) {
       // Assuming 'user_id' is a column on quiz_attempts table for multi-user scenarios.
@@ -803,24 +682,13 @@ export class DatabaseService implements OnDestroy {
     }
     query = query.order('timestamp_start', { ascending: false });
 
-    return this.handleSupabaseFetch<QuizAttempt>(
-      query,
-      this.mapQuizAttemptFromSupabase,
-      (attempts) => this.dexieDB.quizAttempts.bulkPut(attempts),
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        let dexieQuery = this.dexieDB.quizAttempts.orderBy('timestampStart').reverse();
-        if (contestId) {
-          // Dexie uses settings.publicContest based on schema
-          const allAttempts = await dexieQuery.toArray();
-          return allAttempts.filter(a => a.settings.publicContest === contestId);
-        }
-        // Add userId filter for Dexie if applicable
-        // if (userId) { ... }
-        return dexieQuery.toArray();
-      },
-      operationName
-    ) as Promise<QuizAttempt[]>;
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase error in getAllQuizAttempts:', error);
+      throw error;
+    }
+    return (data ?? []);
   }
 
   async deleteQuizAttempt(id: string): Promise<void> {
@@ -832,34 +700,26 @@ export class DatabaseService implements OnDestroy {
       console.error('Supabase error deleting quiz attempt:', error);
       throw error;
     }
-    await this.dexieDB.quizAttempts.delete(id);
   }
 
-  async clearAllQuizAttempts(contestId: string): Promise<void> {
+  async clearAllQuizAttempts(contestId: number): Promise<void> {
     console.log(`Attempting to clear Supabase quiz attempts for contest: ${contestId}`);
     const { error: supabaseError } = await this.supabase
       .from('quiz_attempts')
       .delete()
-      .eq('public_contest_setting', contestId); // Standardized
+      .eq('fk_contest_id', contestId); // Standardized
 
     if (supabaseError) {
       console.error(`Supabase error clearing quiz attempts for contest ${contestId}:`, supabaseError);
       throw supabaseError;
     }
     console.log(`Supabase quiz attempts cleared for contest ${contestId}. Now clearing Dexie.`);
-    const dexieKeysToDelete = await this.dexieDB.quizAttempts
-      .where('settings.publicContest').equals(contestId) // Dexie uses settings.publicContest
-      .primaryKeys();
-    if (dexieKeysToDelete.length > 0) {
-      await this.dexieDB.quizAttempts.bulkDelete(dexieKeysToDelete);
-    }
-    console.log(`Dexie quiz attempts cleared for contest ${contestId}.`);
   }
 
   // --- Methods requiring more complex logic ---
   async getProblematicQuestionsIdsByDate(
     dateSpecifier: 'today' | 'yesterday' | Date,
-    contestId: string | null = null,
+    contestId: number | null = null,
     userId?: string
   ): Promise<string[]> {
     const operationName = `getProblematicQuestionsIdsByDate for ${typeof dateSpecifier === 'string' ? dateSpecifier : dateSpecifier.toDateString()}` + (contestId ? `, contest ${contestId}` : '');
@@ -896,7 +756,7 @@ export class DatabaseService implements OnDestroy {
         .lt('timestamp_start', endDateIsoExclusive); // Attempts started within the day
 
       if (contestId) {
-        attemptsQuery = attemptsQuery.eq('public_contest_setting', contestId);
+        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId);
       }
       // if (userId) { attemptsQuery = attemptsQuery.eq('user_id', userId); }
 
@@ -904,13 +764,6 @@ export class DatabaseService implements OnDestroy {
 
       if (attemptsError) {
         console.error(`Supabase error fetching attempts in ${operationName}:`, attemptsError);
-        if (!navigator.onLine) {
-          console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName} (attempts fetch).`);
-          // Note: The Dexie fallback here would need to implement the full nuanced logic.
-          // For simplicity, the current getProblematicIdsFromDexie is more basic.
-          // A more complete Dexie version of *this* multi-step logic would be needed.
-          return this.getProblematicIdsFromDexieNuanced(startDate, endDate, contestId);
-        }
         throw attemptsError;
       }
 
@@ -1015,191 +868,70 @@ export class DatabaseService implements OnDestroy {
 
     } catch (err) {
       console.error(`Error in ${operationName} (outer catch):`, err);
-      if (!navigator.onLine) {
-        console.warn(`[DatabaseService] Offline: Final fallback to Dexie for ${operationName} due to error (outer catch).`);
-        return this.getProblematicIdsFromDexieNuanced(startDate, endDate, contestId);
-      }
       throw err;
     }
   }
 
-  private async getProblematicIdsFromDexie(startDate: Date, endDate: Date, contestId: string | null): Promise<string[]> {
-    let attemptsQuery = this.dexieDB.quizAttempts;
-    let filteredAttempts: QuizAttempt[];
-
-    if (contestId) {
-      filteredAttempts = await attemptsQuery
-        .where('settings.publicContest').equals(contestId)
-        .filter(att => att.timestampStart >= startDate && att.timestampStart < endDate)
-        .toArray();
-    } else {
-      filteredAttempts = await attemptsQuery
-        .where('timestampStart').between(startDate.getTime(), endDate.getTime(), true, false)
-        .toArray();
-    }
-
-    const problematicIds = new Set<string>();
-    filteredAttempts.forEach(attempt => {
-      if (attempt.answeredQuestions) {
-        attempt.answeredQuestions.forEach(aq => {
-          if (aq && !aq.isCorrect && aq.questionId) {
-            problematicIds.add(aq.questionId);
-          }
-        });
-      }
-    });
-    return Array.from(problematicIds);
-  }
-
-  // You'll need a Dexie equivalent of the nuanced logic for a true offline fallback
-  private async getProblematicIdsFromDexieNuanced(startDate: Date, endDate: Date, contestId: string | null): Promise<string[]> {
-    console.warn("[DBService] Using getProblematicIdsFromDexieNuanced. Ensure this matches your intended logic.");
-    // This needs to replicate the multi-step logic using Dexie:
-    // 1. Fetch attempts from Dexie within date range and contestId
-    // 2. Collect candidateProblematicIds and their in-attempt status
-    // 3. Fetch global status of these candidates using this.dexieDB.questions.bulkGet(...)
-    // 4. Apply the same final filtering logic.
-
-    let dexieAttemptsQuery = this.dexieDB.quizAttempts
-      .where('timestampEnd') // Using timestampEnd as per your original logic for Dexie
-      .between(startDate.getTime(), endDate.getTime(), true, true);
-
-    let attempts: QuizAttempt[];
-    if (contestId) {
-      // If 'settings.publicContest' is indexed, this is efficient.
-      // Otherwise, filter after fetching.
-      const allDateAttempts = await dexieAttemptsQuery.toArray();
-      attempts = allDateAttempts.filter(att => att.settings.publicContest === contestId);
-    } else {
-      attempts = await dexieAttemptsQuery.toArray();
-    }
-
-    if (!attempts || attempts.length === 0) {
-      return [];
-    }
-
-    const candidateProblematicIds = new Set<string>();
-    const attemptQuestionDetails = new Map<string, { wasUnansweredInAttempt: boolean, wasWrongInAttempt: boolean }>();
-
-    for (const attempt of attempts) {
-      const allQsInAttempt = (attempt.allQuestions || []) as Array<{ questionId: string, isCorrect?: boolean }>;
-      const answeredQs = (attempt.answeredQuestions || []) as Array<{ questionId: string, isCorrect: boolean }>;
-
-      for (const qInfo of allQsInAttempt) {
-        candidateProblematicIds.add(qInfo.questionId);
-        const existingDetail = attemptQuestionDetails.get(qInfo.questionId) || {
-          wasUnansweredInAttempt: false,
-          wasWrongInAttempt: false
-        };
-        const answeredDetail = answeredQs.find(aq => aq.questionId === qInfo.questionId);
-        if (answeredDetail) {
-          if (!answeredDetail.isCorrect) existingDetail.wasWrongInAttempt = true;
-        } else {
-          existingDetail.wasUnansweredInAttempt = true;
-        }
-        attemptQuestionDetails.set(qInfo.questionId, existingDetail);
-      }
-    }
-
-
-    if (candidateProblematicIds.size === 0) return [];
-
-    const globalQuestionStatuses = (await this.dexieDB.questions.bulkGet(Array.from(candidateProblematicIds))).filter(q => q !== undefined) as Question[];
-    const globalStatusMap = new Map(globalQuestionStatuses.map(q => [q.id, q]));
-    const finalProblematicIds = new Set<string>();
-
-    for (const questionId of candidateProblematicIds) {
-      const globalQst = globalStatusMap.get(questionId);
-      const attemptDetail = attemptQuestionDetails.get(questionId);
-
-      if (!globalQst || !attemptDetail) continue;
-
-      if (attemptDetail.wasWrongInAttempt) {
-        finalProblematicIds.add(questionId);
-        continue;
-      }
-      if (attemptDetail.wasUnansweredInAttempt) {
-        let globallyCorrectInDateRange = false;
-        if (globalQst.lastAnsweredTimestamp && globalQst.lastAnswerCorrect === true) {
-          const globalLastAnsweredTime = globalQst.lastAnsweredTimestamp;
-          if (globalLastAnsweredTime >= startDate.getTime() && globalLastAnsweredTime <= endDate.getTime()) {
-            globallyCorrectInDateRange = true;
-          }
-        }
-        if (!globallyCorrectInDateRange) {
-          finalProblematicIds.add(questionId);
-        }
-      }
-    }
-    return Array.from(finalProblematicIds);
-  }
-
-  async getNeverAnsweredQuestionIds(contestId: string, userId?: string): Promise<string[]> {
+  async getNeverAnsweredQuestionIds(contestId: number, userId?: string): Promise<string[]> {
     const operationName = `getNeverAnsweredQuestionIds` + (contestId ? ` for contest ${contestId}` : '');
     let supabaseQuery = this.supabase.from('questions').select('id')
       .eq('times_correct', 0)
       .eq('times_incorrect', 0);
     if (contestId) {
-      supabaseQuery = supabaseQuery.eq('public_contest', contestId).limit(10000);
+      supabaseQuery = supabaseQuery.eq('fk_contest_id', contestId).limit(10000);
     }
     // userId not used here as it's about global "never answered" based on question stats
 
     try {
       const { data, error } = await supabaseQuery;
       if (error) {
-        console.error(`Supabase error in ${operationName}:`, error);
-        if (!navigator.onLine) {
-          console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName}.`);
-          let dexieQuery = this.dexieDB.questions.filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
-          if (contestId) dexieQuery = dexieQuery.and(q => q.publicContest === contestId);
-          return (await dexieQuery.toArray()).map(q => q.id);
-        }
         throw error;
       }
       return data ? data.map(q => q.id) : [];
     } catch (err) {
       console.error(`Error in ${operationName}, potentially falling back to Dexie:`, err);
-      if (!navigator.onLine) {
-        console.warn(`[DatabaseService] Offline: Final fallback to Dexie for ${operationName} due to error.`);
-        let dexieQuery = this.dexieDB.questions.filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
-        if (contestId) dexieQuery = dexieQuery.and(q => q.publicContest === contestId);
-        return (await dexieQuery.toArray()).map(q => q.id);
-      }
       throw err;
     }
   }
 
-  async getNeverAnsweredQuestionCount(contestId: string | null = null, userId?: string): Promise<number> {
+  async getNeverAnsweredQuestionCount(contestId: number, userId: number): Promise<number> {
     const operationName = `getNeverAnsweredQuestionCount` + (contestId ? ` for contest ${contestId}` : '');
-    let supabaseQuery = this.supabase.from('questions').select('id', { count: 'exact', head: true })
-      .eq('times_correct', 0)
-      .eq('times_incorrect', 0);
-    if (contestId) {
-      supabaseQuery = supabaseQuery.eq('public_contest', contestId);
-    }
-    // userId not used here as it's about global "never answered" based on question stats
+    let neverAnsweredQuestions = this.supabase.from('quiz_attempts').select('*')
+      .eq('fk_contest_id', contestId)
+      .eq('fk_user_id', userId);
+
+      // Only call countAllRows if contestId?.id is defined and you need its result
+      // await this.countAllRows(contestId?.id); // Remove or use if needed
+
+      let countRows = 0;
+      if (contestId && contestId !== undefined){
+        countRows = await this.countAllRows(contestId);
+      } else {
+        throw new Error('contestId is required for getNeverAnsweredQuestionCount');
+      }
 
     try {
-      const { count, error } = await supabaseQuery;
+      const { data, error } = await neverAnsweredQuestions;
       if (error) {
         console.error(`Supabase error in ${operationName}:`, error);
-        if (!navigator.onLine) {
-          console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName}.`);
-          let dexieQuery = this.dexieDB.questions.filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
-          if (contestId) dexieQuery = dexieQuery.and(q => q.publicContest === contestId);
-          return (await dexieQuery.toArray()).length;
-        }
         throw error;
       }
-      return count ?? 0;
+      // Flatten all answered_questions arrays and collect unique question IDs
+      const answeredIds = new Set<number>();
+      if (data) {
+        for (const attempt of data) {
+          if (Array.isArray(attempt.answered_questions)) {
+        for (const q of attempt.answered_questions) {
+          if (q && q.questionId) {
+            answeredIds.add(q.questionId);
+          }
+        }
+          }
+        }
+      }
+      return countRows - answeredIds.size;
     } catch (err) {
       console.error(`Error in ${operationName}, potentially falling back to Dexie:`, err);
-      if (!navigator.onLine) {
-        console.warn(`[DatabaseService] Offline: Final fallback to Dexie for ${operationName} due to error.`);
-        let dexieQuery = this.dexieDB.questions.filter(q => (q.timesCorrect ?? 0) === 0 && (q.timesIncorrect ?? 0) === 0);
-        if (contestId) dexieQuery = dexieQuery.and(q => q.publicContest === contestId);
-        return (await dexieQuery.toArray()).length;
-      }
       throw err;
     }
   }
@@ -1291,20 +1023,6 @@ export class DatabaseService implements OnDestroy {
         }
         throw upsertError; // Re-throw
       }
-
-      // 3. Update Dexie with the successfully updated questions
-      if (updatedSupabaseQuestions && updatedSupabaseQuestions.length > 0) {
-        const dexieQuestionsToUpdate = updatedSupabaseQuestions.map(sq => this.mapQuestionFromSupabase(sq));
-        try {
-          await this.dexieDB.questions.bulkPut(dexieQuestionsToUpdate);
-          console.log(`[${operationName}] Successfully updated ${dexieQuestionsToUpdate.length} questions in Dexie.`);
-        } catch (dexieError) {
-          console.error(`[${operationName}] Error updating Dexie after Supabase success:`, dexieError);
-        }
-      } else {
-        console.warn(`[${operationName}] Supabase upsert reported success but returned no data. Dexie not updated.`);
-      }
-
       console.log(`[${operationName}] Completed successfully for ${supabaseUpdatePayloads.length} payloads.`);
 
     } catch (error) {
@@ -1360,14 +1078,6 @@ export class DatabaseService implements OnDestroy {
         // For now, throwing error to indicate failure.
         throw updateError;
       }
-      // Update Dexie if Supabase was successful
-      await this.dexieDB.questions.where({ id: questionId }).modify(q => {
-        q.timesCorrect = newTimesCorrect;
-        q.timesIncorrect = newTimesIncorrect;
-        q.lastAnsweredTimestamp = updates.last_answered_timestamp;
-        q.lastAnswerCorrect = isCorrect;
-        q.accuracy = newAccuracy;
-      });
     } catch (error) {
       console.error(`Failed to update question stats for ${questionId}:`, error);
       // If offline during this, stats will not be updated on Supabase or Dexie consistently.
@@ -1380,69 +1090,26 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-  async getAvailablePublicContests(): Promise<string[]> {
+  async getAvailablePublicContests(userId: number): Promise<Contest[]> {
     const operationName = 'getAvailablePublicContests';
     try {
       // Using distinct on public_contest column
       const { data, error } = await this.supabase
-        .rpc('get_distinct_public_contests'); // Assumes a PL/pgSQL function exists
+        .from('contests')
+        .select('*, users_contests!inner(*)')
+        .eq('is_active', true)
+        .eq('users_contests.fk_user_id', userId);
       if (error || !data) {
-        console.error(`Supabase error or no data from RPC in ${operationName}:`, error);
-        // Fallback to selecting all and processing client-side if RPC fails or doesn't exist
-        const { data: qData, error: qError } = await this.supabase.from('questions').select('public_contest');
-        if (qError) {
-          console.error(`Supabase error fetching all public_contest values:`, qError);
-          if (!navigator.onLine) {
-            console.warn(`[DatabaseService] Offline: Falling back to Dexie for ${operationName}.`);
-            return this.getAvailablePublicContestsFromDexie();
-          }
-          throw qError;
-        }
-        const contestSet = new Set<string>();
-        if (qData) {
-          qData.forEach(q => {
-            if (q.public_contest && q.public_contest.trim() !== '') contestSet.add(q.public_contest);
-          });
-        }
-        // remove specific topic
-        if (contestSet.has('itil') && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico') {
-          contestSet.delete('itil');
-        }
-        return Array.from(contestSet).sort();
-      }
-
-      // remove specific topic
-      const objectFound: any = data.find((el: any) => el.public_contest === 'itil');
-      if (objectFound && this.authService.isAuthenticated() && this.authService.getCurrentUserSnapshot() && this.authService.getCurrentUserSnapshot()?.id !== 'federico') {
-        const index = data.indexOf(objectFound);
-        if (index !== -1) {
-          data.splice(index, 1);
+        if (error) {
+          console.error(`Supabase error fetching all contests values:`, error);
+          throw error;
         }
       }
-
-      // Assuming RPC returns an array of objects like { public_contest: 'ContestName' }
-      return (data as Array<{
-        public_contest: string
-      }>).map(item => item.public_contest).filter(c => c && c.trim() !== '').sort();
-
+      return (data as Array<Contest>);
     } catch (err) {
       console.error(`Error in ${operationName}, falling back to Dexie:`, err);
-      if (!navigator.onLine) {
-        console.warn(`[DatabaseService] Offline: Final fallback to Dexie for ${operationName} due to error.`);
-        return this.getAvailablePublicContestsFromDexie();
-      }
       throw err;
     }
-  }
-
-  // Helper for Dexie fallback for getAvailablePublicContests
-  private async getAvailablePublicContestsFromDexie(): Promise<string[]> {
-    const allDexieQuestions = await this.dexieDB.questions.toArray();
-    const contestSet = new Set<string>();
-    allDexieQuestions.forEach(q => {
-      if (q.publicContest && q.publicContest.trim() !== '') contestSet.add(q.publicContest);
-    });
-    return Array.from(contestSet).sort();
   }
 
   /*
@@ -1456,7 +1123,7 @@ export class DatabaseService implements OnDestroy {
   */
 
 
-  async getQuestionsByPublicContestForSimulation(contestIdentifier: string): Promise<Question[]> {
+  async getQuestionsByPublicContestForSimulation(contestIdentifier: Contest): Promise<Question[]> {
     if (!contestIdentifier) return [];
 
     // This method simulates a test with 100 quiz questions distributed as follows:
@@ -1480,7 +1147,7 @@ export class DatabaseService implements OnDestroy {
     ];
 
     // Try to fetch all questions that have never been encountered
-    const allQuestions: Question[] = await this.fetchAllNeverEncounteredRows(contestIdentifier);
+    const allQuestions: Question[] = await this.fetchAllNeverEncounteredRows(contestIdentifier.id);
     const selectedQuestions: Question[] = [];
 
     for (const dist of topicDistribution) {
@@ -1509,7 +1176,7 @@ export class DatabaseService implements OnDestroy {
     return selectedQuestions.slice(0, 100);
   }
 
-  async getQuestionsByPublicContest(contestIdentifier: string): Promise<Question[]> {
+  async getQuestionsByPublicContest(contestIdentifier: number): Promise<Question[]> {
     if (!contestIdentifier) return [];
     return this.getAllQuestions(contestIdentifier); // Leverages existing Supabase-first logic
   }
@@ -1527,55 +1194,43 @@ export class DatabaseService implements OnDestroy {
     return newFavoriteStatus;
   }
 
-  async getFavoriteQuestions(contestId?: string | null): Promise<Question[]> {
+  async getFavoriteQuestions(contestId?: number | null): Promise<Question[]> {
     const operationName = `getFavoriteQuestions` + (contestId ? ` for contest ${contestId}` : '');
     let supabaseQuery = this.supabase.from('questions').select('*').eq('is_favorite', 1); // Assuming 1 for true
     if (contestId) {
-      supabaseQuery = supabaseQuery.eq('public_contest', contestId);
+      supabaseQuery = supabaseQuery.eq('fk_contest_id', contestId);
     }
 
-    return this.handleSupabaseFetch<Question>(
-      supabaseQuery,
-      this.mapQuestionFromSupabase,
-      (questions) => this.dexieDB.questions.bulkPut(questions),
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        let dexieQuery = this.dexieDB.questions.where('isFavorite').equals(1);
-        if (contestId) dexieQuery = dexieQuery.and(q => q.publicContest === contestId);
-        return dexieQuery.toArray();
-      },
-      operationName
-    ) as Promise<Question[]>;
+    const { data, error } = await supabaseQuery;
+    if (error) {
+      console.error('Supabase error in getFavoriteQuestions:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuestionFromSupabase);
   }
 
-  async getPausedQuiz(userId?: string): Promise<QuizAttempt | undefined> {
+  async getPausedQuiz(contestId: number, userId: number): Promise<QuizAttempt | undefined> {
     const operationName = `getPausedQuiz` + (userId ? ` for user ${userId}` : '');
     let query = this.supabase.from('quiz_attempts')
       .select('*')
       .eq('status', 'paused')
+      .eq('fk_contest_id',contestId)
+      .eq('fk_user_id',userId)
       .order('timestamp_start', { ascending: false });
     // if (userId) { query = query.eq('user_id', userId); } // For multi-user
 
     return this.handleSupabaseFetch<QuizAttempt>(
-      query, // Limit 1 could be added server-side or client-side for "latest"
+      query,
       this.mapQuizAttemptFromSupabase,
-      async (attempts) => {
-        if (attempts.length > 0) await this.dexieDB.quizAttempts.put(attempts[0]);
-      }, // Cache if found
-      async () => {
-        console.warn(`[DatabaseService] Using Dexie fallback for ${operationName}.`);
-        const pausedDexie = await this.dexieDB.quizAttempts.where('status').equals('paused')
-          // .and(attempt => !userId || attempt.userId === userId) // If userId is stored
-          .reverse().sortBy('timestampStart');
-        return pausedDexie.length > 0 ? pausedDexie[0] : undefined;
-      },
+      async () => {},
+      async () => undefined,
       operationName,
-      true // Expecting single or none. Supabase query doesn't use .single() to allow empty result gracefully
+      true
     ).then(results => Array.isArray(results) ? results[0] : results) as Promise<QuizAttempt | undefined>;
   }
 
 
-  async clearAllQuestions(contestId: string): Promise<void> {
+  async clearAllQuestions(contestId: number, userId: number): Promise<void> {
     // This RESETS stats, doesn't delete questions.
     console.log(`Attempting to reset Supabase question stats for contest: ${contestId}`);
     // An RPC function would be more atomic. Client-side: fetch IDs, map to reset objects, then upsert.
@@ -1583,7 +1238,7 @@ export class DatabaseService implements OnDestroy {
       const { data: questionsToReset, error: fetchError } = await this.supabase
         .from('questions')
         .select('*') // only fetch id
-        .eq('public_contest', contestId);
+        .eq('fk_contest_id', contestId);
 
       if (fetchError) throw fetchError;
 
@@ -1600,45 +1255,20 @@ export class DatabaseService implements OnDestroy {
 
         const { error: updateError } = await this.supabase.from('questions').upsert(updates);
         if (updateError) throw updateError;
-
-        // Update Dexie: map back from the reset "Supabase-like" structure
-        const dexieUpdates = updates.map(u => this.mapQuestionFromSupabase(u));
-        try {
-          await this.dexieDB.questions.bulkPut(dexieUpdates);
-          console.log(`Stats reset for ${updates.length} questions in contest ${contestId}`);
-        } catch (dexieError) {
-          console.error(`Error updating Dexie after Supabase success:`, dexieError);
-        }
       } else {
         console.log(`No questions found in contest ${contestId} to reset stats.`);
       }
     } catch (error) {
       console.error(`Error resetting question stats for contest ${contestId}:`, error);
-      if (!navigator.onLine) {
-        console.warn(`[DatabaseService] Offline: Failed to reset question stats for ${contestId}. Operation might be incomplete.`);
-        // Attempt Dexie reset anyway
-        const existingDexieQuestions = await this.dexieDB.questions.where('publicContest').equals(contestId).toArray();
-        const finalDexieUpdates: Question[] = existingDexieQuestions.map(dq => ({
-          ...dq,
-          timesCorrect: 0,
-          timesIncorrect: 0,
-          isFavorite: 0,
-          lastAnsweredTimestamp: undefined,
-          lastAnswerCorrect: false,
-          accuracy: 0,
-        }));
-        await this.dexieDB.questions.bulkPut(finalDexieUpdates);
-        console.log(`Dexie question stats reset for contest ${contestId} during offline fallback.`);
-      }
       // throw error; // Avoid throwing to allow app to continue if reset fails
     }
   }
 
   // --- General DB Methods ---
-  async resetContest(contestId: string): Promise<void> {
+  async resetContest(contestId: number, userId: number): Promise<void> {
     console.log(`Resetting contest ${contestId} in Supabase and Dexie.`);
     try {
-      await this.clearAllQuestions(contestId); // Resets stats (Supabase-first)
+      await this.clearAllQuestions(contestId, userId); // Resets stats (Supabase-first)
       await this.clearAllQuizAttempts(contestId); // Deletes attempts (Supabase-first)
       console.log(`Contest ${contestId} has been reset.`);
     } catch (error) {
@@ -1650,14 +1280,14 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-  async fetchAllNeverEncounteredRows(contestId: string, tableName: string = "questions"): Promise<Question[]> {
+  async fetchAllNeverEncounteredRows(contestId: number, tableName: string = "questions"): Promise<Question[]> {
     const chunkSize = 1000; // Supabase limit
     let allRows: Question[] = [];
     let start = 0;
 
     while (true) {
       const { data, error } = await this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .eq('times_correct', 0)
         .eq('times_incorrect', 0)
         .range(start, start + chunkSize - 1)
@@ -1679,14 +1309,14 @@ export class DatabaseService implements OnDestroy {
     return allRows.map(row => this.mapQuestionFromSupabase(row));
   }
 
-  async fetchAllRows(contestId: string, tableName: string = "questions"): Promise<Question[]> {
+  async fetchAllRows(contestId: number, tableName: string = "questions", userId?: number): Promise<Question[]> {
     const chunkSize = 1000; // Supabase limit
     let allRows: Question[] = [];
     let start = 0;
 
     while (true) {
       const { data, error } = await this.supabase.from('questions').select('*')
-        .eq('public_contest', contestId)
+        .eq('fk_contest_id', contestId)
         .range(start, start + chunkSize - 1);
 
       if (error) {
@@ -1705,6 +1335,18 @@ export class DatabaseService implements OnDestroy {
     return allRows.map(row => this.mapQuestionFromSupabase(row));
   }
 
+  async countAllRows(contestId: number, tableName: string = "questions", userId?: number): Promise<number> {
+    const { count, error } = await this.supabase.from(tableName).select('id', { count: 'exact', head: true })
+      .eq('fk_contest_id', contestId);
+
+    if (error) {
+      console.error('Error fetching rows:', error);
+      throw error;
+    }
+
+    return count ?? 0;
+  }
+
   mapAnsweredQuestionToQuestion(answered: AnsweredQuestion): Question {
     return {
       id: answered.questionId,
@@ -1713,12 +1355,64 @@ export class DatabaseService implements OnDestroy {
       scoreIsCorrect: answered.questionSnapshot.scoreIsCorrect,
       scoreIsWrong: answered.questionSnapshot.scoreIsWrong,
       scoreIsSkip: answered.questionSnapshot.scoreIsSkip,
-
+      contestId: answered.contestId,
       options: answered.questionSnapshot.options,
       correctAnswerIndex: answered.questionSnapshot.correctAnswerIndex,
       explanation: answered.questionSnapshot.explanation,
       isFavorite: answered.questionSnapshot.isFavorite,
       // Add other fields as needed, possibly with default values or undefined
     };
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const operationName = 'getAllUsers';
+    try {
+      const { data, error } = await this.supabase.from('users').select('*');
+      if (error) {
+        console.error(`[DatabaseService] Supabase error in ${operationName}:`, error);
+        if (!navigator.onLine) {
+          console.warn(`[DatabaseService] Offline: No Dexie fallback for users table.`);
+          return [];
+        }
+        throw error;
+      }
+          return data.map(row => this.mapUserFromDB(row)) ?? [];
+    } catch (err) {
+      console.error(`Error in ${operationName}:`, err);
+      if (!navigator.onLine) {
+        console.warn(`[DatabaseService] Offline: No Dexie fallback for users table.`);
+        return [];
+      }
+      throw err;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User> {
+    const operationName = 'getUserByUsername';
+    try {
+      const { data, error } = await this.supabase.from('users').select('*').eq('username',username);
+      if (error) {
+        console.error(`[DatabaseService] Supabase error in ${operationName}:`, error);
+        throw error;
+      }
+      return this.mapUserFromDB(data[0]);
+    } catch (err) {
+      console.error(`Error in ${operationName}:`, err);
+      throw err;
+    }
+  }
+
+  private mapUserFromDB(dbUser: any): User {
+    if (!dbUser) return undefined as any;
+    const userResult = {
+      id: dbUser.id,
+      username: dbUser.username,
+      hashedPassword: dbUser.password,
+      isActive: dbUser.is_active,
+      displayName: dbUser.display_name ?? dbUser.displayName,
+      // createdAt: supabaseUser.created_at ? new Date(supabaseUser.created_at) : undefined,
+      // Add other fields as needed, mapping snake_case to camelCase
+    };
+    return userResult;
   }
 }

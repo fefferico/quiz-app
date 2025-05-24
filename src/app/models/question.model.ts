@@ -19,6 +19,7 @@ export interface Question {
   scoreIsCorrect: number;
   scoreIsWrong: number;
   scoreIsSkip: number;
+  contestId: number;
 }
 
 export enum QuestionDifficulty {

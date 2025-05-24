@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Pong</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            flex-direction: column; /* To stack canvas and score */
+        }
+        canvas {
+            border: 2px solid #fff;
+            background-color: #000;
+        }
+        #scoreBoard {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        #instructions {
+            font-size: 14px;
+            color: #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreBoard">Player: 0 - AI: 0</div>
+    <canvas id="pongCanvas"></canvas>
+    <div id="instructions">Use Arrow Up & Arrow Down to move your paddle.</div>
+
+    <script>
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBoard = document.getElementById('scoreBoard');
+
+        // Game settings
+        const PADDLE_HEIGHT = 100;
+        const PADDLE_WIDTH = 15;
+        const BALL_RADIUS = 8;
+        let PADDLE_SPEED = 8; // Can be adjusted
+        let BALL_SPEED_X_INITIAL = 5;
+        let BALL_SPEED_Y_INITIAL = 5;
+        const AI_PADDLE_SPEED = 4; // Slower AI for easier play
+
+        let playerScore = 0;
+        let aiScore = 0;
+
+        // Set canvas dimensions
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Player paddle
+        const player = {
+            x: PADDLE_WIDTH, // Distance from left edge
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            color: '#fff',
+            dy: 0 // Direction of movement
+        };
+
+        // AI paddle
+        const ai = {
+            x: canvas.width - PADDLE_WIDTH * 2, // Distance from right edge
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            color: '#fff'
+        };
+
+        // Ball
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: BALL_RADIUS,
+            speedX: BALL_SPEED_X_INITIAL * (Math.random() > 0.5 ? 1 : -1), // Random initial X direction
+            speedY: BALL_SPEED_Y_INITIAL * (Math.random() > 0.5 ? 1 : -1), // Random initial Y direction
+            color: '#fff'
+        };
+
+        // Draw functions
+        function drawRect(x, y, w, h, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, w, h);
+        }
+
+        function drawCircle(x, y, r, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2, false);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawNet() {
+            ctx.beginPath();
+            ctx.setLineDash([10, 10]); // Dashed line
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
+        }
+
+        // Update score display
+        function updateScoreDisplay() {
+            scoreBoard.textContent = `Player: ${playerScore} - AI: ${aiScore}`;
+        }
+
+        // Reset ball to center
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            // Give a slight delay and random direction
+            setTimeout(() => {
+                ball.speedX = BALL_SPEED_X_INITIAL * (Math.random() > 0.5 ? 1 : -1);
+                ball.speedY = BALL_SPEED_Y_INITIAL * (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.5 + 0.5); // Slightly randomize Y speed
+            }, 500); // 0.5 second delay
+        }
+
+        // Move player paddle
+        function movePlayerPaddle() {
+            player.y += player.dy;
+
+            // Keep paddle within canvas bounds
+            if (player.y < 0) {
+                player.y = 0;
+            }
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+            }
+        }
+
+        // Simple AI for the opponent paddle
+        function moveAiPaddle() {
+            // AI tries to follow the ball's y position
+            const paddleCenter = ai.y + ai.height / 2;
+            if (paddleCenter < ball.y - 20) { // -20 for a slight delay/error margin
+                ai.y += AI_PADDLE_SPEED;
+            } else if (paddleCenter > ball.y + 20) { // +20
+                ai.y -= AI_PADDLE_SPEED;
+            }
+
+            // Keep AI paddle within canvas bounds
+            if (ai.y < 0) {
+                ai.y = 0;
+            }
+            if (ai.y + ai.height > canvas.height) {
+                ai.y = canvas.height - ai.height;
+            }
+        }
+
+        // Update game state
+        function update() {
+            // Move ball
+            ball.x += ball.speedX;
+            ball.y += ball.speedY;
+
+            // Ball collision with top/bottom walls
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.speedY = -ball.speedY;
+            }
+
+            // Ball collision with paddles
+            // Player paddle
+            if (
+                ball.x - ball.radius < player.x + player.width &&
+                ball.x + ball.radius > player.x &&
+                ball.y + ball.radius > player.y &&
+                ball.y - ball.radius < player.y + player.height
+            ) {
+                ball.speedX = -ball.speedX;
+                // Optional: Make ball speed up slightly or change angle
+                let deltaY = ball.y - (player.y + player.height / 2);
+                ball.speedY = deltaY * 0.2; // Adjust this factor for more/less angle change
+                 // Increase speed slightly after hit
+                ball.speedX *= 1.05;
+                ball.speedY *= 1.05;
+            }
+
+            // AI paddle
+            if (
+                ball.x + ball.radius > ai.x &&
+                ball.x - ball.radius < ai.x + ai.width &&
+                ball.y + ball.radius > ai.y &&
+                ball.y - ball.radius < ai.y + ai.height
+            ) {
+                ball.speedX = -ball.speedX;
+                let deltaY = ball.y - (ai.y + ai.height / 2);
+                ball.speedY = deltaY * 0.2;
+                // Increase speed slightly after hit
+                ball.speedX *= 1.05;
+                ball.speedY *= 1.05;
+            }
+
+            // Ball out of bounds (scoring)
+            if (ball.x - ball.radius < 0) { // AI scores
+                aiScore++;
+                updateScoreDisplay();
+                resetBall();
+            } else if (ball.x + ball.radius > canvas.width) { // Player scores
+                playerScore++;
+                updateScoreDisplay();
+                resetBall();
+            }
+
+            movePlayerPaddle();
+            moveAiPaddle();
+        }
+
+        // Render game
+        function render() {
+            // Clear canvas
+            drawRect(0, 0, canvas.width, canvas.height, '#000');
+
+            // Draw net
+            drawNet();
+
+            // Draw paddles
+            drawRect(player.x, player.y, player.width, player.height, player.color);
+            drawRect(ai.x, ai.y, ai.width, ai.height, ai.color);
+
+            // Draw ball
+            drawCircle(ball.x, ball.y, ball.radius, ball.color);
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop); // For smooth animation
+        }
+
+        // Keyboard controls
+        function keyDown(e) {
+            if (e.key === 'ArrowUp' || e.key === 'Up') {
+                player.dy = -PADDLE_SPEED;
+            } else if (e.key === 'ArrowDown' || e.key === 'Down') {
+                player.dy = PADDLE_SPEED;
+            }
+        }
+
+        function keyUp(e) {
+            if (e.key === 'ArrowUp' || e.key === 'Up' || e.key === 'ArrowDown' || e.key === 'Down') {
+                player.dy = 0;
+            }
+        }
+
+        document.addEventListener('keydown', keyDown);
+        document.addEventListener('keyup', keyUp);
+
+        // Start game
+        updateScoreDisplay(); // Initial score display
+        gameLoop();
+    </script>
+</body>
+</html>

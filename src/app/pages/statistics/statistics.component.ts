@@ -9,25 +9,25 @@ import {
   inject,
   ChangeDetectorRef
 } from '@angular/core';
-import {CommonModule, DatePipe, PercentPipe} from '@angular/common'; // DecimalPipe removed as not directly used in template
-import {Router, RouterLink, ActivatedRoute} from '@angular/router'; // Import ActivatedRoute
-import {Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement} from 'chart.js/auto'; // Added ChartEvent, ActiveElement
+import { CommonModule, DatePipe, PercentPipe } from '@angular/common'; // DecimalPipe removed as not directly used in template
+import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
+import { Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement } from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'chartjs-adapter-date-fns';
-import {it} from 'date-fns/locale';
+import { it } from 'date-fns/locale';
 
-import {FormsModule} from '@angular/forms'; // Import FormsModule for ngModel
+import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 
-import {DatabaseService} from '../../core/services/database.service';
-import {AnsweredQuestion, QuizAttempt, QuizSettings} from '../../models/quiz.model'; // Added QuestionSnapshotInfo
-import {Question} from '../../models/question.model';
+import { DatabaseService } from '../../core/services/database.service';
+import { AnsweredQuestion, QuizAttempt, QuizSettings } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
+import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import {SimpleModalComponent} from '../../shared/simple-modal/simple-modal.component';
-import {SetupModalComponent} from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
-import {GenericData} from '../../models/statistics.model';
+import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
+import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
+import { GenericData } from '../../models/statistics.model';
 
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition,
   faHome,
@@ -37,11 +37,12 @@ import {
   faLandmark,
   faTrashCan
 } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
-import {AlertService} from '../../services/alert.service';
-import {ContestSelectionService} from '../../core/services/contest-selection.service'; // Import ContestSelectionService
-import {Subscription} from 'rxjs';
-import {AuthService} from '../../core/services/auth.service';
-import {SpinnerService} from '../../core/services/spinner.service';
+import { AlertService } from '../../services/alert.service';
+import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../core/services/auth.service';
+import { SpinnerService } from '../../core/services/spinner.service';
+import { Contest } from '../../models/contes.model';
 
 Chart.register(...registerables);
 
@@ -173,45 +174,32 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedDateChart: Chart | undefined;
   // --- END NEW ---
 
-  activeContestId: string = ''; // To store the active contest for statistics
-
   private routeSub!: Subscription;
   private contestSub!: Subscription;
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
+  get selectedPublicContest(): Contest | null {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
-  private checkForContest(): void {
-    if (!this.selectedPublicContest) {
-      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
-        this.router.navigate(['/home']);
-      })
-    }
-  }
 
   ngOnInit(): void {
     // Set the default locale for all charts
     Chart.defaults.locale = 'it';
     this.isStatsViewer = this.authService.isStatsViewer();
-    this.checkForContest();
+
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.routeSub = this.route.queryParamMap.subscribe(async params => {
-      const contestFromQuery = params.get('contest');
-      if (contestFromQuery) {
-        this.activeContestId = contestFromQuery;
-        if (this.contestSelectionService.getCurrentSelectedContest() !== this.activeContestId) {
-          this.contestSelectionService.setSelectedContest(this.activeContestId);
-        }
-      } else {
-        this.activeContestId = this.contestSelectionService.getCurrentSelectedContest();
-      }
       await this.loadAndProcessStatistics();
     });
 
     this.contestSub = this.contestSelectionService.selectedContest$.subscribe(async contestId => {
-      if (!this.route.snapshot.queryParamMap.has('contest') && this.activeContestId !== contestId) {
-        this.activeContestId = contestId || '';
+      if (!this.route.snapshot.queryParamMap.has('contest')) {
         await this.loadAndProcessStatistics(); // Reload stats if service changes contest
       }
     });
@@ -299,26 +287,31 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   async loadAndProcessStatistics(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.isLoading = true;
     this.errorLoading = '';
     try {
       // Pass activeContestId to filter data at source
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
-        this.dbService.getAllQuizAttemptsByContest(this.activeContestId),
-        // Usage
-        this.dbService.fetchAllRows(this.activeContestId) // Assuming this method filters by publicContest
-        //this.dbService.getAllQuestions(this.activeContestId) // Assumes this method filters by publicContest
+        this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.authService.getCurrentUserId()),
+        this.dbService.fetchAllRows(currentContest.id) // Assuming this method filters by publicContest
+        //this.dbService.getAllQuestions(this.selectedPublicContest.id) // Assumes this method filters by publicContest
       ]);
 
       this.quizAttempts = quizAttempts;
       this.allQuestionsFromDb = allQuestionsFromDb;
 
-      if (this.quizAttempts.length > 0 || (this.activeContestId && this.allQuestionsFromDb.length > 0)) {
+      if (this.quizAttempts.length > 0 || (currentContest.id && this.allQuestionsFromDb.length > 0)) {
         this.calculateOverallStats(); // Uses this.quizAttempts
         this.calculateTopicPerformance(); // Uses this.quizAttempts and this.allQuestionsFromDb
         this.calculateDailyPerformance(); // Uses this.quizAttempts
         await this.calculateTodayDetailedPerformance(); // Uses dbService call with activeContestId
-        this.calculateTopicCoverage(this.activeContestId); // Uses this.quizAttempts and this.allQuestionsFromDb
+        this.calculateTopicCoverage(currentContest.id); // Uses this.quizAttempts and this.allQuestionsFromDb
         // await this.getGenericData(); // Uses dbService calls with activeContestId
 
         // if a date is selected and it's not today, try to load its data
@@ -384,7 +377,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.quizAttempts.forEach(attempt => {
       attempt.allQuestions.forEach(qSnapshotInfo => { // Use allQuestions to capture exposure
         const topic = qSnapshotInfo.questionSnapshot.topic || 'Uncategorized';
-        const data = performanceMap.get(topic) || {correct: 0, total: 0, questionIds: new Set()};
+        const data = performanceMap.get(topic) || { correct: 0, total: 0, questionIds: new Set() };
         data.questionIds.add(qSnapshotInfo.questionId);
 
         const answeredVersion = attempt.answeredQuestions.find(aq => aq.questionId === qSnapshotInfo.questionId);
@@ -416,7 +409,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const timestamp = attempt.timestampEnd || attempt.timestampStart;
       if (!timestamp) return;
       const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
-      const dayData = dailyMap.get(dateKey) || {quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0};
+      const dayData = dailyMap.get(dateKey) || { quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0 };
       dayData.quizzes++;
       dayData.correct += attempt.answeredQuestions
         ? attempt.answeredQuestions.filter(aq => aq.isCorrect && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey)).length
@@ -439,7 +432,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       } as DailyPerformanceData)).slice(-30);
   }
 
-  async calculateTopicCoverage(contest: string): Promise<void> {
+  async calculateTopicCoverage(contest: number): Promise<void> {
     if (!this.allQuestionsFromDb || this.allQuestionsFromDb.length === 0) {
       this.topicCoverage = [];
       return;
@@ -724,20 +717,26 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       options: {
         responsive: true, maintainAspectRatio: false, indexAxis: 'y',
         scales: {
-          x: {beginAtZero: true, max: 100, ticks: {callback: value => value + '%'}},
-          y: {ticks: {autoSkip: false}}
+          x: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } },
+          y: { ticks: { autoSkip: false } }
         },
         plugins: {
-          legend: {display: false},
-          tooltip: {callbacks: {label: context => `${this.topicPerformance[context.dataIndex].topic}: ${context.parsed.x.toFixed(1)}%`}}, // Show full topic name in tooltip
-          title: {display: true, text: 'Precisione per Argomento'}
+          legend: { display: false },
+          tooltip: { callbacks: { label: context => `${this.topicPerformance[context.dataIndex].topic}: ${context.parsed.x.toFixed(1)}%` } }, // Show full topic name in tooltip
+          title: { display: true, text: 'Precisione per Argomento' }
         }
       }
     });
   }
 
   async resetStatistics(): Promise<void> {
-    const confirmationMessage = `Sei sicuro di voler cancellare tutte le statistiche ${this.activeContestId ? `relative al concorso '${this.activeContestId}'` : ''}? Questo cancellerà lo storico dei quiz ${this.activeContestId ? `per questo concorso` : '(globali se nessun concorso è selezionato)'}.`;
+      const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+        this.router.navigate(['/home']);
+      return;
+    }
+
+    const confirmationMessage = `Sei sicuro di voler cancellare tutte le statistiche ${currentContest.id ? `relative al concorso '${currentContest.id}'` : ''}? Questo cancellerà lo storico dei quiz ${currentContest.id ? `per questo concorso` : '(globali se nessun concorso è selezionato)'}.`;
 
     this.alertService.showConfirmationDialog("ATTENZIONE", confirmationMessage).then(async (result) => {
       if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
@@ -749,13 +748,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         // Pass activeContestId to dbService.resetDatabase if it's meant to be contest-specific
         // Or, if resetDatabase is global, clear attempts for contest then reload.
         // Assuming resetDatabase might be global, safer to clear attempts by contest:
-        await this.dbService.resetContest(this.activeContestId);
+        await this.dbService.resetContest(currentContest.id, this.authService.getCurrentUserSnapshot()?.userId ?? -1);
         // If questions statistics (like 'never answered') are also contest-specific and stored, they'd need clearing too.
         // For now, just reloading will show empty state for attempts.
         this.spinnerService.hide();
-        this.alertService.showAlert("Info", `Statistiche ${this.activeContestId ? `per '${this.activeContestId}'` : ''} resettate. Ora la pagina verrà ricaricata.`).then(async res => {
-            await this.loadAndProcessStatistics();
-          }
+        this.alertService.showAlert("Info", `Statistiche ${currentContest.id ? `per '${currentContest.id}'` : ''} resettate. Ora la pagina verrà ricaricata.`).then(async res => {
+          await this.loadAndProcessStatistics();
+        }
         );
       } catch (error) {
         console.error('Error resetting statistics:', error);
@@ -765,6 +764,12 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startPracticeQuizForTopicOLD(topic: string): void {
+      const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+        this.router.navigate(['/home']);
+      return;
+    }
+
     // allQuestionsFromDb is already filtered by contest.
     // quizAttempts is also already filtered by contest.
     // Logic should be fine.
@@ -785,32 +790,38 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (practiceQuestionIds.size === 0) {
       const allTopicQuestions = this.allQuestionsFromDb.filter(q => (q.topic || 'Uncategorized') === topic); // allQuestionsFromDb is contest-specific
       if (allTopicQuestions.length > 0) {
-        if (confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}"${this.activeContestId ? ` nel concorso '${this.activeContestId}'` : ''}. Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
+        if (confirm(`Hai risposto correttamente a tutte le domande incontrate per l'argomento "${topic}"${currentContest.id ? ` nel concorso '${currentContest.id}'` : ''}. Vuoi comunque fare pratica su tutte le ${allTopicQuestions.length} domande disponibili per questo argomento?`)) {
           allTopicQuestions.forEach(q => practiceQuestionIds.add(q.id));
         } else {
           return;
         }
       } else {
-        this.alertService.showAlert("Info", `Nessuna domanda disponibile per l'argomento: ${topic}${this.activeContestId ? ` nel concorso '${this.activeContestId}'` : ''}.`);
+        this.alertService.showAlert("Info", `Nessuna domanda disponibile per l'argomento: ${topic}${currentContest.id ? ` nel concorso '${currentContest.id}'` : ''}.`);
         return;
       }
     }
 
     const finalQuestionIds = Array.from(practiceQuestionIds);
     const queryParams = {
-      quizTitle: `Pratica: ${topic}${this.activeContestId ? ` (${this.activeContestId})` : ''}`,
+      quizTitle: `Pratica: ${topic}${currentContest.id ? ` (${currentContest.id})` : ''}`,
       fixedQuestionIds: finalQuestionIds.join(','), // Use fixedQuestionIds
       totalQuestionsInQuiz: finalQuestionIds.length,
-      publicContest: this.activeContestId // Pass contest context
+      publicContest: currentContest.id // Pass contest context
     };
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
 
   }
 
   async startPracticeQuizForTopic(topic: string): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.isLoadingModal = true;
     const selectedData = this.topicCoverage.find(_topic => _topic.topic === topic);
     if (!selectedData) {
@@ -822,14 +833,14 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       this.spinnerService.show("Recupero domande in corso...");
-      const questionsForModal = await this.dbService.getQuestionsByTopic(this.selectedPublicContest, topic);
+      const questionsForModal = await this.dbService.getQuestionsByTopic(currentContest.id, topic);
       this.spinnerService.hide();
       this.isLoadingModal = false;
       const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Uncategorized';
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, {count: 0, questionIds: []});
+          topicsMap.set(topic, { count: 0, questionIds: [] });
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
@@ -858,12 +869,18 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async exportStatisticsToPDF(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     if (this.quizAttempts.length === 0 && this.allQuestionsFromDb.length === 0) { // Check if any data exists
       this.alertService.showAlert("Info", "Non ci sono statistiche da esportare.");
       return;
     }
 
-    const doc = new jsPDF({orientation: 'p', unit: 'mm', format: 'a4'});
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
     const pageHeight = doc.internal.pageSize.getHeight();
     const pageWidth = doc.internal.pageSize.getWidth();
     let yPos = 15; // Start a bit lower
@@ -884,15 +901,15 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, {align: 'right'});
+        doc.text(`Pagina ${i} di ${pageCount}`, pageWidth - margin, pageHeight - margin + 5, { align: 'right' });
       }
     };
 
 
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    const mainTitle = `Report Statistiche Quiz${this.activeContestId ? ` - ${this.activeContestId}` : ''}`;
-    doc.text(mainTitle, doc.internal.pageSize.getWidth() / 2, 15, {align: 'center'});
+    const mainTitle = `Report Statistiche Quiz${currentContest.name ? ` - ${currentContest.name}` : ''}`;
+    doc.text(mainTitle, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
     yPos += lineHeight * 3;
 
     if (this.quizAttempts.length > 0) {
@@ -919,7 +936,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       checkYPos(lineHeight * 3);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Copertura Argomenti ${this.activeContestId ? `(${this.activeContestId})` : ''}`, 10, yPos);
+      doc.text(`Copertura Argomenti ${currentContest.name ? `(${currentContest.name})` : ''}`, 10, yPos);
       yPos += 7;
       (doc as any).autoTable({
         startY: yPos,
@@ -928,10 +945,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
           new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
         ]),
-        theme: 'striped', styles: {fontSize: 8, cellPadding: 1.5, halign: 'right'},
-        headStyles: {fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center'}, // gray-500
-        columnStyles: {0: {halign: 'left', cellWidth: 'auto'}}, // Topic name left aligned
-        margin: {left: margin, right: margin},
+        theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+        headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
+        columnStyles: { 0: { halign: 'left', cellWidth: 'auto' } }, // Topic name left aligned
+        margin: { left: margin, right: margin },
         didDrawPage: (data: any) => {
           yPos = data.cursor.y;
           if (yPos > pageHeight - margin - 10) yPos = margin
@@ -945,7 +962,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       checkYPos(80);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Precisione per Argomento ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
+      doc.text(`Precisione per Argomento ${currentContest.name ? `(${currentContest.name})` : ''}`, margin, yPos);
       yPos += lineHeight * 1.5;
       try {
         const chartImage = this.topicChart.toBase64Image('image/png', 1.0);
@@ -967,7 +984,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       checkYPos(100);
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Andamento Giornaliero ${this.activeContestId ? `(${this.activeContestId})` : ''}`, margin, yPos);
+      doc.text(`Andamento Giornaliero ${currentContest.name ? `(${currentContest.name})` : ''}`, margin, yPos);
       yPos += lineHeight * 1.5;
       try {
         const chartImage = this.dailyChart.toBase64Image('image/png', 1.0);
@@ -987,28 +1004,36 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     addPageNumbers(); // Add page numbers at the end
     const dateSuffix = this.datePipe.transform(new Date(), 'yyyyMMdd_HHmm');
-    const contestSuffix = this.activeContestId ? `_${this.activeContestId.replace(/\s+/g, '_')}` : '';
+    const contestSuffix = currentContest.id && currentContest.name
+      ? `_${currentContest.name.replace(/\s+/g, '_')}`
+      : '';
     doc.save(`report-statistiche${contestSuffix}-${dateSuffix}.pdf`);
   }
 
 
   async getGenericData(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     // All these dbService calls need to be contest-aware.
-    // They should accept this.activeContestId.
+    // They should accept this.selectedPublicContest.id.
     const [
       uniqueCorrectOnce, uniqueWrongOnce, uniqueNeverAnswered,
       uniqueAnsweredOnce, onlyCorrectlyAnswered, domandeDaRafforzare,
       domandeInCuiVaiMalino, domandeInCuiVaiMoltoMale, domandeDisastro
     ] = await Promise.all([
-      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnceCount(this.activeContestId),
-      this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(this.activeContestId),
-      this.dbService.getAllQuestionNeverAnswered(this.activeContestId),
-      this.dbService.getAllQuestionAnsweredAtLeastOnce(this.activeContestId),
-      this.dbService.getOnlyQuestionCorrectlyAnswered(this.activeContestId),
-      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.75, 0.9999),
-      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.50, 0.7499),
-      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.25, 0.4999),
-      this.dbService.getQuestionsByCorrectnessRange(this.activeContestId, 0.00, 0.2499)
+      this.dbService.getAllQuestionCorrectlyAnsweredAtLeastOnceCount(currentContest.id),
+      this.dbService.getAllQuestionWronglyAnsweredAtLeastOnce(currentContest.id),
+      this.dbService.getAllQuestionNeverAnswered(currentContest.id),
+      this.dbService.getAllQuestionAnsweredAtLeastOnce(currentContest.id),
+      this.dbService.getOnlyQuestionCorrectlyAnswered(currentContest.id),
+      this.dbService.getQuestionsByCorrectnessRange(currentContest.id, 0.75, 0.9999),
+      this.dbService.getQuestionsByCorrectnessRange(currentContest.id, 0.50, 0.7499),
+      this.dbService.getQuestionsByCorrectnessRange(currentContest.id, 0.25, 0.4999),
+      this.dbService.getQuestionsByCorrectnessRange(currentContest.id, 0.00, 0.2499)
     ]);
 
     // this.allQuestionsFromDb is already filtered by activeContestId
@@ -1016,7 +1041,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.tipologiaDomande = [
       {
-        topic: `Domande totali ${this.activeContestId ? `per '${this.activeContestId}'` : 'nel DB'}`,
+        topic: `Domande totali ${currentContest.name ? `per '${currentContest.name}'` : 'nel DB'}`,
         total: totalQuestionsInCurrentContext,
         questionIds: this.allQuestionsFromDb.map(q => q.id),
         correct: 0,
@@ -1118,19 +1143,25 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
+    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
 
   }
 
   async calculateTodayDetailedPerformance(): Promise<void> {
     const today = new Date();
-    // getDetailedPerformanceForDate will use this.activeContestId
+    // getDetailedPerformanceForDate will use this.selectedPublicContest.id
     this.todayDetailedPerformance = await this.getDetailedPerformanceForDate(today);
   }
 
   private async getDetailedPerformanceForDate(date: Date): Promise<DailyPerformanceDataDetailed | null> {
-    // Pass this.activeContestId to the dbService call
-    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(this.activeContestId, date);
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return null;
+    }
+
+    // Pass this.selectedPublicContest.id to the dbService call
+    const attemptsForDate = await this.dbService.getQuizAttemptsBySpecificDate(currentContest.id, date);
     if (attemptsForDate.length === 0) {
       return { // Return a shell object if no attempts, so chart shows "0"
         date: this.datePipe.transform(date, 'yyyy-MM-dd')!,
@@ -1210,7 +1241,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       const dateParts = this.selectedDateForChart.split('-');
       const targetDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-      // getDetailedPerformanceForDate will use this.activeContestId
+      // getDetailedPerformanceForDate will use this.selectedPublicContest.id
       this.selectedDateDetailedPerformance = await this.getDetailedPerformanceForDate(targetDate);
     } catch (error) {
       console.error('Error loading data for selected date:', error);
@@ -1289,7 +1320,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           y: {
             beginAtZero: true,
-            title: {display: true, text: 'Conteggio'},
+            title: { display: true, text: 'Conteggio' },
             ticks: {
               stepSize: 1
             },
@@ -1297,7 +1328,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         },
         plugins: {
-          legend: {display: false},
+          legend: { display: false },
           title: {
             display: true,
             text: `Dettaglio risultato del giorno (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
@@ -1328,7 +1359,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       } as ChartOptions,
       plugins: [ChartDataLabels]
     };
-    this.todayChart = new Chart(ctxSelectedDate, chartConfig);
+    this.selectedDateChart = new Chart(ctxSelectedDate, chartConfig);
   }
 
   async handleSelectedDateChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
@@ -1460,7 +1491,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           y: {
             beginAtZero: true,
-            title: {display: true, text: 'Conteggio'},
+            title: { display: true, text: 'Conteggio' },
             ticks: {
               stepSize: 1
             },
@@ -1468,7 +1499,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         },
         plugins: {
-          legend: {display: false},
+          legend: { display: false },
           title: {
             display: true,
             text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
@@ -1571,7 +1602,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento';
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, {count: 0, questionIds: []});
+          topicsMap.set(topic, { count: 0, questionIds: [] });
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;

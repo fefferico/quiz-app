@@ -1,25 +1,26 @@
 // src/app/pages/home/home.component.ts
-import {Component, OnInit, OnDestroy, inject} from '@angular/core'; // Add OnDestroy
-import {CommonModule, DatePipe} from '@angular/common';
-import {Router, RouterLink} from '@angular/router';
-import {DatabaseService} from '../../core/services/database.service';
-import {QuizAttempt, QuizSettings} from '../../models/quiz.model';
-import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core'; // Add OnDestroy
+import { CommonModule, DatePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { DatabaseService } from '../../core/services/database.service';
+import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
   faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle
 } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
-import {SimpleModalComponent} from '../../shared/simple-modal/simple-modal.component';
-import {SetupModalComponent} from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
-import {GenericData} from '../../models/statistics.model';
-import {AlertService} from '../../services/alert.service';
-import {SoundService} from '../../core/services/sound.service';
-import {Question} from '../../models/question.model';
-import {FormsModule} from '@angular/forms';
-import {ContestSelectionService} from '../../core/services/contest-selection.service'; // Import the service
-import {Subscription} from 'rxjs';
-import {AppUser, AuthService} from '../../core/services/auth.service';
-import {SpinnerService} from '../../core/services/spinner.service';
+import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
+import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
+import { GenericData } from '../../models/statistics.model';
+import { AlertService } from '../../services/alert.service';
+import { SoundService } from '../../core/services/sound.service';
+import { Question } from '../../models/question.model';
+import { FormsModule } from '@angular/forms';
+import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import the service
+import { Subscription } from 'rxjs';
+import { AppUser, AuthService } from '../../core/services/auth.service';
+import { SpinnerService } from '../../core/services/spinner.service';
+import { Contest } from '../../models/contes.model';
 
 @Component({
   selector: 'app-home',
@@ -42,7 +43,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   spinnerService = inject(SpinnerService);
 
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
-  loggedInUser: string = '';
+  loggedInUser: AppUser | null = null;
 
   // --- General State ---
   isMusicPlaying: boolean = false;
@@ -62,7 +63,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
 
   // --- Public Contest ---
-  availablePublicContests: string[] = [];
+  availablePublicContests: Contest[] = [];
   // selectedPublicContest: string | null = null;
 
   isLoadingContests = false;
@@ -91,31 +92,28 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   faLandmark: IconDefinition = faLandmark; // Icon for public contests
 
   // Keep track of the contestId this component is currently operating with
-  private currentLocalContestId: string | null = null;
+  private currentLocalContestId: Contest | null = null;
 
   isTimerEnabled: boolean = false;
   timerDurationSeconds: number = 0;
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
-    return this.contestSelectionService.getCurrentSelectedContest() || '';
+  get selectedPublicContest(): Contest | null { // Updated return type
+    return this.contestSelectionService.getCurrentSelectedContest();
   }
 
   ngOnInit(): void {
     this.isStatsViewer = this.authService.isStatsViewer();
     const currentUser = this.authService.getCurrentUserSnapshot();
-    this.loggedInUser = currentUser && 'id' in currentUser ? (currentUser as AppUser).id : '';
+    this.loggedInUser = currentUser && 'id' in currentUser ? (currentUser as AppUser) : null;
 
-    this.contestSubscription = this.contestSelectionService.selectedContest$.subscribe(newlySelectedContestId => {
-      console.log(`HomeComponent: ContestSelectionService emitted '${newlySelectedContestId}'. Current local is '${this.currentLocalContestId}'`);
+    console.log("Logged in user", this.loggedInUser);
 
-      // Only proceed if the contest ID has actually changed from the component's perspective
-      // or if the component hasn't initialized its contest-specific data yet (currentLocalContestId is null and newlySelectedContestId is not)
-      if (this.currentLocalContestId !== newlySelectedContestId) {
+    this.contestSubscription = this.contestSelectionService.selectedContest$.subscribe(newlySelectedContest => {
+      console.log(`HomeComponent: ContestSelectionService emitted '${newlySelectedContest?.id}'. Current local is '${this.currentLocalContestId?.id}'`);
+      if (this.currentLocalContestId !== newlySelectedContest) {
         console.log('HomeComponent: Detected a change. Calling onPublicContestSelected.');
-        // Update the local state *before* calling onPublicContestSelected
-        // to prevent onPublicContestSelected from causing another emission that re-enters here.
-        this.currentLocalContestId = newlySelectedContestId;
-        this.onPublicContestSelected(newlySelectedContestId);
+        this.currentLocalContestId = newlySelectedContest; // Update local state *before* calling
+        this.onPublicContestSelected(newlySelectedContest);
       } else {
         console.log('HomeComponent: No actual change in contest ID for this component or already processed. Skipping full reload.');
       }
@@ -129,32 +127,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.isLoadingPageData = true;
     try {
       await this.loadAvailablePublicContests();
-      await this.checkForPausedQuiz();
-
-      // The subscription will handle the initial call to onPublicContestSelected
-      // if there's a contest pre-selected in the service.
-      // We set currentLocalContestId based on the service *before* the subscription might fire for the initial value.
-      // This ensures the first emission from the service (if it's the same as currentLocalContestId)
-      // doesn't cause an unnecessary reload if onPublicContestSelected was already called.
-
-      const initialContestFromService = this.contestSelectionService.getCurrentSelectedContest();
-      console.log('HomeComponent Initialize: Initial contest from service:', initialContestFromService);
-
-      // If there's an initial contest and it hasn't been set locally yet,
-      // set it and potentially trigger data load.
-      // This handles the case where the subscription might fire *after* initializeHomepage has set up some state.
-      if (initialContestFromService && this.currentLocalContestId !== initialContestFromService) {
-        this.currentLocalContestId = initialContestFromService; // Sync local state
-        // No need to call onPublicContestSelected here, the subscription will handle it.
-        // Or, if you want to ensure it loads if the subscription fires late:
-        // await this.onPublicContestSelected(initialContestFromService);
-      } else if (!initialContestFromService && this.currentLocalContestId !== null) {
-        // Handle case where service has null but component thought a contest was selected
-        this.currentLocalContestId = null;
-        this.onPublicContestSelected(null); // Reset data
-      }
-
-
+      // The contestSubscription will handle the initial call to onPublicContestSelected.
     } catch (error) {
       console.error("Error initializing homepage:", error);
       this.alertService.showAlert("Errore", "Impossibile caricare i dati iniziali della pagina.");
@@ -163,78 +136,73 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
   }
 
-  async onPublicContestSelected(contestIdentifier: string | null): Promise<void> {
-    console.log(`HomeComponent: onPublicContestSelected called with '${contestIdentifier}'. Current local before service call: '${this.currentLocalContestId}'`);
+  async onPublicContestSelected(contest: Contest | null): Promise<void> {
+    console.log(`HomeComponent: onPublicContestSelected called with '${contest?.id}'. Current local before service call: '${this.currentLocalContestId?.id}'`);
 
-    // Critical: Update the component's internal state FIRST if it's different.
-    // The subscription should ideally handle setting currentLocalContestId *before* calling this.
-    // However, if this method is called directly (e.g. by updateSelectedContestInService),
-    // ensure local state is consistent.
-    if (this.currentLocalContestId !== contestIdentifier) {
-      this.currentLocalContestId = contestIdentifier;
-    }
-
+    // currentLocalContestId is already updated by the subscription handler before this is called.
     // Ensure the service is updated ONLY IF it's not the source of this call
-    // (i.e., if the service's current value is different from contestIdentifier).
-    // This prevents the service from re-emitting if this method was called due to a service emission.
-    if (this.contestSelectionService.getCurrentSelectedContest() !== contestIdentifier) {
-      console.log(`HomeComponent: onPublicContestSelected - Service out of sync. Updating service to '${contestIdentifier}'`);
-      this.contestSelectionService.setSelectedContest(contestIdentifier);
+    if (this.contestSelectionService.getCurrentSelectedContest() !== contest) {
+      console.log(`HomeComponent: onPublicContestSelected - Service out of sync. Updating service to '${contest?.id}'`);
+      this.contestSelectionService.setSelectedContest(contest);
     }
-
 
     this.resetContestSpecificData();
-    if (contestIdentifier) {
+
+    if (contest) {
       this.isLoadingContestSpecificData = true;
       this.loadingButtonKey = 'all_contest_data';
       try {
         await Promise.all([
-          this.loadTodayProblematicQuestions(contestIdentifier),
-          this.loadYesterdayProblematicQuestions(contestIdentifier),
-          this.countNeverEncounteredQuestion(contestIdentifier)
+          this.loadTodayProblematicQuestions(contest),
+          this.loadYesterdayProblematicQuestions(contest),
+          this.countNeverEncounteredQuestion(contest),
+          this.checkForPausedQuiz()
         ]);
       } catch (error) {
-        console.error(`Error loading data for contest ${contestIdentifier}:`, error);
-        this.alertService.showAlert("Errore", `Impossibile caricare i dati per il concorso: ${contestIdentifier}`);
+        console.error(`Error loading data for contest ${contest.id}:`, error);
+        this.alertService.showAlert("Errore", `Impossibile caricare i dati per il concorso: ${contest.name || 'N.D.'}. Si consiglia di provare a riselezionare la banca dati e ricaricare la pagina`);
       } finally {
         this.isLoadingContestSpecificData = false;
         this.loadingButtonKey = null;
       }
+    } else {
+      // If no contest is selected, ensure loading flags are reset.
+      this.isLoadingContestSpecificData = false;
+      this.loadingButtonKey = null;
     }
   }
-
 
   private resetContestSpecificData(): void {
     this.todayProblematicQuestionIds = [];
     this.yesterdayProblematicQuestionIds = [];
     this.neverEncounteredQuestionIds = [];
-    this.topics = []; // Clear topics for modal
-    // Don't clear selectedXDayDate here, user might want to use it with the new contest
+    this.neverEncounteredQuestionCount = 0; // Reset count as well
+    this.topics = [];
   }
 
-
   async checkForPausedQuiz(): Promise<void> {
-    this.pausedQuiz = await this.dbService.getPausedQuiz();
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      return;
+    }
+    this.pausedQuiz = await this.dbService.getPausedQuiz(currentContest.id, this.authService.getCurrentUserId());
   }
 
   resumePausedQuiz(): void {
     if (this.pausedQuiz) {
-      let navigateToPath = '/quiz/take'; // Default path
-      console.log(`Navigating to ${navigateToPath} with queryParams:`, {resumeAttemptId: this.pausedQuiz.id});
-      this.router.navigate([navigateToPath], {state: {quizParams: {resumeAttemptId: this.pausedQuiz.id}}});
+      this.router.navigate(['/quiz/take'], { state: { quizParams: { resumeAttemptId: this.pausedQuiz.id } } });
     }
   }
 
-  async loadYesterdayProblematicQuestions(contestId: string | null): Promise<void> {
+  async loadYesterdayProblematicQuestions(contest: Contest | null): Promise<void> {
     this.loadingButtonKey = 'yesterday_problematic';
-    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contestId);
+    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contest?.id);
     this.loadingButtonKey = null;
   }
 
-  // --- Modified Data Loading Methods to accept contestId ---
-  async loadTodayProblematicQuestions(contestId: string | null): Promise<void> {
+  async loadTodayProblematicQuestions(contest: Contest | null): Promise<void> {
     this.loadingButtonKey = 'today_problematic';
-    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contestId);
+    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contest?.id);
     this.loadingButtonKey = null;
   }
 
@@ -244,14 +212,11 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     buttonKey: string,
     isSimulation: boolean = false
   ): Promise<void> {
-    if (!this.selectedPublicContest && modalTitle !== 'Riprendi il quiz precedente' && modalTitle !== 'Nuovo Quiz Generico') {
-      // Allow "Nuovo Quiz" to proceed without a contest, but it will show all topics.
-      // Or, you might want to disable "Nuovo Quiz" too until a contest is selected.
-      // For now, let's assume "Nuovo Quiz" button will be handled specially or also disabled.
-      if (buttonKey !== 'new_quiz_generic') { // Special key for general new quiz
-        this.alertService.showAlert("Attenzione", "Per favore, seleziona prima un concorso pubblico.");
-        return;
-      }
+    // The primary guard is the [disabled] state of buttons in the template.
+    // This is a secondary check.
+    if (buttonKey !== 'new_quiz_generic' && !isSimulation && !this.selectedPublicContest && modalTitle !== 'Riprendi il quiz precedente' && !modalTitle.toLowerCase().includes('generale')) {
+      this.alertService.showAlert("Attenzione", "Per favore, seleziona prima un concorso pubblico.");
+      return;
     }
 
     this.loadingButtonKey = buttonKey;
@@ -259,13 +224,13 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     let questionsForModal: Question[] = [];
 
     try {
-      this.spinnerService.show(isSimulation ? "Recupero domande per il quiz simulato..." : "Recupero domande mai viste...");
+      this.spinnerService.show(isSimulation ? "Recupero domande per il quiz simulato..." : "Recupero domande...");
       questionsForModal = await fetchQuestionsFn();
-      this.spinnerService.hide();
     } catch (error) {
       console.error(`Error fetching questions for modal (${modalTitle}):`, error);
       this.alertService.showAlert("Errore", `Impossibile recuperare le domande per: ${modalTitle}.`);
     } finally {
+      this.spinnerService.hide();
       this.isLoadingModalData = false;
       this.loadingButtonKey = null;
     }
@@ -275,7 +240,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento';
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, {count: 0, questionIds: []});
+          topicsMap.set(topic, { count: 0, questionIds: [] });
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
@@ -284,21 +249,32 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
         topic: topicName, count: data.count, questionIds: data.questionIds
       }));
-      this.quizSetupModalTitle = modalTitle;
+      this.quizSetupModalTitle = `Quiz Concorso: ${this.selectedPublicContest?.name}`;
       this.openQuizSetupModal();
     } else {
-      this.alertService.showAlert("Info", `Nessuna domanda trovata per: ${modalTitle}.`);
+      this.alertService.showAlert("Info", `Nessuna domanda trovata per il concorso selezionato: ${this.selectedPublicContest?.name}.`);
     }
+    this.isLoadingModal = false;
+    this.loadingButtonIndex = -1;
   }
 
-  async countNeverEncounteredQuestion(contestId: string | null): Promise<void> {
+  async countNeverEncounteredQuestion(contest: Contest | null): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      return;
+    }
+
     this.loadingButtonKey = 'never_encountered';
-    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(contestId);
+    // Assuming getNeverAnsweredQuestionCount takes contest ID (string|undefined)
+    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(currentContest.id, this.authService.getCurrentUserId());
     this.loadingButtonKey = null;
   }
 
-
   startXDayProblematicQuiz(dateString: string | null): void {
+    if (!this.selectedPublicContest) {
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
+      return;
+    }
     if (!dateString) {
       this.alertService.showAlert("Attenzione", "Seleziona una data.");
       return;
@@ -309,60 +285,72 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     this.prepareAndOpenModal(
       async () => {
-        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest);
+        // selectedPublicContest is confirmed not null by the guard above
+        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest!.id);
         return this.dbService.getQuestionByIds(ids);
       },
-      `Errori del ${formattedDate} (${this.selectedPublicContest || 'Generale'})`,
+      `Errori del ${formattedDate} (${this.selectedPublicContest?.name || 'Generale'})`,
       'x_day_problematic'
     );
   }
 
   startYesterdayProblematicQuiz(): void {
+    // Button disabled if !selectedPublicContest
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.yesterdayProblematicQuestionIds),
-      `Errori di IERI (${this.selectedPublicContest || 'Generale'})`,
+      `Errori di IERI (${this.selectedPublicContest?.name || 'Generale'})`,
       'yesterday_problematic'
     );
   }
 
   startTodayProblematicQuiz(): void {
+    // Button disabled if !selectedPublicContest
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.todayProblematicQuestionIds),
-      `Errori di OGGI (${this.selectedPublicContest || 'Generale'})`,
+      `Errori di OGGI (${this.selectedPublicContest?.name || 'Generale'})`,
       'today_problematic'
     );
   }
 
   async startNeverEncounteredQuiz(): Promise<void> {
+    // Button disabled if !selectedPublicContest
+    if (!this.selectedPublicContest) { // Should not happen if button is properly disabled
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
+      return;
+    }
     if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0) {
       this.spinnerService.show("Recupero domande mai viste...");
-      await this.loadNeverEncounteredQuestions();
+      await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
       this.spinnerService.hide();
     }
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
-      `Domande Mai Viste (${this.selectedPublicContest || 'Generale'})`,
+      `Domande Mai Viste (${this.selectedPublicContest?.name || 'Generale'})`,
       'never_encountered'
     );
   }
 
-  startSimulationContestQuizNow(): void { // Renamed to avoid conflict with previous onSelect which reloads data
+  startSimulationContestQuizNow(): void {
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
     }
     this.isTimerEnabled = true;
-    this.timerDurationSeconds = 5400; // 90 minutes in seconds
+    this.timerDurationSeconds = 5400;
     this.prepareAndOpenModal(
-      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null
-      `Simulazione Concorso: ${this.selectedPublicContest}`,
+      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null due to guard
+      `Simulazione Concorso: ${this.selectedPublicContest?.name}`,
       'public_contest_quiz',
       true
     );
   }
 
   async loadNeverEncounteredQuestions(): Promise<void> {
-    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(this.selectedPublicContest);
+    if (!this.selectedPublicContest) {
+      this.neverEncounteredQuestionIds = []; // Clear if no contest
+      return;
+    }
+    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(this.selectedPublicContest.id);
   }
 
   openQuizSetupModal(): void {
@@ -386,41 +374,30 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       enableTimer: quizConfig.enableTimer ?? false,
       timerDurationSeconds: quizConfig.timerDurationSeconds ?? 0,
       enableStreakSounds: quizConfig.enableStreakSounds ?? false,
-      // Pass selected contest if this quiz is derived from one
-      publicContest: this.selectedPublicContest && this.quizSetupModalTitle.includes(this.selectedPublicContest)
-        ? this.selectedPublicContest
-        : undefined
+      publicContest: this.selectedPublicContest?.id // Use optional chaining for contest ID
     };
-    Object.keys(queryParams).forEach(key => (queryParams[key] === undefined || queryParams[key] === '') && delete queryParams[key]);
+    Object.keys(queryParams).forEach(key => (queryParams[key] === undefined || queryParams[key] === null || queryParams[key] === '') && delete queryParams[key]);
 
-    let navigateToPath = '/quiz/take'; // Default path
-    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], {state: {quizParams: queryParams}});
+    this.router.navigate(['/quiz/take'], { state: { quizParams: queryParams } });
   }
 
   previousTrackIndex: number | null = null;
 
   startMusic(index: number): void {
-    // index = 0 : Lazio, index = 1 : Roma
     const tracks = ['lazio', 'roma'];
     if (index < 0 || index >= tracks.length) return;
 
-    // If music is playing and a different track is selected, switch tracks
     if (this.isMusicPlaying) {
       if (this.previousTrackIndex !== index) {
         this.soundService.play(tracks[index]);
         this.previousTrackIndex = index;
-        return;
       } else {
-        // Same track: stop music
         this.soundService.setSoundsEnabled(false);
         this.isMusicPlaying = false;
         this.previousTrackIndex = null;
-        return;
       }
+      return;
     }
-
-    // Start music
     this.soundService.setSoundsEnabled(true);
     this.soundService.play(tracks[index]);
     this.isMusicPlaying = true;
@@ -428,8 +405,15 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   }
 
   async loadAvailablePublicContests(): Promise<void> {
-    // isLoadingContests flag can be part of isLoadingPageData or separate
-    this.availablePublicContests = await this.dbService.getAvailablePublicContests();
+    if (this.loggedInUser && this.loggedInUser.userId !== undefined) {
+      this.availablePublicContests = await this.dbService.getAvailablePublicContests(this.loggedInUser.userId);
+
+      if (this.selectedPublicContest && !this.availablePublicContests.find(contest => contest.id === this.selectedPublicContest?.id)){
+        this.contestSelectionService.setSelectedContest(null);
+      }
+    } else {
+      this.availablePublicContests = [];
+    }
   }
 
   async startPublicContestQuiz(): Promise<void> {
@@ -438,26 +422,27 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       return;
     }
 
-    this.loadingButtonIndex = 4; // Assign a unique index for this button's loading state
-    this.isLoadingModal = true;
+    this.loadingButtonIndex = 4; // Or a specific key for loadingButtonKey
+    this.isLoadingModal = true; // Consider using isLoadingModalData for consistency
     let questionsForModal: Question[] = [];
 
     try {
-      questionsForModal = await this.dbService.getQuestionsByPublicContest(this.selectedPublicContest);
+      questionsForModal = await this.dbService.getQuestionsByPublicContest(this.selectedPublicContest.id); // ID is safe due to guard
     } catch (error) {
-      console.error(`Error fetching questions for contest ${this.selectedPublicContest}:`, error);
-      this.alertService.showAlert("Errore", `Impossibile recuperare le domande per il concorso: ${this.selectedPublicContest}.`);
+      console.error(`Error fetching questions for contest ${this.selectedPublicContest.name}:`, error);
+      this.alertService.showAlert("Errore", `Impossibile recuperare le domande per il concorso: ${this.selectedPublicContest.name}.`);
       this.isLoadingModal = false;
       this.loadingButtonIndex = -1;
       return;
     }
+
 
     if (questionsForModal.length > 0) {
       const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
       questionsForModal.forEach(q => {
         const topic = q.topic || 'Senza Argomento'; // Default topic if undefined
         if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, {count: 0, questionIds: []});
+          topicsMap.set(topic, { count: 0, questionIds: [] });
         }
         const topicData = topicsMap.get(topic)!;
         topicData.count++;
@@ -479,20 +464,22 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.loadingButtonIndex = -1;
   }
 
-  updateSelectedContestInService(contestId: string | null): void {
-    // This method is called from the template's (ngModelChange)
-    // It should primarily just update the service. The subscription will handle the rest.
-    console.log(`HomeComponent: updateSelectedContestInService called with '${contestId}'. Current service value: '${this.contestSelectionService.getCurrentSelectedContest()}'`);
-    if (this.contestSelectionService.getCurrentSelectedContest() !== contestId) {
-      this.contestSelectionService.setSelectedContest(contestId);
+  updateSelectedContestInService(contest: Contest | null): void {
+    console.log(`HomeComponent: updateSelectedContestInService called with '${contest?.id}'. Current service value: '${this.contestSelectionService.getCurrentSelectedContest()?.id}'`);
+    if (this.contestSelectionService.getCurrentSelectedContest() !== contest) {
+      this.contestSelectionService.setSelectedContest(contest);
     }
-    // DO NOT call onPublicContestSelected directly here. Let the subscription do its job.
+    // The subscription to selectedContest$ will handle calling onPublicContestSelected.
   }
 
-  // Make sure to unsubscribe
   ngOnDestroy(): void {
     if (this.contestSubscription) {
       this.contestSubscription.unsubscribe();
     }
+  }
+
+  compareWithFn(obj1: Contest | null, obj2: Contest | null): boolean { // Allow nulls
+    if (obj1 === null && obj2 === null) return true; // Both null, consider them same for placeholder
+    return obj1 && obj2 ? obj1.id === obj2.id : obj1 === obj2;
   }
 }

@@ -8,6 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
+import { Contest } from '../../models/contes.model';
 
 @Component({
   selector: 'app-favorite-questions',
@@ -29,8 +30,8 @@ export class FavoriteQuestionsComponent implements OnInit {
   isLoading = true;
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
-    return this.contestSelectionService.getCurrentSelectedContest() || '';
+  get selectedPublicContest(): Contest | null {
+    return this.contestSelectionService.getCurrentSelectedContest();
   }
 
   private chckForContest(): void {
@@ -47,9 +48,16 @@ export class FavoriteQuestionsComponent implements OnInit {
   }
 
   async loadFavorites(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+
     this.isLoading = true;
     try {
-      this.favoriteQuestions = await this.dbService.getFavoriteQuestions();
+      this.favoriteQuestions = await this.dbService.getFavoriteQuestions(currentContest.id);
     } catch (error) {
       console.error("Error loading favorite questions:", error);
     } finally {
@@ -76,10 +84,10 @@ export class FavoriteQuestionsComponent implements OnInit {
     // Navigate to QuizSetup with parameters to load these specific IDs
     // This requires QuizSetupComponent and subsequently QuizTakingComponent to handle a 'fixedQuestionIds' param
     const queryParams = {
-        // totalQuestionsInQuiz: questionIds.length, // totalQuestionsInQuiz will be derived from IDs length
-        fixedQuestionIds: questionIds
-        // We can also set a default title or context for this type of quiz
-      };
+      // totalQuestionsInQuiz: questionIds.length, // totalQuestionsInQuiz will be derived from IDs length
+      fixedQuestionIds: questionIds
+      // We can also set a default title or context for this type of quiz
+    };
 
     let navigateToPath = '/quiz/take'; // Default path
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);

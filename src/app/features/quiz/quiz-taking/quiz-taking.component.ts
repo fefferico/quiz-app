@@ -43,6 +43,8 @@ import { GenericData } from '../../../models/statistics.model';
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 import { Spinner } from '@angular-devkit/build-angular/src/utils/spinner';
 import { SpinnerService } from '../../../core/services/spinner.service';
+import { Contest } from '../../../models/contes.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -77,6 +79,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private soundService = inject(SoundService);
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
   spinnerService = inject(SpinnerService);
+  authService = inject(AuthService);
 
   private navigationState: any; // Added to store navigation state
 
@@ -279,27 +282,23 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   // Getter to easily access the contest from the template
-  get selectedPublicContest(): string {
+  get selectedPublicContest(): Contest | null {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
   forceExit: boolean = false;
   hideCorrectAnswer: boolean = false;
 
-  private checkForContest(): void {
-    if (!this.selectedPublicContest) {
-      this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
-        this.forceExit = true;
-        this.router.navigate(['/home']);
-      })
-    } else {
-      this.forceExit = false;
-    }
-  }
 
   ngOnInit(): void {
     window.scrollTo({ top: 0, behavior: 'auto' });
-    this.checkForContest();
+
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.loadAvailableVoices(); // Attempt to load voices initially
 
     this.quizStartTime = new Date();
@@ -490,8 +489,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             options: [...this.questions[this.currentQuestionIndex].options], // Original options
             correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
             explanation: this.questions[this.currentQuestionIndex].explanation,
-            isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0
-          }
+            isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0,
+          },
+          contestId: this.currentQuestion.contestId
         });
       }
 
@@ -501,6 +501,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }
       const attemptToSave: QuizAttempt = {
         id: this.currentQuizAttemptId,
+        contestId: this.selectedPublicContest ? this.selectedPublicContest.id : -1,
+        userId: this.authService.getCurrentUserId(),
         timestampStart: this.quizStartTime,
         settings: this.quizSettings,
         totalQuestionsInQuiz: this.questions.length,
@@ -523,7 +525,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
               correctAnswerIndex: originalQuestionData.correctAnswerIndex,
               explanation: originalQuestionData.explanation,
               isFavorite: originalQuestionData.isFavorite || 0
-            }
+            },
+            contestId: originalQuestionData.contestId
           };
         }),
         status: 'paused',
@@ -713,20 +716,21 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       existingAnswer.isCorrect = isCorrect;
     } else {
       this.userAnswers.push({
-      questionId: actualQuestionId,
-      userAnswerIndex: optionIndex,
-      isCorrect: isCorrect,
-      questionSnapshot: {
-        text: this.currentQuestion.text,
-        topic: this.currentQuestion.topic,
-        scoreIsCorrect: this.currentQuestion.scoreIsCorrect,
-        scoreIsWrong: this.currentQuestion.scoreIsWrong,
-        scoreIsSkip: this.currentQuestion.scoreIsSkip,
-        options: [...this.currentQuestion.options],
-        correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
-        explanation: this.currentQuestion.explanation,
-        isFavorite: this.currentQuestion.isFavorite || 0
-      }
+        questionId: actualQuestionId,
+        userAnswerIndex: optionIndex,
+        isCorrect: isCorrect,
+        questionSnapshot: {
+          text: this.currentQuestion.text,
+          topic: this.currentQuestion.topic,
+          scoreIsCorrect: this.currentQuestion.scoreIsCorrect,
+          scoreIsWrong: this.currentQuestion.scoreIsWrong,
+          scoreIsSkip: this.currentQuestion.scoreIsSkip,
+          options: [...this.currentQuestion.options],
+          correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
+          explanation: this.currentQuestion.explanation,
+          isFavorite: this.currentQuestion.isFavorite || 0
+        },
+        contestId: this.currentQuestion.contestId
       });
     }
 
@@ -830,7 +834,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             correctAnswerIndex: this.currentQuestion.correctAnswerIndex,
             explanation: this.currentQuestion.explanation,
             isFavorite: this.currentQuestion.isFavorite || 0
-          }
+          },
+          contestId: this.currentQuestion.contestId
         });
       }
       this.currentQuestionIndex++;
@@ -907,7 +912,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             correctAnswerIndex: originalQuestionData.correctAnswerIndex,
             explanation: originalQuestionData.explanation,
             isFavorite: originalQuestionData.isFavorite || 0
-          }
+          },
+          contestId: originalQuestionData.contestId
         });
       }
     });
@@ -928,6 +934,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       timestampStart: this.quizStartTime,
       timestampEnd: quizEndTime,
       settings: finalQuizSettings,
+      contestId: this.selectedPublicContest ? this.selectedPublicContest.id : -1,
+      userId: this.authService.getCurrentUserId(),
       score: score,
       totalQuestionsInQuiz: this.questions.length,
       answeredQuestions: [...this.userAnswers],
@@ -1067,7 +1075,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           options: [...snapshotItem.questionSnapshot.options],
           correctAnswerIndex: snapshotItem.questionSnapshot.correctAnswerIndex,
           explanation: snapshotItem.questionSnapshot.explanation,
-          isFavorite: snapshotItem.questionSnapshot.isFavorite || 0
+          isFavorite: snapshotItem.questionSnapshot.isFavorite || 0,
+          contestId: snapshotItem.contestId
         }));
 
         this.userAnswers = pausedAttempt.answeredQuestions || [];
@@ -1566,7 +1575,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   async loadNeverEncounteredQuestionIds(): Promise<void> {
     this.neverEncounteredQuestions = await this.dbService.getNeverEncounteredRandomQuestionsByParams(
-      this.quizSettings.publicContest ?? '',
+      this.quizSettings.publicContest,
       this.quizSettings.totalQuestionsInQuiz,
       this.quizSettings.selectedTopics,
       this.quizSettings.keywords,
