@@ -1,6 +1,6 @@
 const fs = require('fs'); // Node.js File System module
 const path = require('path'); // Node.js Path module
-let startId = 20000;
+let startId = 30000;
 
 // The function from the previous example
 function jsArrayToSupabaseBulkInsertSQL(tableName, dataArray) {
@@ -11,7 +11,7 @@ function jsArrayToSupabaseBulkInsertSQL(tableName, dataArray) {
 
   function formatValue(value, col) {
     if (col === 'id') {
-      return Number(value)+20000;
+      return Number(value)+startId;
     }
     if (value === null || typeof value === 'undefined') {
       return 'NULL';
