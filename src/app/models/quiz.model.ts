@@ -81,6 +81,6 @@ export interface QuizSettings {
   quizTitle?: string;
 }
 
-export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out';
+export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out' | 'cancelled' | 'error' | 'in svolgimento' | 'in pausa' | 'completato' | 'tempo scaduto' | 'cancellato' | 'errore' // <-- NEW: For better state management
 
 

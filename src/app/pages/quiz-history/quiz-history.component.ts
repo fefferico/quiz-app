@@ -254,6 +254,35 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
     return quizSettings.quizType || quizAttempt.quizTitle ? ' | Titolo: ' + quizAttempt.quizTitle : ' | Titolo: ' + quizAttempt.quizTitle;
   }
+
+  getStatusLabelColor(attempt: QuizAttempt): string {
+    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento' ) {
+      return 'font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1';
+    }
+    if (attempt.status === 'paused' || attempt.status === 'in pausa' ) {
+      return 'font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1 mr-1';
+    }
+    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto' ) {
+      return 'font-extrabold border rounded bg-red-300 dark:bg-red-500 dark:text-white border-red-500 px-1 mr-1';
+    }
+    return 'font-extrabold border rounded bg-green-300 dark:bg-green-500 dark:text-white border-green-500 px-1 mr-1'; // Default to completed
+  }
+
+    getStatusLabelText(attempt: QuizAttempt): string {
+    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento' ) {
+      return 'in svolgimento';
+    }
+    if (attempt.status === 'paused' || attempt.status === 'in pausa' ) {
+      return 'in pausa';
+    }
+    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto' ) {
+      return 'tempo scaduto';
+    }
+    return 'completato'; // Default to completed
+
+  }
+
+  
   async deleteAttempt(attemptId: string, event: MouseEvent): Promise<void> {
     event.stopPropagation();
     // ... (rest of the method is fine)
@@ -327,7 +356,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
     const totQuestions = attempt.totalQuestionsInQuiz || 1; // Use totalQuestionsInQuiz from attempt
     const score = attempt.score || 0;
-    const resultsPercentage = (score / totQuestions) * 100;
+    const resultsPercentage = (score / this.getMaxResultForAttempt(attempt)) * 100;
 
 
     if (resultsPercentage >= 75) {

@@ -104,7 +104,9 @@ export class DatabaseService implements OnDestroy {
       timeLeftOnPauseSeconds: supabaseAttempt.time_left_on_pause_seconds,
       timeElapsedOnPauseSeconds: supabaseAttempt.time_elapsed_on_pause_seconds,
       contestId: supabaseAttempt.fk_contest_id,
-      userId: supabaseAttempt.fk_user_id
+      userId: supabaseAttempt.fk_user_id,
+      quizTitle: supabaseAttempt.quiz_title,
+      quizType: supabaseAttempt.quiz_type
     };
   }
 
