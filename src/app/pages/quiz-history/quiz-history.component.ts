@@ -237,14 +237,23 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     return topics.join(', ');
   }
 
-  getQuizType(quizSettings: QuizSettings): string {
-    return quizSettings && quizSettings.quizType ? ' | Tipologia: ' + quizSettings.quizType : '';
+  getQuizType(quizAttempt: QuizAttempt): string {
+    const quizSettings = quizAttempt.settings || {};
+    if ((!quizSettings || !quizSettings.quizType) && (!quizAttempt || !quizAttempt.quizType)) {
+      return '';
+    }
+
+    return quizSettings.quizType || quizAttempt.quizType ? ' | Tipologia: ' + quizAttempt.quizType : ' | Tipologia: ' + quizAttempt.quizType;
   }
 
-  getQuizTitle(quizSettings: QuizSettings): string {
-    return quizSettings && quizSettings.quizTitle ? ' | Titolo: ' + quizSettings.quizTitle : '';
-  }
+  getQuizTitle(quizAttempt: QuizAttempt): string {
+    const quizSettings = quizAttempt.settings || {};
+    if ((!quizSettings || !quizSettings.quizTitle) && (!quizAttempt || !quizAttempt.quizTitle)) {
+      return '';
+    }
 
+    return quizSettings.quizType || quizAttempt.quizTitle ? ' | Titolo: ' + quizAttempt.quizTitle : ' | Titolo: ' + quizAttempt.quizTitle;
+  }
   async deleteAttempt(attemptId: string, event: MouseEvent): Promise<void> {
     event.stopPropagation();
     // ... (rest of the method is fine)
