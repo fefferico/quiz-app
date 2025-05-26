@@ -138,6 +138,8 @@ export class DatabaseService implements OnDestroy {
     if (appAttempt.timeElapsedOnPauseSeconds !== undefined) supabaseAttempt.time_elapsed_on_pause_seconds = appAttempt.timeElapsedOnPauseSeconds;
     if (appAttempt.contestId !== undefined) supabaseAttempt.fk_contest_id = appAttempt.contestId;
     if (appAttempt.userId !== undefined) supabaseAttempt.fk_user_id = appAttempt.userId;
+    if (appAttempt.quizTitle !== undefined) supabaseAttempt.quiz_title = appAttempt.quizTitle;
+    if (appAttempt.quizType !== undefined) supabaseAttempt.quiz_type = appAttempt.quizType;
     return supabaseAttempt;
   }
 

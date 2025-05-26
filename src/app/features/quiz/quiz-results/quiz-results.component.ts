@@ -17,7 +17,12 @@ import {
   faChevronUp,
   faFaceSmileBeam,
   faBarChart,
-  faLandmark
+  faLandmark,
+  faCircleXmark,
+  faQuestion,
+  faExclamationCircle,
+  faCheckCircle,
+  faList
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
 import { Contest } from '../../../models/contes.model';
@@ -51,6 +56,10 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   faChevronDown: IconDefinition = faChevronDown; // For accordion closed
   faChevronUp: IconDefinition = faChevronUp;     // For accordion open
   faGood: IconDefinition = faFaceSmileBeam;
+  faCircleXmark: IconDefinition = faCircleXmark;
+  faCheckCircle: IconDefinition = faCheckCircle;
+  faExclamationCircle: IconDefinition = faExclamationCircle;
+  faList: IconDefinition = faList;
 
   quizAttemptId: string | null = null;
   quizAttempt: QuizAttempt | undefined;
@@ -407,6 +416,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         return;
       })
     } else {
+      this.quizAttempt.settings.quizType = 'Revisione errori';
+      this.quizAttempt.settings.quizTitle = 'Revisione domande sbagliate';
       this.onInternalSubmit(this.quizAttempt, this.wrongOrUnansweredQuestionIds);
     }
   }
@@ -429,7 +440,9 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     const
       queryParams = {
         ...settings,
-        quizTitle: `Ripetizione: ${settings.selectedTopics?.join(', ') || 'Quiz Misto'}`,
+        quizTitle: `${settings.quizTitle || 'Quiz Misto'}`,
+        quizType: `${settings.quizType || 'Quiz Misto'}`,
+        selectedTopics: settings.selectedTopics?.join(', '),
         totalQuestionsInQuiz: shuffledQuestionIds.length, // totalQuestionsInQuiz is now the count of selected IDs
         // Topics and keywords from original settings might be too broad if we are repeating specific Qs
         // We are now using fixedQuestionIds, so topics/keywords from settings are less relevant for selection
@@ -455,7 +468,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
   getCorrectnessByGroup(group: GroupedQuestionDisplay): number {
     if (group && group.questions) {
-      return group.questions.filter(qst => qst.isCorrect).length / this.getGroupLength(group);
+      return (group.questions.filter(qst => qst.isCorrect).length || 0) / (this.getGroupLength(group) || 1);
     }
     return 1;
   }
@@ -495,4 +508,55 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     }
     return classes;
   }
+
+   applyFilters(type: string): void {
+    if (!this.quizAttempt) return;
+
+    // Example: this.filterType can be 'all', 'correct', 'wrong', or 'skipped'
+    const filterType = type || 'all';
+
+    const answeredMap = new Map<string, AnsweredQuestion>();
+    (this.quizAttempt.answeredQuestions || []).forEach(aq => answeredMap.set(aq.questionId, aq));
+
+    const filteredGroups: { [key: string]: AnsweredQuestion[] } = {};
+
+    for (const qInfo of this.quizAttempt.allQuestions) {
+      const topic = qInfo.questionSnapshot.topic || 'Uncategorized';
+      if (!filteredGroups[topic]) filteredGroups[topic] = [];
+
+      const answeredVersion = answeredMap.get(qInfo.questionId);
+      const displayQuestion: AnsweredQuestion = {
+        questionId: qInfo.questionId,
+        questionSnapshot: qInfo.questionSnapshot,
+        userAnswerIndex: answeredVersion ? answeredVersion.userAnswerIndex : -1,
+        isCorrect: answeredVersion ? answeredVersion.isCorrect : false,
+        contestId: this.selectedPublicContest?.id || -1
+      };
+
+      let include = false;
+      switch (filterType) {
+        case 'correct':
+          include = displayQuestion.isCorrect;
+          break;
+        case 'wrong':
+          include = answeredVersion !== undefined && !displayQuestion.isCorrect;
+          break;
+        case 'skipped':
+          include = displayQuestion.userAnswerIndex === -1;
+          break;
+        default:
+          include = true;
+      }
+      if (include) filteredGroups[topic].push(displayQuestion);
+    }
+
+    this.groupedQuestions = Object.keys(filteredGroups)
+      .sort((a, b) => a.localeCompare(b))
+      .map(topic => ({
+        topic,
+        questions: filteredGroups[topic]
+      }))
+      .filter(topic => topic.questions && topic.questions.length > 0);
+  }
+
 }

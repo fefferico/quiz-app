@@ -141,6 +141,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   errorLoading = '';
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
+  quizSettings: QuizSettings | undefined;
 
   totalQuizzesTaken = 0;
   totalQuestionsAttempted = 0;

@@ -50,6 +50,12 @@
       <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
         ID: {{ quizAttempt.id }}
       </p>
+      <p *ngIf="quizAttempt.settings.quizType" class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
+        Tipologia: {{ quizAttempt.settings.quizType }}
+      </p>
+      <p *ngIf="quizAttempt.settings.quizTitle" class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
+        Titolo: {{ quizAttempt.settings.quizTitle }}
+      </p>
 
       <div *ngIf="quizAttempt && !isLoading && !errorLoading" class="flex justify-center mt-4">
         <button (click)="exportResultsToPDF()" title="Esporta Risultati in PDF" class="bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold py-2 px-3 rounded-lg shadow-md text-sm
@@ -63,6 +69,33 @@
         </button>
       </div>
     </header>
+
+    <div class="my-4 flex flex-col sm:flex-row gap-4 justify-center items-center text-center min-width-">
+      <button (click)="applyFilters('correct')"
+        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-green-500 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
+        <fa-icon [icon]="faCheckCircle" class="text-white dark:white-gray-400"></fa-icon>
+        Corrette
+      </button>
+
+      <button (click)="applyFilters('wrong')"
+        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-red-500 hover:bg-red-800 dark:bg-red-700 dark:hover:bg-red-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
+        <fa-icon [icon]="faCircleXmark" class="text-white dark:white-gray-400"></fa-icon>
+        Sbagliate
+      </button>
+
+      <button (click)="applyFilters('skipped')"
+        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-yellow-500 hover:bg-yellow-800 dark:bg-yellow-700 dark:hover:bg-yellow-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
+        <fa-icon [icon]="faExclamationCircle" class="text-white dark:white-gray-400"></fa-icon>
+        Saltate
+      </button>
+
+      <button (click)="applyFilters('all')"
+        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-indigo-500 hover:bg-indigo-800 dark:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
+        <fa-icon [icon]="faList" class="text-white dark:white-gray-400"></fa-icon>
+        Tutte
+      </button>
+    </div>
+
 
     <!-- Questions grouped by topic with accordion -->
     <div *ngFor="let group of groupedQuestions" [ngClass]="getResultClass(group)">
@@ -122,6 +155,9 @@
           </div>
         </div>
       </div>
+    </div>
+    <div *ngIf="!groupedQuestions || groupedQuestions.length === 0" class="text-center my-5 font-bold">
+      Non è stata trovata alcuna domanda raggruppata per Argomento o per stato
     </div>
     <!-- End questions grouped by topic -->
 

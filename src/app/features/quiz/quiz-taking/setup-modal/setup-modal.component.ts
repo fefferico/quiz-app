@@ -20,7 +20,7 @@ export class SetupModalComponent implements OnInit {
 
   @Input() topics: GenericData[] = []; // Placeholder for topic counts if needed
   clonedTopics: GenericData[] = []; // Placeholder for topic counts if needed
-  @Input() modalTitle: string = "Dettagli domanda non disponibili."; // To display for context
+  @Input() quizSettings: QuizSettings | undefined
   @Input() contestName: Contest | undefined; // MODIFIED HERE
   @Input() enableTimer: boolean = false;
   @Input() timerDurationSeconds: number = 0;
@@ -71,7 +71,9 @@ export class SetupModalComponent implements OnInit {
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName?.id,
-        hideCorrectAnswer: this.hideCorrectAnswer
+        hideCorrectAnswer: this.hideCorrectAnswer,
+        quizTitle: this.quizSettings?.quizTitle,
+        quizType: this.quizSettings?.quizType
       };
     } else {
       quizSettings = {
@@ -80,7 +82,9 @@ export class SetupModalComponent implements OnInit {
         enableTimer: this.enableTimer,
         timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName?.id,
-        hideCorrectAnswer: this.hideCorrectAnswer
+        hideCorrectAnswer: this.hideCorrectAnswer,
+        quizTitle: this.quizSettings?.quizTitle,
+        quizType: this.quizSettings?.quizType
       };
     }
     quizSettings.keywords = []; // Add keywords to both modes
@@ -105,7 +109,9 @@ export class SetupModalComponent implements OnInit {
         // get specific question id
         fixedQuestionIds: fixedQuestionIds,
         publicContest: this.contestName,
-        hideCorrectAnswer: this.hideCorrectAnswer
+        hideCorrectAnswer: this.hideCorrectAnswer,
+        quizTitle: quizSettings.quizTitle,
+        quizType: quizSettings.quizType
       };
 
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);

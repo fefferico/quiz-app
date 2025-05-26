@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms'; // <-- IMPORT FormsModule for ngMo
 import { Subscription } from 'rxjs';
 
 import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt } from '../../models/quiz.model';
+import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome, faTrashCan, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
@@ -54,7 +54,9 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   filterMinPercentage: number | null = null;
   filterMaxPercentage: number | null = null;
   filterSelectedTopic: string = ''; // Selected topic for filtering
+  filterSelectedType: string = '';
   availableTopics: string[] = [];   // To populate topic dropdown
+  availableTypes: string[] = [];   
   // --- End Filter Properties ---
 
   // Getter to easily access the contest from the template
@@ -62,8 +64,10 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     return this.contestSelectionService.getCurrentSelectedContest();
   }
 
+  isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
 
   ngOnInit(): void {
+    this.isStatsViewer = this.authService.isStatsViewer();
 
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
@@ -71,18 +75,20 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       })
     }
 
-    this.routeSub = this.route.queryParamMap.subscribe(params => {
+    this.routeSub = this.route.queryParamMap.subscribe(async params => {
       const contestFromQuery = params.get('contest') || '';
-      this.loadQuizHistory();
+      await this.loadQuizHistory();
       this.loadAvailableTopics();
+      this.loadAvailableTypes();
     });
 
     // Subscribe to changes from the service if not driven by query param
-    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(contestId => {
+    this.contestSub = this.contestSelectionService.selectedContest$.subscribe( async contestId => {
       // Only update if there's no contest in query param and the service value changes
       if (!this.route.snapshot.queryParamMap.has('contest') && this.selectedPublicContest !== contestId) {
-        this.loadQuizHistory();
+        await this.loadQuizHistory();
         this.loadAvailableTopics();
+        this.loadAvailableTypes();
       }
     });
   }
@@ -98,7 +104,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     this.errorLoading = null;
     try {
       // Pass currentContestId to filter attempts if a contest is selected
-      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.authService.getCurrentUserId());
+      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.getUserId());
       this.applyFilters();
     } catch (error) {
       console.error('Error loading quiz history:', error);
@@ -116,7 +122,6 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       return;
     }
 
-
     try {
       // Filter questions by contest before extracting topics
       const questions = await this.dbService.getAllQuestions(currentContest.id);
@@ -130,6 +135,25 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error loading available topics:', error);
       this.availableTopics = [];
+    }
+  }
+
+  async loadAvailableTypes(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+    try {
+      const typesFromAttemps = this.allQuizAttempts // allQuizAttempts is already contest-filtered
+        .flatMap(attempt => attempt.settings.quizType || [])
+        .filter(quizType => quizType && quizType.trim() !== '');
+
+      this.availableTypes = [...new Set([...typesFromAttemps])].sort();
+    } catch (error) {
+      console.error('Error loading available types:', error);
+      this.availableTypes = [];
     }
   }
 
@@ -157,7 +181,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     // 2. Filter by Min Percentage
     if (this.filterMinPercentage !== null && this.filterMinPercentage >= 0 && this.filterMinPercentage <= 100) {
       filtered = filtered.filter(attempt => {
-        const percentage = ((attempt.score || 0) / (attempt.totalQuestionsInQuiz || 1)) * 100;
+        const percentage = (this.getCorrectCountForAttempt(attempt) / (attempt?.totalQuestionsInQuiz ?? 1) * 100);
         return percentage >= this.filterMinPercentage!;
       });
     }
@@ -165,7 +189,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     // 3. Filter by Max Percentage
     if (this.filterMaxPercentage !== null && this.filterMaxPercentage >= 0 && this.filterMaxPercentage <= 100) {
       filtered = filtered.filter(attempt => {
-        const percentage = ((attempt.score || 0) / (attempt.totalQuestionsInQuiz || 1)) * 100;
+        const percentage = (this.getCorrectCountForAttempt(attempt) / (attempt?.totalQuestionsInQuiz ?? 1) * 100);
         return percentage <= this.filterMaxPercentage!;
       });
     }
@@ -174,6 +198,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     if (this.filterSelectedTopic && this.filterSelectedTopic !== '') {
       filtered = filtered.filter(attempt =>
         attempt.settings.selectedTopics?.includes(this.filterSelectedTopic)
+      );
+    }
+
+    // 5. Filter by Type
+    if (this.filterSelectedType && this.filterSelectedType !== '') {
+      filtered = filtered.filter(attempt =>
+        attempt.settings.quizType?.includes(this.filterSelectedType)
       );
     }
 
@@ -189,6 +220,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     this.filterMinPercentage = null;
     this.filterMaxPercentage = null;
     this.filterSelectedTopic = '';
+    this.filterSelectedType = '';
     this.applyFilters();
   }
 
@@ -203,6 +235,14 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       return topics.slice(0, MAX_DISPLAY_TOPICS).join(', ') + ` e altri ${topics.length - MAX_DISPLAY_TOPICS}`;
     }
     return topics.join(', ');
+  }
+
+  getQuizType(quizSettings: QuizSettings): string {
+    return quizSettings && quizSettings.quizType ? ' | Tipologia: ' + quizSettings.quizType : '';
+  }
+
+  getQuizTitle(quizSettings: QuizSettings): string {
+    return quizSettings && quizSettings.quizTitle ? ' | Titolo: ' + quizSettings.quizTitle : '';
   }
 
   async deleteAttempt(attemptId: string, event: MouseEvent): Promise<void> {
@@ -265,6 +305,9 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   viewResults(attemptId: string): void {
+    if (this.isStatsViewer) {
+      return;
+    }
     this.router.navigate(['/quiz/results', attemptId]);
   }
 
@@ -316,5 +359,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     // if (this.attemptsSub) { // attemptsSub was declared but not used
     //   this.attemptsSub.unsubscribe();
     // }
+  }
+
+  getUserId(): number {
+    let userId = this.authService.getCurrentUserId();
+    if (userId === 3) {
+      userId = 2;
+    }
+    return userId;
   }
 }

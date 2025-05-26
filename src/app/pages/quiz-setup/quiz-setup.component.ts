@@ -361,6 +361,8 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         queryParams.timerDurationSeconds = timerDurationSeconds || 0;
         queryParams.keywords = keywords.join(',');
         queryParams.enableStreakSounds = this.enableStreakSoundsInput; // Add sound setting
+        queryParams.quizTitle = this.isStudyMode ? 'Studio' : 'Quiz';
+        queryParams.quizType = this.isStudyMode ? 'Study' : 'Standard'; // Add quiz type
 
         if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
           queryParams.totalQuestionsInQuiz = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);

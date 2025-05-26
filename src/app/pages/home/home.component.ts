@@ -49,6 +49,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   isMusicPlaying: boolean = false;
   isQuizSetupModalOpen = false;
   quizSetupModalTitle = 'QUIZ';
+  quizSettings: QuizSettings | undefined// Default settings, can be modified in the modal
   topics: GenericData[] = []; // For the setup modal, will be populated based on contest
 
   // --- Loading States ---
@@ -153,9 +154,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       this.loadingButtonKey = 'all_contest_data';
       try {
         await Promise.all([
-          this.loadTodayProblematicQuestions(contest,this.getUserId()),
-          this.loadYesterdayProblematicQuestions(contest,this.getUserId()),
-          this.countNeverEncounteredQuestion(contest,this.getUserId()),
+          this.loadTodayProblematicQuestions(contest, this.getUserId()),
+          this.loadYesterdayProblematicQuestions(contest, this.getUserId()),
+          this.countNeverEncounteredQuestion(contest, this.getUserId()),
           this.checkForPausedQuiz()
         ]);
       } catch (error) {
@@ -208,13 +209,13 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   private async prepareAndOpenModal(
     fetchQuestionsFn: () => Promise<Question[]>,
-    modalTitle: string,
+    quizSettings: QuizSettings,
     buttonKey: string,
     isSimulation: boolean = false
   ): Promise<void> {
     // The primary guard is the [disabled] state of buttons in the template.
     // This is a secondary check.
-    if (buttonKey !== 'new_quiz_generic' && !isSimulation && !this.selectedPublicContest && modalTitle !== 'Riprendi il quiz precedente' && !modalTitle.toLowerCase().includes('generale')) {
+    if (buttonKey !== 'new_quiz_generic' && !isSimulation && !this.selectedPublicContest && quizSettings.quizTitle !== 'Riprendi il quiz precedente' && !quizSettings.quizTitle?.toLowerCase().includes('generale')) {
       this.alertService.showAlert("Attenzione", "Per favore, seleziona prima un concorso pubblico.");
       return;
     }
@@ -227,8 +228,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       this.spinnerService.show(isSimulation ? "Recupero domande per il quiz simulato..." : "Recupero domande...");
       questionsForModal = await fetchQuestionsFn();
     } catch (error) {
-      console.error(`Error fetching questions for modal (${modalTitle}):`, error);
-      this.alertService.showAlert("Errore", `Impossibile recuperare le domande per: ${modalTitle}.`);
+      console.error(`Error fetching questions for modal (${quizSettings.quizTitle}):`, error);
+      this.alertService.showAlert("Errore", `Impossibile recuperare le domande per: ${quizSettings.quizTitle}.`);
     } finally {
       this.spinnerService.hide();
       this.isLoadingModalData = false;
@@ -271,17 +272,40 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   }
 
   startXDayProblematicQuiz(dateString: string | null): void {
-    if (!this.selectedPublicContest) {
-      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
       return;
     }
+
+
     if (!dateString) {
       this.alertService.showAlert("Attenzione", "Seleziona una data.");
       return;
     }
-    const selectedDate = new Date(dateString);
-    selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
-    const formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || dateString;
+
+    let selectedDate: Date;
+    let formattedDate: string;
+
+    if (dateString === 'today') {
+      selectedDate = new Date();
+      formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || 'Oggi';
+    } else if (dateString === 'yesterday') {
+      selectedDate = new Date();
+      selectedDate.setDate(selectedDate.getDate() - 1);
+      formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || 'Ieri';
+    }
+    else {
+      selectedDate = new Date(dateString);
+      formattedDate = this.datePipe.transform(selectedDate, 'dd/MM/yyyy') || dateString;
+    }
+
+    this.quizSettings = {
+      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      selectedTopics: [],
+      quizTitle: `Errori ${formattedDate} (${currentContest.name || 'Generale'})`,
+      quizType: 'Revisione errori',
+      publicContest: currentContest.id
+    };
 
     this.prepareAndOpenModal(
       async () => {
@@ -289,48 +313,56 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
         const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest!.id, this.getUserId());
         return this.dbService.getQuestionByIds(ids);
       },
-      `Errori del ${formattedDate} (${this.selectedPublicContest?.name || 'Generale'})`,
+      this.quizSettings,
       'x_day_problematic'
     );
   }
 
-  startYesterdayProblematicQuiz(): void {
-    // Button disabled if !selectedPublicContest
-    this.prepareAndOpenModal(
-      () => this.dbService.getQuestionByIds(this.yesterdayProblematicQuestionIds),
-      `Errori di IERI (${this.selectedPublicContest?.name || 'Generale'})`,
-      'yesterday_problematic'
-    );
-  }
-
-  startTodayProblematicQuiz(): void {
-    // Button disabled if !selectedPublicContest
-    this.prepareAndOpenModal(
-      () => this.dbService.getQuestionByIds(this.todayProblematicQuestionIds),
-      `Errori di OGGI (${this.selectedPublicContest?.name || 'Generale'})`,
-      'today_problematic'
-    );
-  }
-
   async startNeverEncounteredQuiz(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      return;
+    }
+
+    this.quizSettings = {
+      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      selectedTopics: [],
+      quizTitle: `Domande mai risposte (${this.selectedPublicContest?.name || 'Generale'})`,
+      quizType: 'Domande mai risposte',
+      publicContest: currentContest.id
+    };
+
     // Button disabled if !selectedPublicContest
     if (!this.selectedPublicContest) { // Should not happen if button is properly disabled
       this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
     }
     if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0) {
-      this.spinnerService.show("Recupero domande mai viste...");
+      this.spinnerService.show("Recupero Domande mai risposte...");
       await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
       this.spinnerService.hide();
     }
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
-      `Domande Mai Viste (${this.selectedPublicContest?.name || 'Generale'})`,
+      this.quizSettings,
       'never_encountered'
     );
   }
 
   startSimulationContestQuizNow(): void {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      return;
+    }
+
+    this.quizSettings = {
+      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      selectedTopics: [],
+      quizTitle: `Esame (${currentContest.name || 'Generale'})`,
+      quizType: 'Esame',
+      publicContest: currentContest.id
+    };
+
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
@@ -339,7 +371,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.timerDurationSeconds = 5400;
     this.prepareAndOpenModal(
       () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null due to guard
-      `Simulazione Concorso: ${this.selectedPublicContest?.name}`,
+      this.quizSettings,
       'public_contest_quiz',
       true
     );
@@ -366,7 +398,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   handleQuizSetupSubmitted(quizConfig: Partial<QuizSettings> & { fixedQuestionIds?: string[] }): void {
     this.closeQuizSetupModal();
     const queryParams: any = {
-      quizTitle: this.quizSetupModalTitle || 'Quiz',
+      quizTitle: this.quizSettings?.quizTitle || 'Quiz',
+      quizType: this.quizSettings?.quizType || 'Standard',
       totalQuestionsInQuiz: quizConfig.totalQuestionsInQuiz,
       topics: quizConfig.selectedTopics?.join(','),
       topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
@@ -408,7 +441,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     if (this.loggedInUser && this.loggedInUser.userId !== undefined) {
       this.availablePublicContests = await this.dbService.getAvailablePublicContests(this.loggedInUser.userId);
 
-      if (this.selectedPublicContest && !this.availablePublicContests.find(contest => contest.id === this.selectedPublicContest?.id)){
+      if (this.selectedPublicContest && !this.availablePublicContests.find(contest => contest.id === this.selectedPublicContest?.id)) {
         this.contestSelectionService.setSelectedContest(null);
       }
     } else {
@@ -485,7 +518,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   getUserId(): number {
     let userId = this.authService.getCurrentUserId();
-    if (userId === 3){
+    if (userId === 3) {
       userId = 2;
     }
     return userId;

@@ -39,6 +39,9 @@ export interface TopicCount {
   count: number;
 }
 
+export type QuizType = 'Standard' | 'Esame' | 'Revisione errori' | 'Domande mai risposte' | 'Contest' | 'Timed'; // <-- NEW: For different quiz types
+
+
 // Represents a completed quiz session and its results
 export interface QuizAttempt {
   id: string;
@@ -57,6 +60,8 @@ export interface QuizAttempt {
   timeElapsedOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
   contestId: number;
   userId: number;
+  quizType?: QuizType;
+  quizTitle?: string;
 }
 
 export interface QuizSettings {
@@ -72,6 +77,8 @@ export interface QuizSettings {
   questionIDs?: string[];
   publicContest: number;
   hideCorrectAnswer?: boolean;
+  quizType?: QuizType;
+  quizTitle?: string;
 }
 
 export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out';

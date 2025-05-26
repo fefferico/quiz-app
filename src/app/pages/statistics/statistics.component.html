@@ -159,7 +159,7 @@
       </section>
 
       <section class="mb-10" *ngIf="topicCoverage.length > 0">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Copertura Argomenti</h2>
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Materie</h2>
         <div
           class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -252,7 +252,7 @@
 
       <app-simple-modal [isOpen]="isQuizSetupModalOpen" [modalTitle]="quizSetupModalTitle || 'Configurazione quiz'"
                         (close)="closeQuizSetupModal()">
-        <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [modalTitle]="quizSetupModalTitle"
+        <app-setup-modal *ngIf="isQuizSetupModalOpen" [topics]="topics" [quizSettings]="quizSettings"
                          [contestName]="selectedPublicContest === null ? undefined : selectedPublicContest" (submitFeedback)="handleQuizSetupSubmitted($event)"
                          (cancelFeedback)="closeQuizSetupModal()">
         </app-setup-modal>

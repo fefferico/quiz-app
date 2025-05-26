@@ -20,7 +20,7 @@ import { QuestionFeedbackComponent } from '../../../question-feedback/question-f
 
 import { DatabaseService } from '../../../core/services/database.service';
 import { Question } from '../../../models/question.model';
-import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus, QuestionSnapshotInfo } from '../../../models/quiz.model';
+import { QuizSettings, AnsweredQuestion, QuizAttempt, TopicCount, QuizStatus, QuestionSnapshotInfo, QuizType } from '../../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 // IMPORT faCog for the new button
 import {
@@ -170,6 +170,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   questions: Question[] = [];
   currentQuestionIndex = 0;
   quizTitle = 'Quiz';
+  quizType: QuizType = 'Standard';
   currentQuestion: Question | undefined;
   userAnswers: AnsweredQuestion[] = [];
   unansweredQuestions: (AnsweredQuestion | undefined)[] = [];
@@ -324,6 +325,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           }
         }
         this.quizTitle = actualParams['quizTitle'] || 'Quiz';
+        this.quizType = actualParams['quizType'] || 'Standard';
 
         this.quizSpecificSoundsEnabled = actualParams['enableStreakSounds'] === 'true';
         if (this.synth) {
@@ -347,6 +349,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           const totalQuestionsInQuiz = actualParams['totalQuestionsInQuiz'] ? +actualParams['totalQuestionsInQuiz'] : 10;
           const topicsParam = actualParams['topics'] || '';
           const selectedTopics = topicsParam ? topicsParam.split(',').filter((t: any) => t) : [];
+          const quizTitle = actualParams['quizTitle'] || '';
+          const quizType = actualParams['quizType'] || '';
 
           const keywordsParam = actualParams['keywords'] || '';
           let selectedKeywords: string[] = [];
@@ -378,6 +382,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             hideCorrectAnswer,
             totalQuestionsInQuiz,
             selectedTopics,
+            quizTitle,
+            quizType,
             keywords: selectedKeywords,
             topicDistribution: selectedTopicDistribution,
             enableTimer: this.isTimerEnabled,
@@ -965,6 +971,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       status: isTimeUp ? 'timed-out' : 'completed',
       currentQuestionIndex: this.currentQuestionIndex,
       timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
+      quizTitle: this.quizTitle,
+      quizType: this.quizType,
       // timeLeftOnPauseSeconds is not relevant here as quiz is ending
     };
 

@@ -93,12 +93,17 @@
         <span class="text-sm sm:text-base font-medium text-indigo-700 dark:text-indigo-400 mb-1 sm:mb-0">
           Banca Dati: <strong>{{ selectedPublicContest?.name }}</strong>
         </span>
+        <span class="text-sm sm:text-base font-medium text-indigo-700 dark:text-indigo-400 mb-1 sm:mb-0">
+          Tipologia: <strong>{{ quizType }}</strong>
+        </span>
+        <span class="text-sm sm:text-base font-medium text-indigo-700 dark:text-indigo-400 mb-1 sm:mb-0">
+          Titolo: <strong>{{ quizTitle }}</strong>
+        </span>
       </div>
       <div class="flex flex-col sm:flex-row justify-between items-center mb-1">
 
         <span class="text-sm sm:text-base font-medium text-indigo-700 dark:text-indigo-400 mb-1 sm:mb-0">
-          Domanda <strong>{{ currentQuestionIndex + 1 }}</strong> di <strong>{{ questions.length }}</strong> - {{
-          quizTitle }}
+          Domanda <strong>{{ currentQuestionIndex + 1 }}</strong> di <strong>{{ questions.length }}</strong>
         </span>
 
         <div *ngIf="isCronometerEnabled">
