@@ -25,6 +25,7 @@
     <div class="mb-6 text-center sm:text-right">
       <button (click)="startQuizWithFavorites()"
         class="w-full sm:w-auto bg-green-500 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-500 font-bold py-2 px-4 rounded-md shadow">
+        <fa-icon class="ml-2 fa-lg" [icon]="faLandmark"></fa-icon>
         Quiz su queste domande ({{ favoriteQuestions.length }})
       </button>
     </div>

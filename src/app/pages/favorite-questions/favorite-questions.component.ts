@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
 import { Question } from '../../models/question.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { Contest } from '../../models/contes.model';
@@ -25,6 +25,7 @@ export class FavoriteQuestionsComponent implements OnInit {
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
+  faLandmark: IconDefinition = faLandmark; // This was already here, seems unused in the template you showed previously
 
   favoriteQuestions: Question[] = [];
   isLoading = true;

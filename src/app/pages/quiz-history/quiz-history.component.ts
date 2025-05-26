@@ -15,6 +15,7 @@ import { AlertButton } from '../../models/alert.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
 import { Contest } from '../../models/contes.model';
 import { AuthService } from '../../core/services/auth.service';
+import {SpinnerService} from '../../core/services/spinner.service';
 
 @Component({
   selector: 'app-quiz-history',
@@ -31,6 +32,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute); // Inject ActivatedRoute
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
   private authService = inject(AuthService);
+  spinnerService = inject(SpinnerService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -56,7 +58,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   filterSelectedTopic: string = ''; // Selected topic for filtering
   filterSelectedType: string = '';
   availableTopics: string[] = [];   // To populate topic dropdown
-  availableTypes: string[] = [];   
+  availableTypes: string[] = [];
   // --- End Filter Properties ---
 
   // Getter to easily access the contest from the template
@@ -77,7 +79,9 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
     this.routeSub = this.route.queryParamMap.subscribe(async params => {
       const contestFromQuery = params.get('contest') || '';
+      this.spinnerService.show('Recupero storico in corso...');
       await this.loadQuizHistory();
+      this.spinnerService.hide();
       this.loadAvailableTopics();
       this.loadAvailableTypes();
     });
@@ -86,7 +90,9 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     this.contestSub = this.contestSelectionService.selectedContest$.subscribe( async contestId => {
       // Only update if there's no contest in query param and the service value changes
       if (!this.route.snapshot.queryParamMap.has('contest') && this.selectedPublicContest !== contestId) {
+        this.spinnerService.show('Recupero storico in corso...');
         await this.loadQuizHistory();
+        this.spinnerService.hide();
         this.loadAvailableTopics();
         this.loadAvailableTypes();
       }
@@ -282,7 +288,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
   }
 
-  
+
   async deleteAttempt(attemptId: string, event: MouseEvent): Promise<void> {
     event.stopPropagation();
     // ... (rest of the method is fine)
@@ -360,13 +366,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
 
     if (resultsPercentage >= 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg transition-shadow duration-200';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg hover:bg-green-400 dark:hover:bg-green-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg transition-shadow duration-200';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg hover:bg-yellow-400 dark:hover:bg-yellow-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg transition-shadow duration-200';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg hover:bg-orange-400 dark:hover:bg-orange-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg transition-shadow duration-200';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg hover:bg-red-400 dark:hover:bg-red-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     }
     return classes;
   }

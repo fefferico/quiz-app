@@ -199,12 +199,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.routeSub = this.route.queryParamMap.subscribe(async params => {
+      this.spinnerService.show('Recupero statistiche in corso...');
       await this.loadAndProcessStatistics();
+      this.spinnerService.hide();
     });
 
     this.contestSub = this.contestSelectionService.selectedContest$.subscribe(async contestId => {
       if (!this.route.snapshot.queryParamMap.has('contest')) {
+        this.spinnerService.show('Recupero statistiche in corso...');
         await this.loadAndProcessStatistics(); // Reload stats if service changes contest
+        this.spinnerService.hide();
       }
     });
 
