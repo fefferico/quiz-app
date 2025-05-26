@@ -147,7 +147,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
     try {
       const typesFromAttemps = this.allQuizAttempts // allQuizAttempts is already contest-filtered
-        .flatMap(attempt => attempt.settings.quizType || [])
+        .flatMap(attempt => (attempt.settings.quizType || attempt.quizType) || [])
         .filter(quizType => quizType && quizType.trim() !== '');
 
       this.availableTypes = [...new Set([...typesFromAttemps])].sort();
@@ -204,7 +204,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     // 5. Filter by Type
     if (this.filterSelectedType && this.filterSelectedType !== '') {
       filtered = filtered.filter(attempt =>
-        attempt.settings.quizType?.includes(this.filterSelectedType)
+        attempt.settings.quizType?.includes(this.filterSelectedType) || attempt.quizType?.includes(this.filterSelectedType)
       );
     }
 
