@@ -155,13 +155,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   topicChart: Chart | undefined;
 
   dailyPerformance: DailyPerformanceData[] = [];
+  dailyRevisionPerformance: DailyPerformanceData[] = [];
   // We will use a single object for today's detailed data for simplicity
   todayDetailedPerformance: DailyPerformanceDataDetailed | null = null;
   @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('dailyRevisionPerformanceChart') dailyRevisionPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('todayPerformanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
 
   dailyChart: Chart | undefined;
   todayChart: Chart | undefined;
+  revisionChart: Chart | undefined;
 
   totalWrongAnswersOverall = 0;
 
@@ -226,6 +229,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.dailyChart.destroy();
       this.dailyChart = undefined;
     }
+    if (this.revisionChart) {
+      this.revisionChart.destroy();
+      this.revisionChart = undefined;
+    }
     if (this.todayChart) {
       this.todayChart.destroy();
       this.todayChart = undefined;
@@ -247,6 +254,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.createDailyPerformanceChart();
     } else {
       this.clearCanvasOrShowMessage(this.dailyPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
+    }
+
+    // Daily Revision Tren Chart
+    if (this.dailyRevisionPerformanceChartRef?.nativeElement && this.dailyRevisionPerformance.length > 0) {
+      this.createDailyRevisionPerformanceChart();
+    } else {
+      this.clearCanvasOrShowMessage(this.dailyRevisionPerformanceChartRef, 'Nessun dato sull\'andamento delle revisioni giornaliere.');
     }
 
     // Today's Detailed Chart
@@ -313,6 +327,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.calculateTodayDetailedPerformance(); // Uses dbService call with activeContestId
         this.calculateTopicCoverage(currentContest.id); // Uses this.quizAttempts and this.allQuestionsFromDb
         // await this.getGenericData(); // Uses dbService calls with activeContestId
+        this.calculateDailyRevisionPerformance(); // Uses this.quizAttempts
 
         // if a date is selected and it's not today, try to load its data
         if (this.selectedDateForChart && this.datePipe.transform(new Date(), 'yyyy-MM-dd') !== this.selectedDateForChart) {
@@ -343,6 +358,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.averageScorePercentage = 0;
     this.topicPerformance = [];
     this.dailyPerformance = [];
+    this.dailyRevisionPerformance = [];
     this.todayDetailedPerformance = null;
     this.selectedDateDetailedPerformance = null;
     this.topicCoverage = [];
@@ -519,8 +535,6 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
     const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
     const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
-    // Assuming dp.totalIncorrect = (questions presented - correct answers),
-    // which includes both wrongly answered and skipped questions based on current calculateDailyPerformance.
     const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
     const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
     const maxTotalAnswered = Math.max(...totalAttemptedData);
@@ -866,6 +880,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.dailyChart) this.dailyChart.destroy();
     if (this.todayChart) this.todayChart.destroy();
     if (this.selectedDateChart) this.selectedDateChart.destroy();
+    if (this.revisionChart) this.revisionChart.destroy();
   }
 
   async exportStatisticsToPDF(): Promise<void> {
@@ -1646,5 +1661,233 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       userId = 2;
     }
     return userId;
+  }
+
+  calculateDailyRevisionPerformance(): void {
+    const dailyMap = new Map<string, DailyMap>();
+    const dateFormatter = new DatePipe('en-US');
+    const sortedAttempts = [...this.quizAttempts].sort((a, b) =>
+      new Date(a.timestampEnd || a.timestampStart || 0).getTime() - new Date(b.timestampEnd || b.timestampStart || 0).getTime()
+    ).filter(attempt => attempt.quizType === "Revisione errori" || (attempt.settings && attempt.settings.quizType === "Revisione errori"));
+    sortedAttempts.forEach(attempt => {
+      const timestamp = attempt.timestampEnd || attempt.timestampStart;
+      if (!timestamp) return;
+      const dateKey = dateFormatter.transform(timestamp, 'yyyy-MM-dd')!;
+      const dayData = dailyMap.get(dateKey) || { quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0 };
+      dayData.quizzes++;
+      dayData.correct += attempt.answeredQuestions
+        ? attempt.answeredQuestions.filter(aq => aq.isCorrect && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey)).length
+        : 0;
+      dayData.incorrect += attempt.answeredQuestions ? attempt.answeredQuestions.filter(aq => !aq.isCorrect && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey)).length
+        : 0;
+      dayData.skipped += attempt.unansweredQuestions && (attempt.timestampEnd && dateFormatter.transform(attempt.timestampEnd, 'yyyy-MM-dd') === dateKey) ? attempt.unansweredQuestions.length : 0;
+      const total = dayData.correct + dayData.incorrect + dayData.skipped;
+      dailyMap.set(dateKey, dayData);
+    });
+    this.dailyRevisionPerformance = Array.from(dailyMap.entries())
+      .map(([date, data]) => ({
+        date: date,
+        quizzesTaken: data.quizzes,
+        totalCorrect: data.correct,
+        totalIncorrect: data.incorrect,
+        totalSkipped: data.skipped,
+        totalAttemptedInDay: data.correct + data.incorrect + data.skipped,
+        averageAccuracy: (data.correct + data.incorrect + data.skipped) > 0 ? (data.correct / (data.correct + data.incorrect + data.skipped)) : 0
+      } as DailyPerformanceData)).slice(-30);
+  }
+
+  createDailyRevisionPerformanceChart(): void {
+    if (this.revisionChart) this.revisionChart.destroy();
+    if (!this.dailyRevisionPerformanceChartRef?.nativeElement || this.dailyRevisionPerformance.length === 0) {
+      this.clearCanvasOrShowMessage(this.dailyRevisionPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
+      return;
+    }
+    const ctx = this.dailyRevisionPerformanceChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+
+    // Build daily map for revision attempts
+    const dailyMap = new Map<string, DailyMap>();
+    const dateFormatter = new DatePipe('en-US');
+    this.dailyRevisionPerformance.forEach(attempt => {
+      const dayData = dailyMap.get(attempt.date) || { quizzes: 0, correct: 0, incorrect: 0, skipped: 0 };
+      dayData.quizzes++;
+      dayData.correct += attempt.totalCorrect
+      dayData.incorrect += attempt.totalIncorrect
+      dayData.skipped += attempt.totalSkipped
+      dailyMap.set(attempt.date, dayData);
+    });
+
+    const labels = this.dailyRevisionPerformance.map(dp => dp.date);
+    const accuracyData = this.dailyRevisionPerformance.map(dp => dp.averageAccuracy * 100);
+    const quizzesTakenData = this.dailyRevisionPerformance.map(dp => dp.quizzesTaken);
+    const totalCorrectData = this.dailyRevisionPerformance.map(dp => dp.totalCorrect);
+    const totalAttemptedData = this.dailyRevisionPerformance.map(dp => dp.totalAttemptedInDay);
+    const totalIncorrectData = this.dailyRevisionPerformance.map(dp => dp.totalIncorrect);
+    const totalSkippedData = this.dailyRevisionPerformance.map(dp => dp.totalSkipped);
+    const maxTotalAnswered = Math.max(...totalAttemptedData);
+
+    const chartData = {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line' as const,
+          label: 'Precisione Media (%)',
+          data: accuracyData,
+          borderColor: 'rgba(255, 159, 64, 1)',
+          backgroundColor: 'rgba(255, 159, 64, 0.2)',
+          yAxisID: 'yAccuracy',
+          tension: 0.1,
+          fill: false
+        },
+        {
+          type: 'bar' as const,
+          label: 'Domande svolte',
+          data: totalAttemptedData,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte errate',
+          data: totalIncorrectData,
+          backgroundColor: 'rgba(255, 99, 132, 0.6)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte saltate',
+          data: totalSkippedData,
+          backgroundColor: 'rgba(255, 206, 86, 0.6)',
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+        {
+          type: 'bar' as const,
+          label: 'Risposte Corrette',
+          data: totalCorrectData,
+          backgroundColor: 'rgba(75, 192, 192, 0.7)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2,
+          yAxisID: 'yQuizzes'
+        },
+      ]
+    };
+
+    const chartDailyConfig: ChartConfiguration = {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        scales: {
+          x: {
+            type: 'time',
+            adapters: {
+              date: {
+                locale: it
+              }
+            },
+            time: {
+              unit: 'day',
+              tooltipFormat: 'd MMM yyyy',
+              displayFormats: {
+                day: 'd MMM'
+              }
+            },
+            title: {
+              display: true,
+              text: 'Data'
+            }
+          },
+          yAccuracy: {
+            type: 'linear',
+            position: 'left',
+            min: 0,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Precisione (%)'
+            },
+            ticks: {
+              callback: value => value + '%'
+            },
+            grid: {
+              drawOnChartArea: true
+            }
+          },
+          yQuizzes: {
+            suggestedMax: maxTotalAnswered + 2,
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            title: {
+              display: true,
+              text: 'Conteggio'
+            },
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          },
+          title: {
+            display: true,
+            text: 'Andamento Revisioni Giornaliero'
+          },
+          legend: {
+            display: true,
+            position: 'top',
+          },
+          datalabels: {
+            display: (context: any) => {
+              const value = context.dataset.data[context.dataIndex] as number;
+              if (typeof value !== 'number') {
+                return false;
+              }
+              if (context.dataset.yAxisID === 'yQuizzes') {
+                return value !== 0;
+              }
+              return true;
+            },
+            anchor: 'end',
+            align: 'center',
+            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            formatter: (value: number, context: any) => {
+              if (typeof value !== 'number') {
+                return '';
+              }
+              if (context.dataset.yAxisID === 'yAccuracy') {
+                return value.toFixed(2) + '%';
+              } else {
+                return Math.round(value).toString();
+              }
+            }
+          }
+        }
+      } as ChartOptions,
+      plugins: [ChartDataLabels]
+    };
+    this.revisionChart = new Chart(ctx, chartDailyConfig);
   }
 }
