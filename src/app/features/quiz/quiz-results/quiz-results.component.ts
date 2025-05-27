@@ -27,6 +27,7 @@ import {
 import { AlertService } from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
 import { Contest } from '../../../models/contes.model';
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -47,6 +48,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef); // For manual change detection if needed
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
+  authService = inject(AuthService);
   // Icons
   segnala: IconDefinition = faExclamation;
   repeatIcon: IconDefinition = faRepeat;

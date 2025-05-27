@@ -161,7 +161,7 @@
     </div>
     <!-- End questions grouped by topic -->
 
-    <div class="w-full mt-4 inline-grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+    <div *ngIf="!authService.isStatsViewer()" class="w-full mt-4 inline-grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
       <button (click)="repeatQuiz()"
         class="text-sm sm:text-base w-full inline-block sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
         <fa-icon class="mr-2" [icon]="repeatIcon"></fa-icon>

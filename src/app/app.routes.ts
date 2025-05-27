@@ -35,7 +35,7 @@ export const routes: Routes = [
   },
   {
     path: 'quiz/results/:id', component: QuizResultsComponent, title: 'Risultati Quiz', canActivate: [AuthGuard],
-    data: {allowedRoles: [UserRole.Admin, UserRole.QuizTaker]}
+    data: {allowedRoles: [UserRole.Admin, UserRole.QuizTaker, UserRole.StatsViewer]}
   },
   {
     path: 'quiz/history', component: QuizHistoryComponent, title: 'Cronologia Quiz', canActivate: [AuthGuard],

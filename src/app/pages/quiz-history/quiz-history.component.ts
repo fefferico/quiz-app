@@ -349,9 +349,6 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   viewResults(attemptId: string): void {
-    if (this.isStatsViewer) {
-      return;
-    }
     this.router.navigate(['/quiz/results', attemptId]);
   }
 

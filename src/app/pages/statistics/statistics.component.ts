@@ -14,6 +14,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router'; // Import 
 import { Chart, registerables, ChartConfiguration, ChartOptions, ChartEvent, ActiveElement } from 'chart.js/auto'; // Added ChartEvent, ActiveElement
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import 'chartjs-adapter-date-fns';
+import 'chartjs-plugin-zoom';
 import { it } from 'date-fns/locale';
 
 import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
@@ -573,183 +574,171 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const ctx = this.dailyPerformanceQuestionsChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const labels = this.dailyPerformance.map(dp => dp.date);
-    const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
-    const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
-    const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
-    const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
-    const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
-    const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
-    const maxTotalAnswered = Math.max(...totalAttemptedData);
+    // Dynamically import chartjs-plugin-zoom for pinch/zoom support
+    import('chartjs-plugin-zoom').then(zoomPlugin => {
+      const labels = this.dailyPerformance.map(dp => dp.date);
+      const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
+      const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
+      const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
+      const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
+      const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
+      const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
+      const maxTotalAnswered = Math.max(...totalAttemptedData);
 
-    const chartData = {
-      labels: labels,
-      datasets: [
-        //{
-        //  type: 'line' as const,
-        //  label: 'Precisione Media (%)',
-        //  data: accuracyData,
-        //  borderColor: 'rgba(255, 159, 64, 1)', // Orange
-        //  backgroundColor: 'rgba(255, 159, 64, 0.2)',
-        //  yAxisID: 'yAccuracy',
-        //  tension: 0.1,
-        //  fill: false
-        //},
-        {
-          type: 'line' as const,
-          label: 'Domande svolte',
-          data: totalAttemptedData,
-          backgroundColor: 'rgb(24, 218, 69)',
-          borderColor: 'rgb(24, 218, 69)',
-          borderWidth: 2,
-          yAxisID: 'yQuizzes'
-        },
-        {
-          type: 'line' as const,
-          label: 'Risposte errate',
-          data: totalIncorrectData,
-          backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red (similar to today's chart incorrect)
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 2,
-          yAxisID: 'yQuizzes'
-        },
-        //{
-        //  type: 'line' as const,
-        //  label: 'Risposte saltate',
-        //  data: totalSkippedData,
-        //  backgroundColor: 'rgba(255, 206, 86, 0.6)', // Red (similar to today's chart incorrect)
-        //  borderColor: 'rgba(255, 206, 86, 1)',
-        //  borderWidth: 2,
-        //  yAxisID: 'yQuizzes'
-        //},
-        {
-          type: 'line' as const,
-          label: 'Risposte Corrette',
-          data: totalCorrectData,
-          backgroundColor: 'rgb(255, 200, 0)', // Green (similar to today's chart correct)
-          borderColor: 'rgb(255, 200, 0)',
-          borderWidth: 2,
-          yAxisID: 'yQuizzes'
-        },
-      ]
-    };
+      const chartData = {
+        labels: labels,
+        datasets: [
+          {
+            type: 'line' as const,
+            label: 'Domande svolte',
+            data: totalAttemptedData,
+            backgroundColor: 'rgb(24, 218, 69)',
+            borderColor: 'rgb(24, 218, 69)',
+            borderWidth: 2,
+            yAxisID: 'yQuizzes'
+          },
+          {
+            type: 'line' as const,
+            label: 'Risposte errate',
+            data: totalIncorrectData,
+            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2,
+            yAxisID: 'yQuizzes'
+          },
+          {
+            type: 'line' as const,
+            label: 'Risposte Corrette',
+            data: totalCorrectData,
+            backgroundColor: 'rgb(255, 200, 0)',
+            borderColor: 'rgb(255, 200, 0)',
+            borderWidth: 2,
+            yAxisID: 'yQuizzes'
+          },
+        ]
+      };
 
-    const chartDailyConfig: ChartConfiguration = {
-      type: 'line', // Changed from 'linear' to 'line' for a linear chart
-      data: chartData,
-      options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index',
-      },
-      scales: {
-        x: {
-        type: 'time',
-        adapters: {
-          date: {
-          locale: it
+      const chartDailyConfig: ChartConfiguration = {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            x: {
+              type: 'time',
+              adapters: {
+                date: {
+                  locale: it
+                }
+              },
+              time: {
+                unit: 'day',
+                tooltipFormat: 'd MMM yyyy',
+                displayFormats: {
+                  day: 'd MMM'
+                }
+              },
+              title: {
+                display: true,
+                text: 'Data'
+              }
+            },
+            yQuizzes: {
+              suggestedMax: 1200,
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              title: {
+                display: true,
+                text: 'Domande '
+              },
+              grid: {
+                drawOnChartArea: false,
+                lineWidth: 1,
+                color: 'rgb(255, 200, 0)',
+              },
+              ticks: {
+                stepSize: 50,
+              },
+              axis: 'y',
+              border: {
+                width: 1,
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            },
+            title: {
+              display: true,
+              text: 'Andamento Performance Giornaliera'
+            },
+            legend: {
+              display: true,
+              position: 'top',
+            },
+            datalabels: {
+              display: (context: any) => {
+                const value = context.dataset.data[context.dataIndex] as number;
+                if (typeof value !== 'number') {
+                  return false;
+                }
+                if (context.dataset.yAxisID === 'yQuizzes') {
+                  return value !== 0;
+                }
+                return true;
+              },
+              anchor: 'end',
+              align: 'center',
+              color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+              font: {
+                weight: 'bold',
+                size: 12
+              },
+              formatter: (value: number, context: any) => {
+                if (typeof value !== 'number') {
+                  return '';
+                }
+                if (context.dataset.yAxisID === 'yAccuracy') {
+                  return value.toFixed(2) + '%';
+                } else {
+                  return Math.round(value).toString();
+                }
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'x',
+                modifierKey: 'ctrl',
+              },
+              zoom: {
+                wheel: {
+                  enabled: true,
+                  modifierKey: 'ctrl',
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'x',
+              },
+              limits: {
+                x: { minRange: 1 }
+              }
+            }
           }
-        },
-        time: {
-          unit: 'day',
-          tooltipFormat: 'd MMM yyyy',
-          displayFormats: {
-          day: 'd MMM'
-          }
-        },
-        title: {
-          display: true,
-          text: 'Data'
-        }
-        },
-        // yAccuracy: {
-        // type: 'linear',
-        // position: 'right',
-        // min: 0,
-        // max: 100,
-        // title: {
-        //   display: true,
-        //   text: 'Precisione (%)'
-        // },
-        // ticks: {
-        //   callback: value => value + '%'
-        // },
-        // grid: {
-        //   drawOnChartArea: true
-        // }
-        // },
-        yQuizzes: {
-        suggestedMax: 1200,
-        type: 'linear',
-        position: 'left',
-        min: 0,
-        title: {
-          display: true,
-          text: 'Domande '
-        },
-        grid: {
-          drawOnChartArea: false,
-          lineWidth: 1, // <-- Make the y-axis line thicker
-          color: 'rgb(255, 200, 0)',
-        },
-        ticks: {
-          stepSize: 50,
-        },
-        axis: 'y',
-        border: {
-          width: 1, // <-- Make the y-axis border (vertical line) thicker
-        }
-        }
-      },
-      plugins: {
-        tooltip: {
-        mode: 'index',
-        intersect: false,
-        },
-        title: {
-        display: true,
-        text: 'Andamento Performance Giornaliera'
-        },
-        legend: {
-        display: true,
-        position: 'top',
-        },
-        datalabels: {
-        display: (context: any) => {
-          const value = context.dataset.data[context.dataIndex] as number;
-          if (typeof value !== 'number') {
-          return false;
-          }
-          if (context.dataset.yAxisID === 'yQuizzes') {
-          return value !== 0;
-          }
-          return true;
-        },
-        anchor: 'end',
-        align: 'center',
-        color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
-        font: {
-          weight: 'bold',
-          size: 12
-        },
-        formatter: (value: number, context: any) => {
-          if (typeof value !== 'number') {
-          return '';
-          }
-          if (context.dataset.yAxisID === 'yAccuracy') {
-          return value.toFixed(2) + '%';
-          } else {
-          return Math.round(value).toString();
-          }
-        }
-        }
-      }
-      } as ChartOptions,
-      plugins: [ChartDataLabels]
-    };
-    this.dailyChart = new Chart(ctx, chartDailyConfig);
+        } as ChartOptions,
+        plugins: [ChartDataLabels, zoomPlugin.default]
+      };
+      this.dailyChart = new Chart(ctx, chartDailyConfig);
+    });
   }
 
 
