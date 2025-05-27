@@ -148,6 +148,8 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   totalQuestionsAttempted = 0;
   totalCorrectAnswers = 0;
   averageScorePercentage = 0;
+  totalWeightedScoreSum = 0;
+  totalPossibleScoreSum = 0;
 
   topicPerformance: TopicPerformanceData[] = [];
   tipologiaDomande: TopicPerformanceData[] = [];
@@ -389,24 +391,27 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Charts will be cleared/handled by createChartsIfReady
   }
 
+  getMaxResultForAttempt(quizAttempt: QuizAttempt): number {
+    return Number(quizAttempt.allQuestions.reduce((sum, q) => sum + (q.questionSnapshot.scoreIsCorrect || 0) * 1, 0).toFixed(2));
+  }
 
   calculateOverallStats(): void {
     this.totalQuizzesTaken = this.quizAttempts.length;
     this.totalQuestionsAttempted = 0;
     this.totalCorrectAnswers = 0;
-    let totalWeightedScoreSum = 0;
-    let totalPossibleScoreSum = 0;
+    this.totalWeightedScoreSum = 0;
+    this.totalPossibleScoreSum = 0;
 
     this.quizAttempts.forEach(attempt => {
       const currentScore = attempt.score || 0;
       this.totalQuestionsAttempted += attempt.totalQuestionsInQuiz;
-      this.totalCorrectAnswers += currentScore;
-      totalWeightedScoreSum += currentScore;
-      totalPossibleScoreSum += attempt.totalQuestionsInQuiz;
+      this.totalCorrectAnswers += attempt.answeredQuestions.filter(ans=>ans.isCorrect).length;
+      this.totalWeightedScoreSum += currentScore;
+      this.totalPossibleScoreSum += this.getMaxResultForAttempt(attempt);
     });
 
-    this.averageScorePercentage = totalPossibleScoreSum > 0
-      ? (totalWeightedScoreSum / totalPossibleScoreSum)
+    this.averageScorePercentage = this.totalPossibleScoreSum > 0
+      ? (this.totalWeightedScoreSum / this.totalPossibleScoreSum)
       : 0;
   }
 
