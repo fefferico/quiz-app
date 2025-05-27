@@ -751,125 +751,148 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const ctx = this.dailyPerformancePrecisionChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const labels = this.dailyPerformance.map(dp => dp.date);
-    const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
-    const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
-    const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
-    const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
-    const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
-    const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
-    const maxTotalAnswered = Math.max(...totalAttemptedData);
+    // Dynamically import chartjs-plugin-zoom for pinch/zoom support
+    import('chartjs-plugin-zoom').then(zoomPlugin => {
+      const labels = this.dailyPerformance.map(dp => dp.date);
+      const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
+      const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
+      const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
+      const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
+      const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
+      const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
+      const maxTotalAnswered = Math.max(...totalAttemptedData);
 
-    const chartData = {
-      labels: labels,
-      datasets: [
-         {
-           type: 'line' as const,
-           label: 'Precisione Media (%)',
-           data: accuracyData,
-           borderColor: 'rgba(255, 159, 64, 1)', // Orange
-           backgroundColor: 'rgba(255, 159, 64, 0.2)',
-           yAxisID: 'yAccuracy',
-           tension: 0.1,
-           fill: false
-         },
-      ]
-    };
+      const chartData = {
+        labels: labels,
+        datasets: [
+          {
+            type: 'line' as const,
+            label: 'Precisione Media (%)',
+            data: accuracyData,
+            borderColor: 'rgba(255, 159, 64, 1)', // Orange
+            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+            yAxisID: 'yAccuracy',
+            tension: 0.1,
+            fill: false
+          },
+        ]
+      };
 
-    const chartDailyPrecisionConfig: ChartConfiguration = {
-      type: 'line', // Changed from 'linear' to 'line' for a linear chart
-      data: chartData,
-      options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index',
-      },
-      scales: {
-        x: {
-        type: 'time',
-        adapters: {
-          date: {
-          locale: it
+      const chartDailyPrecisionConfig: ChartConfiguration = {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index',
+          },
+          scales: {
+            x: {
+              type: 'time',
+              adapters: {
+                date: {
+                  locale: it
+                }
+              },
+              time: {
+                unit: 'day',
+                tooltipFormat: 'd MMM yyyy',
+                displayFormats: {
+                  day: 'd MMM'
+                }
+              },
+              title: {
+                display: true,
+                text: 'Data'
+              }
+            },
+            yAccuracy: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Precisione (%)'
+              },
+              ticks: {
+                callback: value => value + '%'
+              },
+              grid: {
+                drawOnChartArea: true
+              }
+            },
+          },
+          plugins: {
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            },
+            title: {
+              display: true,
+              text: 'Andamento Performance Giornaliera'
+            },
+            legend: {
+              display: true,
+              position: 'top',
+            },
+            datalabels: {
+              display: (context: any) => {
+                const value = context.dataset.data[context.dataIndex] as number;
+                if (typeof value !== 'number') {
+                  return false;
+                }
+                if (context.dataset.yAxisID === 'yQuizzes') {
+                  return value !== 0;
+                }
+                return true;
+              },
+              anchor: 'end',
+              align: 'center',
+              color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+              font: {
+                weight: 'bold',
+                size: 12
+              },
+              formatter: (value: number, context: any) => {
+                if (typeof value !== 'number') {
+                  return '';
+                }
+                if (context.dataset.yAxisID === 'yAccuracy') {
+                  return value.toFixed(2) + '%';
+                } else {
+                  return Math.round(value).toString();
+                }
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'x',
+                modifierKey: 'ctrl',
+              },
+              zoom: {
+                wheel: {
+                  enabled: true,
+                  modifierKey: 'ctrl',
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'x',
+              },
+              limits: {
+                x: { minRange: 1 }
+              }
+            }
           }
-        },
-        time: {
-          unit: 'day',
-          tooltipFormat: 'd MMM yyyy',
-          displayFormats: {
-          day: 'd MMM'
-          }
-        },
-        title: {
-          display: true,
-          text: 'Data'
-        }
-        },
-         yAccuracy: {
-         type: 'linear',
-         position: 'right',
-         min: 0,
-         max: 100,
-         title: {
-           display: true,
-           text: 'Precisione (%)'
-         },
-         ticks: {
-           callback: value => value + '%'
-         },
-         grid: {
-           drawOnChartArea: true
-         }
-         },
-      },
-      plugins: {
-        tooltip: {
-        mode: 'index',
-        intersect: false,
-        },
-        title: {
-        display: true,
-        text: 'Andamento Performance Giornaliera'
-        },
-        legend: {
-        display: true,
-        position: 'top',
-        },
-        datalabels: {
-        display: (context: any) => {
-          const value = context.dataset.data[context.dataIndex] as number;
-          if (typeof value !== 'number') {
-          return false;
-          }
-          if (context.dataset.yAxisID === 'yQuizzes') {
-          return value !== 0;
-          }
-          return true;
-        },
-        anchor: 'end',
-        align: 'center',
-        color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
-        font: {
-          weight: 'bold',
-          size: 12
-        },
-        formatter: (value: number, context: any) => {
-          if (typeof value !== 'number') {
-          return '';
-          }
-          if (context.dataset.yAxisID === 'yAccuracy') {
-          return value.toFixed(2) + '%';
-          } else {
-          return Math.round(value).toString();
-          }
-        }
-        }
-      }
-      } as ChartOptions,
-      plugins: [ChartDataLabels]
-    };
-    this.dailyPrecisionChart = new Chart(ctx, chartDailyPrecisionConfig);
+        } as ChartOptions,
+        plugins: [ChartDataLabels, zoomPlugin.default]
+      };
+      this.dailyPrecisionChart = new Chart(ctx, chartDailyPrecisionConfig);
+    });
   }
 
   createTopicPerformanceChart(): void {
