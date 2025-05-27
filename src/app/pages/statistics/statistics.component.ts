@@ -158,11 +158,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   dailyRevisionPerformance: DailyPerformanceData[] = [];
   // We will use a single object for today's detailed data for simplicity
   todayDetailedPerformance: DailyPerformanceDataDetailed | null = null;
-  @ViewChild('dailyPerformanceChart') dailyPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('dailyPerformanceQuestionsChart') dailyPerformanceQuestionsChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('dailyPerformancePrecisionChart') dailyPerformancePrecisionChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('dailyRevisionPerformanceChart') dailyRevisionPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('todayPerformanceChart') todayPerformanceChartRef!: ElementRef<HTMLCanvasElement>;
 
   dailyChart: Chart | undefined;
+  dailyPrecisionChart: Chart | undefined;
   todayChart: Chart | undefined;
   revisionChart: Chart | undefined;
 
@@ -233,6 +235,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.dailyChart.destroy();
       this.dailyChart = undefined;
     }
+
+        if (this.dailyPrecisionChart) {
+      this.dailyPrecisionChart.destroy();
+      this.dailyPrecisionChart = undefined;
+    }
+
+    
     if (this.revisionChart) {
       this.revisionChart.destroy();
       this.revisionChart = undefined;
@@ -253,11 +262,18 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.clearCanvasOrShowMessage(this.topicPerformanceChartRef, 'Nessun dato sulla performance per argomento.');
     }
 
-    // Daily Trend Chart
-    if (this.dailyPerformanceChartRef?.nativeElement && this.dailyPerformance.length > 0) {
-      this.createDailyPerformanceChart();
+    // Daily Trend Chart (DOMANDE)
+    if (this.dailyPerformanceQuestionsChartRef?.nativeElement && this.dailyPerformance.length > 0) {
+      this.createDailyPerformanceQuestionsChart();
     } else {
-      this.clearCanvasOrShowMessage(this.dailyPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
+      this.clearCanvasOrShowMessage(this.dailyPerformanceQuestionsChartRef, 'Nessun dato sull\'andamento giornaliero.');
+    }
+
+    // Daily Trend Chart (PRECISIONE)
+    if (this.dailyPerformancePrecisionChartRef?.nativeElement && this.dailyPerformance.length > 0) {
+      this.createDailyPerformancePrecisionChart();
+    } else {
+      this.clearCanvasOrShowMessage(this.dailyPerformancePrecisionChartRef, 'Nessun dato sull\'andamento giornaliero.');
     }
 
     // Daily Revision Tren Chart
@@ -314,10 +330,11 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.isLoading = true;
     this.errorLoading = '';
+
     try {
       // Pass activeContestId to filter data at source
       const [quizAttempts, allQuestionsFromDb] = await Promise.all([
-        this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.authService.getCurrentUserId()),
+        this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.getUserId()),
         this.dbService.fetchAllRows(currentContest.id) // Assuming this method filters by publicContest
       ]);
 
@@ -440,16 +457,38 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       const total = dayData.correct + dayData.incorrect + dayData.skipped;
       dailyMap.set(dateKey, dayData);
     });
-    this.dailyPerformance = Array.from(dailyMap.entries())
-      .map(([date, data]) => ({
-        date: date,
-        quizzesTaken: data.quizzes,
-        totalCorrect: data.correct,
-        totalIncorrect: data.incorrect,
-        totalSkipped: data.skipped,
-        totalAttemptedInDay: data.correct + data.incorrect + data.skipped,
-        averageAccuracy: (data.correct + data.incorrect + data.skipped) > 0 ? (data.correct / (data.correct + data.incorrect + data.skipped)) : 0
-      } as DailyPerformanceData)).slice(-30);
+    // Find the earliest date in dailyMap, or use today if no data
+    let firstDate: Date;
+    if (dailyMap.size > 0) {
+      const allDates = Array.from(dailyMap.keys()).sort();
+      firstDate = new Date(allDates[0]);
+    } else {
+      firstDate = new Date();
+    }
+    // Start from 1 day before the first available data
+    firstDate.setDate(firstDate.getDate() - 1);
+
+    const daysToShow = 30;
+    const result: DailyPerformanceData[] = [];
+
+    for (let i = 0; i < daysToShow; i++) {
+      const date = new Date(firstDate);
+      date.setDate(firstDate.getDate() + i);
+      const dateKey = new DatePipe('en-US').transform(date, 'yyyy-MM-dd')!;
+      const data = dailyMap.get(dateKey) || { quizzes: 0, correct: 0, incorrect: 0, skipped: 0, attempted: 0 };
+      result.push({
+      date: dateKey,
+      quizzesTaken: data.quizzes,
+      totalCorrect: data.correct,
+      totalIncorrect: data.incorrect,
+      totalSkipped: data.skipped,
+      totalAttemptedInDay: data.correct + data.incorrect + data.skipped,
+      averageAccuracy: (data.correct + data.incorrect + data.skipped) > 0
+        ? (data.correct / (data.correct + data.incorrect + data.skipped))
+        : 0
+      });
+    }
+    this.dailyPerformance = result;
   }
 
   async calculateTopicCoverage(contest: number): Promise<void> {
@@ -525,13 +564,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.topicCoverage.sort((a, b) => a.topic.localeCompare(b.topic));
   }
 
-  createDailyPerformanceChart(): void {
+  createDailyPerformanceQuestionsChart(): void {
     if (this.dailyChart) this.dailyChart.destroy();
-    if (!this.dailyPerformanceChartRef?.nativeElement || this.dailyPerformance.length === 0) {
-      this.clearCanvasOrShowMessage(this.dailyPerformanceChartRef, 'Nessun dato sull\'andamento giornaliero.');
+    if (!this.dailyPerformanceQuestionsChartRef?.nativeElement || this.dailyPerformance.length === 0) {
+      this.clearCanvasOrShowMessage(this.dailyPerformanceQuestionsChartRef, 'Nessun dato sull\'andamento giornaliero.');
       return;
     }
-    const ctx = this.dailyPerformanceChartRef.nativeElement.getContext('2d');
+    const ctx = this.dailyPerformanceQuestionsChartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
     const labels = this.dailyPerformance.map(dp => dp.date);
@@ -546,27 +585,27 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     const chartData = {
       labels: labels,
       datasets: [
+        //{
+        //  type: 'line' as const,
+        //  label: 'Precisione Media (%)',
+        //  data: accuracyData,
+        //  borderColor: 'rgba(255, 159, 64, 1)', // Orange
+        //  backgroundColor: 'rgba(255, 159, 64, 0.2)',
+        //  yAxisID: 'yAccuracy',
+        //  tension: 0.1,
+        //  fill: false
+        //},
         {
           type: 'line' as const,
-          label: 'Precisione Media (%)',
-          data: accuracyData,
-          borderColor: 'rgba(255, 159, 64, 1)', // Orange
-          backgroundColor: 'rgba(255, 159, 64, 0.2)',
-          yAxisID: 'yAccuracy',
-          tension: 0.1,
-          fill: false
-        },
-        {
-          type: 'bar' as const,
           label: 'Domande svolte',
           data: totalAttemptedData,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgb(24, 218, 69)',
+          borderColor: 'rgb(24, 218, 69)',
           borderWidth: 2,
           yAxisID: 'yQuizzes'
         },
         {
-          type: 'bar' as const,
+          type: 'line' as const,
           label: 'Risposte errate',
           data: totalIncorrectData,
           backgroundColor: 'rgba(255, 99, 132, 0.6)', // Red (similar to today's chart incorrect)
@@ -574,21 +613,21 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           borderWidth: 2,
           yAxisID: 'yQuizzes'
         },
+        //{
+        //  type: 'line' as const,
+        //  label: 'Risposte saltate',
+        //  data: totalSkippedData,
+        //  backgroundColor: 'rgba(255, 206, 86, 0.6)', // Red (similar to today's chart incorrect)
+        //  borderColor: 'rgba(255, 206, 86, 1)',
+        //  borderWidth: 2,
+        //  yAxisID: 'yQuizzes'
+        //},
         {
-          type: 'bar' as const,
-          label: 'Risposte saltate',
-          data: totalSkippedData,
-          backgroundColor: 'rgba(255, 206, 86, 0.6)', // Red (similar to today's chart incorrect)
-          borderColor: 'rgba(255, 206, 86, 1)',
-          borderWidth: 2,
-          yAxisID: 'yQuizzes'
-        },
-        {
-          type: 'bar' as const,
+          type: 'line' as const,
           label: 'Risposte Corrette',
           data: totalCorrectData,
-          backgroundColor: 'rgba(75, 192, 192, 0.7)', // Green (similar to today's chart correct)
-          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgb(255, 200, 0)', // Green (similar to today's chart correct)
+          borderColor: 'rgb(255, 200, 0)',
           borderWidth: 2,
           yAxisID: 'yQuizzes'
         },
@@ -596,117 +635,252 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     const chartDailyConfig: ChartConfiguration = {
-      type: 'bar', // Base type, individual datasets can override
+      type: 'line', // Changed from 'linear' to 'line' for a linear chart
       data: chartData,
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          intersect: false,
-          mode: 'index',
-        },
-        scales: {
-          x: {
-            type: 'time',
-            adapters: { // Explicitly configure the adapter for this scale
-              date: {
-                locale: it // Pass the imported 'it' object from date-fns/locale
-              }
-            },
-            time: {
-              unit: 'day',
-              tooltipFormat: 'd MMM yyyy', // es: 15 gen 2023
-              displayFormats: {
-                day: 'd MMM' // es: 15 gen
-              }
-            },
-            title: {
-              display: true,
-              text: 'Data'
-            }
-          },
-          yAccuracy: { // For the line chart (Accuracy)
-            type: 'linear',
-            position: 'left',
-            min: 0,
-            max: 100,
-            title: {
-              display: true,
-              text: 'Precisione (%)'
-            },
-            ticks: {
-              callback: value => value + '%'
-            },
-            grid: {
-              drawOnChartArea: true // Keep grid for primary Y axis
-            }
-          },
-          yQuizzes: { // For the bar charts (Counts)
-            suggestedMax: maxTotalAnswered + 2, // Add a little space above the max value
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            title: {
-              display: true,
-              text: 'Conteggio' // More generic term for counts
-            },
-            grid: {
-              drawOnChartArea: false, // Hide grid for secondary Y axis to avoid clutter
-            },
-            ticks: {
-              stepSize: 1 // Ensure whole numbers for counts
-            }
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      scales: {
+        x: {
+        type: 'time',
+        adapters: {
+          date: {
+          locale: it
           }
         },
-        plugins: {
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-          },
-          title: {
-            display: true,
-            text: 'Andamento Performance Giornaliera'
-          },
-          legend: {
-            display: true,
-            position: 'top',
-          },
-          datalabels: {
-            display: (context: any) => {
-              const value = context.dataset.data[context.dataIndex] as number;
-              if (typeof value !== 'number') {
-                return false;
-              }
-              // For bar charts (identified by yAxisID), hide label if value is 0
-              if (context.dataset.yAxisID === 'yQuizzes') {
-                return value !== 0;
-              }
-              return true; // Always display for other types (like the accuracy line)
-            },
-            anchor: 'end',
-            align: 'center', // Keeps labels at the top-center of bars, and above line points
-            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30', // Theme-aware color
-            font: {
-              weight: 'bold',
-              size: 12 // Reduced from 20 for better readability and fit
-            },
-            formatter: (value: number, context: any) => {
-              if (typeof value !== 'number') {
-                return ''; // Return empty string for non-numeric values
-              }
-              // Check if the dataset is the accuracy line
-              if (context.dataset.yAxisID === 'yAccuracy') {
-                return value.toFixed(2) + '%'; // Format as percentage with two decimal place
-              } else {
-                return Math.round(value).toString(); // Format as integer for bar charts
-              }
-            }
+        time: {
+          unit: 'day',
+          tooltipFormat: 'd MMM yyyy',
+          displayFormats: {
+          day: 'd MMM'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Data'
+        }
+        },
+        // yAccuracy: {
+        // type: 'linear',
+        // position: 'right',
+        // min: 0,
+        // max: 100,
+        // title: {
+        //   display: true,
+        //   text: 'Precisione (%)'
+        // },
+        // ticks: {
+        //   callback: value => value + '%'
+        // },
+        // grid: {
+        //   drawOnChartArea: true
+        // }
+        // },
+        yQuizzes: {
+        suggestedMax: 1200,
+        type: 'linear',
+        position: 'left',
+        min: 0,
+        title: {
+          display: true,
+          text: 'Domande '
+        },
+        grid: {
+          drawOnChartArea: false,
+          lineWidth: 1, // <-- Make the y-axis line thicker
+          color: 'rgb(255, 200, 0)',
+        },
+        ticks: {
+          stepSize: 50,
+        },
+        axis: 'y',
+        border: {
+          width: 1, // <-- Make the y-axis border (vertical line) thicker
+        }
+        }
+      },
+      plugins: {
+        tooltip: {
+        mode: 'index',
+        intersect: false,
+        },
+        title: {
+        display: true,
+        text: 'Andamento Performance Giornaliera'
+        },
+        legend: {
+        display: true,
+        position: 'top',
+        },
+        datalabels: {
+        display: (context: any) => {
+          const value = context.dataset.data[context.dataIndex] as number;
+          if (typeof value !== 'number') {
+          return false;
+          }
+          if (context.dataset.yAxisID === 'yQuizzes') {
+          return value !== 0;
+          }
+          return true;
+        },
+        anchor: 'end',
+        align: 'center',
+        color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+        font: {
+          weight: 'bold',
+          size: 12
+        },
+        formatter: (value: number, context: any) => {
+          if (typeof value !== 'number') {
+          return '';
+          }
+          if (context.dataset.yAxisID === 'yAccuracy') {
+          return value.toFixed(2) + '%';
+          } else {
+          return Math.round(value).toString();
           }
         }
+        }
+      }
       } as ChartOptions,
       plugins: [ChartDataLabels]
     };
     this.dailyChart = new Chart(ctx, chartDailyConfig);
+  }
+
+
+  createDailyPerformancePrecisionChart(): void {
+    if (this.dailyPrecisionChart) this.dailyPrecisionChart.destroy();
+    if (!this.dailyPerformancePrecisionChartRef?.nativeElement || this.dailyPerformance.length === 0) {
+      this.clearCanvasOrShowMessage(this.dailyPerformancePrecisionChartRef, 'Nessun dato sull\'andamento giornaliero.');
+      return;
+    }
+    const ctx = this.dailyPerformancePrecisionChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    const labels = this.dailyPerformance.map(dp => dp.date);
+    const accuracyData = this.dailyPerformance.map(dp => dp.averageAccuracy * 100);
+    const quizzesTakenData = this.dailyPerformance.map(dp => dp.quizzesTaken);
+    const totalCorrectData = this.dailyPerformance.map(dp => dp.totalCorrect);
+    const totalAttemptedData = this.dailyPerformance.map(dp => dp.totalAttemptedInDay);
+    const totalIncorrectData = this.dailyPerformance.map(dp => dp.totalIncorrect);
+    const totalSkippedData = this.dailyPerformance.map(dp => dp.totalSkipped);
+    const maxTotalAnswered = Math.max(...totalAttemptedData);
+
+    const chartData = {
+      labels: labels,
+      datasets: [
+         {
+           type: 'line' as const,
+           label: 'Precisione Media (%)',
+           data: accuracyData,
+           borderColor: 'rgba(255, 159, 64, 1)', // Orange
+           backgroundColor: 'rgba(255, 159, 64, 0.2)',
+           yAxisID: 'yAccuracy',
+           tension: 0.1,
+           fill: false
+         },
+      ]
+    };
+
+    const chartDailyPrecisionConfig: ChartConfiguration = {
+      type: 'line', // Changed from 'linear' to 'line' for a linear chart
+      data: chartData,
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      scales: {
+        x: {
+        type: 'time',
+        adapters: {
+          date: {
+          locale: it
+          }
+        },
+        time: {
+          unit: 'day',
+          tooltipFormat: 'd MMM yyyy',
+          displayFormats: {
+          day: 'd MMM'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Data'
+        }
+        },
+         yAccuracy: {
+         type: 'linear',
+         position: 'right',
+         min: 0,
+         max: 100,
+         title: {
+           display: true,
+           text: 'Precisione (%)'
+         },
+         ticks: {
+           callback: value => value + '%'
+         },
+         grid: {
+           drawOnChartArea: true
+         }
+         },
+      },
+      plugins: {
+        tooltip: {
+        mode: 'index',
+        intersect: false,
+        },
+        title: {
+        display: true,
+        text: 'Andamento Performance Giornaliera'
+        },
+        legend: {
+        display: true,
+        position: 'top',
+        },
+        datalabels: {
+        display: (context: any) => {
+          const value = context.dataset.data[context.dataIndex] as number;
+          if (typeof value !== 'number') {
+          return false;
+          }
+          if (context.dataset.yAxisID === 'yQuizzes') {
+          return value !== 0;
+          }
+          return true;
+        },
+        anchor: 'end',
+        align: 'center',
+        color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+        font: {
+          weight: 'bold',
+          size: 12
+        },
+        formatter: (value: number, context: any) => {
+          if (typeof value !== 'number') {
+          return '';
+          }
+          if (context.dataset.yAxisID === 'yAccuracy') {
+          return value.toFixed(2) + '%';
+          } else {
+          return Math.round(value).toString();
+          }
+        }
+        }
+      }
+      } as ChartOptions,
+      plugins: [ChartDataLabels]
+    };
+    this.dailyPrecisionChart = new Chart(ctx, chartDailyPrecisionConfig);
   }
 
   createTopicPerformanceChart(): void {
@@ -882,6 +1056,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.contestSub) this.contestSub.unsubscribe();
     if (this.topicChart) this.topicChart.destroy();
     if (this.dailyChart) this.dailyChart.destroy();
+    if (this.dailyPrecisionChart) this.dailyPrecisionChart.destroy();
     if (this.todayChart) this.todayChart.destroy();
     if (this.selectedDateChart) this.selectedDateChart.destroy();
     if (this.revisionChart) this.revisionChart.destroy();
@@ -1661,7 +1836,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getUserId(): number {
     let userId = this.authService.getCurrentUserId();
-    if (userId === 3) {
+    if (userId === 3 && this.isStatsViewer) {
       userId = 2;
     }
     return userId;
