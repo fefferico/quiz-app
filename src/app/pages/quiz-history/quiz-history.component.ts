@@ -15,7 +15,7 @@ import { AlertButton } from '../../models/alert.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
 import { Contest } from '../../models/contes.model';
 import { AuthService } from '../../core/services/auth.service';
-import {SpinnerService} from '../../core/services/spinner.service';
+import { SpinnerService } from '../../core/services/spinner.service';
 
 @Component({
   selector: 'app-quiz-history',
@@ -87,7 +87,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     });
 
     // Subscribe to changes from the service if not driven by query param
-    this.contestSub = this.contestSelectionService.selectedContest$.subscribe( async contestId => {
+    this.contestSub = this.contestSelectionService.selectedContest$.subscribe(async contestId => {
       // Only update if there's no contest in query param and the service value changes
       if (!this.route.snapshot.queryParamMap.has('contest') && this.selectedPublicContest !== contestId) {
         this.spinnerService.show('Recupero storico in corso...');
@@ -262,26 +262,26 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   getStatusLabelColor(attempt: QuizAttempt): string {
-    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento' ) {
+    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento') {
       return 'font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1';
     }
-    if (attempt.status === 'paused' || attempt.status === 'in pausa' ) {
+    if (attempt.status === 'paused' || attempt.status === 'in pausa') {
       return 'font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1 mr-1';
     }
-    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto' ) {
+    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto') {
       return 'font-extrabold border rounded bg-red-300 dark:bg-red-500 dark:text-white border-red-500 px-1 mr-1';
     }
     return 'font-extrabold border rounded bg-green-300 dark:bg-green-500 dark:text-white border-green-500 px-1 mr-1'; // Default to completed
   }
 
-    getStatusLabelText(attempt: QuizAttempt): string {
-    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento' ) {
+  getStatusLabelText(attempt: QuizAttempt): string {
+    if (attempt.status === 'in-progress' || attempt.status === 'in svolgimento') {
       return 'in svolgimento';
     }
-    if (attempt.status === 'paused' || attempt.status === 'in pausa' ) {
+    if (attempt.status === 'paused' || attempt.status === 'in pausa') {
       return 'in pausa';
     }
-    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto' ) {
+    if (attempt.status === 'timed-out' || attempt.status === 'tempo scaduto') {
       return 'tempo scaduto';
     }
     return 'completato'; // Default to completed
@@ -349,14 +349,14 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   viewResults(attemptId: string): void {
-    const currentAttempt: QuizAttempt | undefined = this.allQuizAttempts.find(att=>att.id===attemptId);
-    if (currentAttempt && (currentAttempt.status === 'in-progress' || currentAttempt.status === 'in svolgimento') && !this.isStatsViewer && this.authService.getCurrentUserId() === currentAttempt.userId){
-      this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?").then(res => {
-        if (res){
-          this.resumeQuiz(currentAttempt);
-        } else {
-          this.router.navigate(['/quiz/results', attemptId]);
+    const currentAttempt: QuizAttempt | undefined = this.allQuizAttempts.find(att => att.id === attemptId);
+    if (currentAttempt && (currentAttempt.status === 'in-progress' || currentAttempt.status === 'in svolgimento') && !this.isStatsViewer && this.authService.getCurrentUserId() === currentAttempt.userId) {
+      this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?").then(result => {
+        if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
+         return false;
         }
+        this.resumeQuiz(currentAttempt);
+        return true;
       })
     } else {
       this.router.navigate(['/quiz/results', attemptId]);
