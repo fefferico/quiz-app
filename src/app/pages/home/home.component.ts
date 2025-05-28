@@ -339,11 +339,12 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
     if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0) {
       this.spinnerService.show("Recupero Domande mai risposte...");
-      await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
+      //await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
       this.spinnerService.hide();
     }
     this.prepareAndOpenModal(
-      () => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
+      //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
+      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!),
       this.quizSettings,
       'never_encountered'
     );
