@@ -28,6 +28,7 @@ import { AlertService } from '../../../services/alert.service'; // Added faChevr
 import { Contest } from '../../../models/contes.model';
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { QuestionService } from '../../../core/services/question-service.service';
 
 interface GroupedQuestionDisplay { // Renamed for clarity
   topic: string;
@@ -49,6 +50,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef); // For manual change detection if needed
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
   authService = inject(AuthService);
+  questionService = inject(QuestionService);
+
   // Icons
   segnala: IconDefinition = faExclamation;
   repeatIcon: IconDefinition = faRepeat;
@@ -393,73 +396,15 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   async repeatQuiz(): Promise<void> { // Make async if dbService calls are async
-    if (!this.quizAttempt) return;
-    // Get original question IDs from the attempt's allQuestions array
-    const questionIds = this.quizAttempt.allQuestions.map(qInfo => qInfo.questionId);
-    if (questionIds.length === 0) {
-      this.alertService.showAlert("Attenzione", "Nessuna domanda trovata in questo tentativo da ripetere.").then(() => {
-        return;
-      })
-    } else {
-      this.onInternalSubmit(this.quizAttempt, questionIds);
+    if (this.quizAttempt?.id) {
+      await this.questionService.repeatQuiz(this.quizAttempt.id);
     }
   }
 
   async repeatWrongQuiz(): Promise<void> { // Make async
-    if (!this.quizAttempt) return;
-    const wrongOrUnansweredQuestionIds = this.quizAttempt.allQuestions
-      .filter(qInfo => {
-        const answeredInfo = this.quizAttempt!.answeredQuestions.find(aq => aq.questionId === qInfo.questionId);
-        return !answeredInfo || !answeredInfo.isCorrect; // Not in answeredQuestions OR isCorrect is false
-      })
-      .map(qInfo => qInfo.questionId);
-
-    if (!this.wrongOrUnansweredQuestionIds || this.wrongOrUnansweredQuestionIds.length === 0) {
-      this.alertService.showAlert("Attenzione", "Nessuna domanda sbagliata o non risposta in questo tentativo. Ottimo lavoro!").then(() => {
-        return;
-      })
-    } else {
-      this.quizAttempt.settings.quizType = 'Revisione errori';
-      this.quizAttempt.settings.quizTitle = 'Revisione domande sbagliate';
-      this.onInternalSubmit(this.quizAttempt, this.wrongOrUnansweredQuestionIds);
+    if (this.quizAttempt?.id) {
+      await this.questionService.repeatWrongQuiz(this.quizAttempt.id);
     }
-  }
-
-  onInternalSubmit(originalAttempt: QuizAttempt | undefined, questionIdsToRepeat?: string[]): void {
-    if (!originalAttempt) return;
-
-    const settings = originalAttempt.settings;
-    const idsToUse = questionIdsToRepeat && questionIdsToRepeat.length > 0
-      ? questionIdsToRepeat
-      : originalAttempt.allQuestions.map(q => q.questionId);
-
-    if (idsToUse.length === 0) {
-      alert("Nessuna domanda specificata per il nuovo quiz.");
-      return;
-    }
-
-    const shuffledQuestionIds = [...idsToUse].sort(() => 0.5 - Math.random());
-
-    const
-      queryParams = {
-        ...settings,
-        quizTitle: `${settings.quizTitle || 'Quiz Misto'}`,
-        quizType: `${settings.quizType || 'Quiz Misto'}`,
-        selectedTopics: settings.selectedTopics?.join(', '),
-        totalQuestionsInQuiz: shuffledQuestionIds.length, // totalQuestionsInQuiz is now the count of selected IDs
-        // Topics and keywords from original settings might be too broad if we are repeating specific Qs
-        // We are now using fixedQuestionIds, so topics/keywords from settings are less relevant for selection
-        // topics: settings.selectedTopics?.join(','),
-        // keywords: settings.keywords?.join(','),
-        // topicDistribution: settings.topicDistribution ? JSON.stringify(settings.topicDistribution) : '',
-        enableTimer: false, // Typically disable timer for review/repeat quizzes
-        fixedQuestionIds: shuffledQuestionIds.join(','), // Pass the specific IDs
-      } as Partial<QuizAttempt>;
-
-    let navigateToPath = '/quiz/take'; // Default path
-    console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);
-    this.router.navigate([navigateToPath], { state: { quizParams: queryParams } });
-
   }
 
   getTotalStringByGroup(group: GroupedQuestionDisplay): string {

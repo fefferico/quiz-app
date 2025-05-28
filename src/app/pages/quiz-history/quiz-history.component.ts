@@ -9,13 +9,14 @@ import { DatabaseService } from '../../core/services/database.service';
 import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faHome, faTrashCan, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
+import { IconDefinition, faHome, faTrashCan, faLandmark, faRepeat, faExclamation } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 import { AlertButton } from '../../models/alert.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
 import { Contest } from '../../models/contes.model';
 import { AuthService } from '../../core/services/auth.service';
 import { SpinnerService } from '../../core/services/spinner.service';
+import { QuestionService } from '../../core/services/question-service.service';
 
 @Component({
   selector: 'app-quiz-history',
@@ -33,10 +34,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   private contestSelectionService = inject(ContestSelectionService); // Inject ContestSelectionService
   private authService = inject(AuthService);
   spinnerService = inject(SpinnerService);
+  questionService = inject(QuestionService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
   faDelete: IconDefinition = faTrashCan; // This was already here, seems unused in the template you showed previously
+  faRepeat: IconDefinition = faRepeat; // This was already here, seems unused in the template you showed previously
+  faExclamation: IconDefinition = faExclamation; // This was already here, seems unused in the template you showed previously
   faLandmark: IconDefinition = faLandmark; // This was already here, seems unused in the template you showed previously
 
   private attemptsSub!: Subscription;
@@ -366,7 +370,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
       this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?", customBtns).then(result => {
         if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
-         return false;
+          return false;
         }
         this.resumeQuiz(currentAttempt);
         return true;
@@ -387,13 +391,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
 
     if (resultsPercentage >= 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg hover:bg-green-400 dark:hover:bg-green-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg hover:bg-green-300 dark:hover:bg-green-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg hover:bg-yellow-400 dark:hover:bg-yellow-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg hover:bg-orange-400 dark:hover:bg-orange-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg hover:bg-orange-300 dark:hover:bg-orange-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     } else {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg hover:bg-red-400 dark:hover:bg-red-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg hover:bg-red-300 dark:hover:bg-red-700 transition-shadow duration-200 text-gray-700 hover:text-white';
     }
     return classes;
   }
@@ -436,5 +440,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
   resumeQuiz(originalAttempt: QuizAttempt): void {
     this.router.navigate(['/quiz/take'], { state: { quizParams: { resumeAttemptId: originalAttempt.id } } });
+  }
+
+  async repeatQuiz(quizAttemptId: string): Promise<void> { // Make async if dbService calls are async
+    await this.questionService.repeatQuiz(quizAttemptId);
+  }
+
+  async repeatWrongQuiz(quizAttemptId: string): Promise<void> { // Make async
+    await this.questionService.repeatWrongQuiz(quizAttemptId);
   }
 }
