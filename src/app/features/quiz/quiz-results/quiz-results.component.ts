@@ -80,12 +80,13 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
   private routeSub!: Subscription;
 
-    // Getter to easily access the contest from the template
-    get selectedPublicContest(): Contest | null {
-      return this.contestSelectionService.getCurrentSelectedContest();
-    }
+  // Getter to easily access the contest from the template
+  get selectedPublicContest(): Contest | null {
+    return this.contestSelectionService.getCurrentSelectedContest();
+  }
 
   ngOnInit(): void {
+    window.scrollTo({ top: 0, behavior: 'auto' });
     this.routeSub = this.route.paramMap.subscribe(params => {
       this.quizAttemptId = params.get('id');
       if (this.quizAttemptId) {
@@ -133,7 +134,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   }
 
   groupQuestionsByTopic(): void {
-    if (this.selectedPublicContest === null ){
+    if (this.selectedPublicContest === null) {
       this.alertService.showAlert("Errore", "Non è stata selezionata alcuna banca dati valida.");
       return;
     }
@@ -511,7 +512,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     return classes;
   }
 
-   applyFilters(type: string): void {
+  applyFilters(type: string): void {
     if (!this.quizAttempt) return;
 
     // Example: this.filterType can be 'all', 'correct', 'wrong', or 'skipped'

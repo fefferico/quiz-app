@@ -1068,7 +1068,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
     this.errorLoading = '';
     try {
       const pausedAttempt = await this.dbService.getQuizAttemptById(attemptId);
-      if (pausedAttempt && pausedAttempt.status === 'paused') {
+      if (
+        pausedAttempt &&
+        ['paused', 'in pausa', 'in-progress', 'in svolgimento'].includes(pausedAttempt.status)
+      ) {
         this.quizSettings = pausedAttempt.settings;
 
         this.questions = pausedAttempt.allQuestions.map(snapshotItem => ({

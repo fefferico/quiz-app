@@ -120,13 +120,13 @@
               <span class="font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1"> Saltate:
                 {{getSkipCountForAttempt(attempt)}}</span>
             </p>
-            <p class="text-xs mt-1">
+            <p class="text-xs dark:text-white mt-1">
               Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} {{ getQuizType(attempt)}}  {{ getQuizTitle(attempt)}}
             </p>
-            <p class="text-xs mt-1">
+            <p class="text-xs dark:text-white mt-1">
               ID: {{ attempt.id }}
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 w-fit" [ngClass]="getStatusLabelColor(attempt)">
+            <p class="text-xs dark:text-white mt-1 w-fit" [ngClass]="getStatusLabelColor(attempt)">
               Stato: {{ getStatusLabelText(attempt) }}
             </p>
           </div>

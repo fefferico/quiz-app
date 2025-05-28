@@ -778,7 +778,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(255, 159, 64, 0.2)',
             yAxisID: 'yAccuracy',
             tension: 0.1,
-            fill: false
+            fill: true
           },
         ]
       };

@@ -349,7 +349,18 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   viewResults(attemptId: string): void {
-    this.router.navigate(['/quiz/results', attemptId]);
+    const currentAttempt: QuizAttempt | undefined = this.allQuizAttempts.find(att=>att.id===attemptId);
+    if (currentAttempt && (currentAttempt.status === 'in-progress' || currentAttempt.status === 'in svolgimento') && !this.isStatsViewer && this.authService.getCurrentUserId() === currentAttempt.userId){
+      this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?").then(res => {
+        if (res){
+          this.resumeQuiz(currentAttempt);
+        } else {
+          this.router.navigate(['/quiz/results', attemptId]);
+        }
+      })
+    } else {
+      this.router.navigate(['/quiz/results', attemptId]);
+    }
   }
 
 
@@ -408,5 +419,9 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       userId = 2;
     }
     return userId;
+  }
+
+  resumeQuiz(originalAttempt: QuizAttempt): void {
+    this.router.navigate(['/quiz/take'], { state: { quizParams: { resumeAttemptId: originalAttempt.id } } });
   }
 }
