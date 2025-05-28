@@ -209,28 +209,28 @@ export class DatabaseService implements OnDestroy {
   // --- Question Table Methods ---
 
   async getAllQuestionAnsweredAtLeastOnce(contestId: number): Promise<Question[]> {
-  const { data, error } = await this.supabase
-    .from('questions')
-    .select('*')
-    .eq('fk_contest_id', contestId)
-    .or('times_correct.gt.0,times_incorrect.gt.0');
+    const { data, error } = await this.supabase
+      .from('questions')
+      .select('*')
+      .eq('fk_contest_id', contestId)
+      .or('times_correct.gt.0,times_incorrect.gt.0');
 
-  if (error) {
-    console.error('Supabase error in getAllQuestionAnsweredAtLeastOnce:', error);
-    throw error;
+    if (error) {
+      console.error('Supabase error in getAllQuestionAnsweredAtLeastOnce:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuestionFromSupabase);
   }
-  return (data ?? []).map(this.mapQuestionFromSupabase);
-}
 
 
   async getAllQuestionCorrectlyAnsweredAtLeastOnce(contestId: number): Promise<Question[]> {
     const operationName = `getAllQuestionCorrectlyAnsweredAtLeastOnce for contest ${contestId}`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-      .eq('fk_contest_id', contestId)
-      .gt('times_correct', 0),
+        .eq('fk_contest_id', contestId)
+        .gt('times_correct', 0),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -254,11 +254,11 @@ export class DatabaseService implements OnDestroy {
     const operationName = `getOnlyQuestionCorrectlyAnswered for contest ${contestId}`;
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*')
-      .eq('fk_contest_id', contestId)
-      .gt('times_correct', 0)
-      .eq('times_incorrect', 0),
+        .eq('fk_contest_id', contestId)
+        .gt('times_correct', 0)
+        .eq('times_incorrect', 0),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -272,7 +272,7 @@ export class DatabaseService implements OnDestroy {
         .gte('accuracy', min)
         .lte('accuracy', max),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -309,7 +309,7 @@ export class DatabaseService implements OnDestroy {
         .eq('fk_contest_id', contestId)
         .gt('times_incorrect', 0),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -330,7 +330,7 @@ export class DatabaseService implements OnDestroy {
         .eq('fk_contest_id', contestId)
         .ilike('topic', topic), // Case-insensitive match for topic
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -351,7 +351,7 @@ export class DatabaseService implements OnDestroy {
         .eq('fk_contest_id', contestId)
         .or(orConditions),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<Question[]>;
@@ -527,7 +527,7 @@ export class DatabaseService implements OnDestroy {
     const { data, error } = await this.supabase.from('quiz_attempts')
       .select('*')
       .eq('fk_contest_id', contestId)
-      .eq('fk_user_id',userId);
+      .eq('fk_user_id', userId);
 
     if (error) {
       console.error(`[DatabaseService] Supabase error in ${operationName}:`, error);
@@ -549,7 +549,7 @@ export class DatabaseService implements OnDestroy {
         .lt('timestamp_start', endOfDay.toISOString())
         .order('timestamp_start', { ascending: false }),
       this.mapQuizAttemptFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName
     ) as Promise<QuizAttempt[]>;
@@ -569,7 +569,7 @@ export class DatabaseService implements OnDestroy {
       console.error('Supabase error in getAllQuestions:', error);
       throw error;
     }
-    return (data ?? []).map(this.mapQuestionFromSupabase);    
+    return (data ?? []).map(this.mapQuestionFromSupabase);
   }
 
   async getQuestionById(id: string): Promise<Question | undefined> {
@@ -577,7 +577,7 @@ export class DatabaseService implements OnDestroy {
     return this.handleSupabaseFetch<Question>(
       this.supabase.from('questions').select('*').eq('id', id).single(),
       this.mapQuestionFromSupabase,
-      async () => {},
+      async () => { },
       async () => [],
       operationName,
       true // isSingleItem
@@ -761,7 +761,7 @@ export class DatabaseService implements OnDestroy {
         .lt('timestamp_start', endDateIsoExclusive); // Attempts started within the day
 
       if (contestId) {
-        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId).eq('fk_user_id',userId);
+        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId).eq('fk_user_id', userId);
       }
       // if (userId) { attemptsQuery = attemptsQuery.eq('user_id', userId); }
 
@@ -905,15 +905,15 @@ export class DatabaseService implements OnDestroy {
       .eq('fk_contest_id', contestId)
       .eq('fk_user_id', userId);
 
-      // Only call countAllRows if contestId?.id is defined and you need its result
-      // await this.countAllRows(contestId?.id); // Remove or use if needed
+    // Only call countAllRows if contestId?.id is defined and you need its result
+    // await this.countAllRows(contestId?.id); // Remove or use if needed
 
-      let countRows = 0;
-      if (contestId && contestId !== undefined){
-        countRows = await this.countAllRows(contestId);
-      } else {
-        throw new Error('contestId is required for getNeverAnsweredQuestionCount');
-      }
+    let countRows = 0;
+    if (contestId && contestId !== undefined) {
+      countRows = await this.countAllRows(contestId);
+    } else {
+      throw new Error('contestId is required for getNeverAnsweredQuestionCount');
+    }
 
     try {
       const { data, error } = await neverAnsweredQuestions;
@@ -926,11 +926,11 @@ export class DatabaseService implements OnDestroy {
       if (data) {
         for (const attempt of data) {
           if (Array.isArray(attempt.answered_questions)) {
-        for (const q of attempt.answered_questions) {
-          if (q && q.questionId) {
-            answeredIds.add(q.questionId);
-          }
-        }
+            for (const q of attempt.answered_questions) {
+              if (q && q.questionId) {
+                answeredIds.add(q.questionId);
+              }
+            }
           }
         }
       }
@@ -1131,25 +1131,28 @@ export class DatabaseService implements OnDestroy {
   async getQuestionsByPublicContestForSimulation(contestIdentifier: Contest): Promise<Question[]> {
     if (!contestIdentifier) return [];
 
-    // This method simulates a test with 100 quiz questions distributed as follows:
-    // 20% CULTURA GENERALE - Cultura Generale (20 questions)
-    // 12% ITALIANO - Letteratura (12 questions)
-    // 12% ITALIANO - Grammatica or Ragionamento Critico - Verbale (12 questions)
-    // 12% MATEMATICA or Ragionamento Logico Matematico (12 questions)
-    // 12% STORIA - Storia (12 questions)
-    // 12% EDUCAZIONE CIVICA - Educazione Civica (12 questions)
-    // 12% INGLESE - Lingua Inglese (12 questions)
-    // 8% INFORMATICA - Informatica (8 questions)
-    const topicDistribution: { topic: string | string[]; count: number }[] = [
-      { topic: 'CULTURA GENERALE', count: 20 },
-      { topic: 'Letteratura', count: 12 },
-      { topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12 },
-      { topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12 },
-      { topic: 'STORIA', count: 12 },
-      { topic: 'COSTITUZIONE', count: 12 },
-      { topic: 'INGLESE', count: 12 },
-      { topic: 'INFORMATICA', count: 8 }
-    ];
+    let topicDistribution: { topic: string | string[]; count: number }[] = [];
+    if (contestIdentifier.name && contestIdentifier.name.toLowerCase().trim().indexOf('polizia') >= 0) {
+      // This method simulates a test with 100 quiz questions distributed as follows:
+      // 20% CULTURA GENERALE - Cultura Generale (20 questions)
+      // 12% ITALIANO - Letteratura (12 questions)
+      // 12% ITALIANO - Grammatica or Ragionamento Critico - Verbale (12 questions)
+      // 12% MATEMATICA or Ragionamento Logico Matematico (12 questions)
+      // 12% STORIA - Storia (12 questions)
+      // 12% EDUCAZIONE CIVICA - Educazione Civica (12 questions)
+      // 12% INGLESE - Lingua Inglese (12 questions)
+      // 8% INFORMATICA - Informatica (8 questions)
+      topicDistribution = [
+        { topic: 'CULTURA GENERALE', count: 20 },
+        { topic: 'Letteratura', count: 12 },
+        { topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12 },
+        { topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12 },
+        { topic: 'STORIA', count: 12 },
+        { topic: 'COSTITUZIONE', count: 12 },
+        { topic: 'INGLESE', count: 12 },
+        { topic: 'INFORMATICA', count: 8 }
+      ];
+    }
 
     // Try to fetch all questions that have never been encountered
     const allQuestions: Question[] = await this.fetchAllNeverEncounteredRows(contestIdentifier.id);
@@ -1219,15 +1222,15 @@ export class DatabaseService implements OnDestroy {
     let query = this.supabase.from('quiz_attempts')
       .select('*')
       .eq('status', 'paused')
-      .eq('fk_contest_id',contestId)
-      .eq('fk_user_id',userId)
+      .eq('fk_contest_id', contestId)
+      .eq('fk_user_id', userId)
       .order('timestamp_start', { ascending: false });
     // if (userId) { query = query.eq('user_id', userId); } // For multi-user
 
     return this.handleSupabaseFetch<QuizAttempt>(
       query,
       this.mapQuizAttemptFromSupabase,
-      async () => {},
+      async () => { },
       async () => undefined,
       operationName,
       true
@@ -1381,7 +1384,7 @@ export class DatabaseService implements OnDestroy {
         }
         throw error;
       }
-          return data.map(row => this.mapUserFromDB(row)) ?? [];
+      return data.map(row => this.mapUserFromDB(row)) ?? [];
     } catch (err) {
       console.error(`Error in ${operationName}:`, err);
       if (!navigator.onLine) {
@@ -1395,7 +1398,7 @@ export class DatabaseService implements OnDestroy {
   async getUserByUsername(username: string): Promise<User> {
     const operationName = 'getUserByUsername';
     try {
-      const { data, error } = await this.supabase.from('users').select('*').eq('username',username);
+      const { data, error } = await this.supabase.from('users').select('*').eq('username', username);
       if (error) {
         console.error(`[DatabaseService] Supabase error in ${operationName}:`, error);
         throw error;
