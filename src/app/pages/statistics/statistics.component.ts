@@ -124,6 +124,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   spinnerService = inject(SpinnerService);
 
   isStatsViewer: boolean = false;
+  isMobile: boolean = false;
 
   // -- icons
   homeIcon: IconDefinition = faHome;
@@ -193,6 +194,9 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   ngOnInit(): void {
+    // Detect if mobile (simple check)
+    this.isMobile = window.innerWidth <= 768;
+
     // Set the default locale for all charts
     Chart.defaults.locale = 'it';
     this.isStatsViewer = this.authService.isStatsViewer();
@@ -594,31 +598,31 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         labels: labels,
         datasets: [
           {
-            type: 'line' as const,
-            label: 'Domande svolte',
-            data: totalAttemptedData,
-            backgroundColor: 'rgb(24, 218, 69)',
-            borderColor: 'rgb(24, 218, 69)',
-            borderWidth: 2,
-            yAxisID: 'yQuizzes'
+        type: 'line' as const,
+        label: 'Domande svolte',
+        data: totalAttemptedData,
+        backgroundColor: 'rgb(24, 218, 69)',
+        borderColor: 'rgb(24, 218, 69)',
+        borderWidth: 2,
+        yAxisID: 'yQuizzes'
           },
           {
-            type: 'line' as const,
-            label: 'Risposte errate',
-            data: totalIncorrectData,
-            backgroundColor: 'rgba(255, 99, 132, 0.6)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 2,
-            yAxisID: 'yQuizzes'
+        type: 'line' as const,
+        label: 'Risposte errate',
+        data: totalIncorrectData,
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 2,
+        yAxisID: 'yQuizzes'
           },
           {
-            type: 'line' as const,
-            label: 'Risposte Corrette',
-            data: totalCorrectData,
-            backgroundColor: 'rgb(255, 200, 0)',
-            borderColor: 'rgb(255, 200, 0)',
-            borderWidth: 2,
-            yAxisID: 'yQuizzes'
+        type: 'line' as const,
+        label: 'Risposte Corrette',
+        data: totalCorrectData,
+        backgroundColor: 'rgb(255, 200, 0)',
+        borderColor: 'rgb(255, 200, 0)',
+        borderWidth: 2,
+        yAxisID: 'yQuizzes'
           },
         ]
       };
@@ -630,114 +634,115 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           responsive: true,
           maintainAspectRatio: false,
           interaction: {
-            intersect: false,
-            mode: 'index',
+        intersect: false,
+        mode: 'index',
           },
           scales: {
-            x: {
-              type: 'time',
-              adapters: {
-                date: {
-                  locale: it
-                }
-              },
-              time: {
-                unit: 'day',
-                tooltipFormat: 'd MMM yyyy',
-                displayFormats: {
-                  day: 'd MMM'
-                }
-              },
-              title: {
-                display: true,
-                text: 'Data'
-              }
-            },
-            yQuizzes: {
-              suggestedMax: 1200,
-              type: 'linear',
-              position: 'left',
-              min: 0,
-              title: {
-                display: true,
-                text: 'Domande '
-              },
-              grid: {
-                drawOnChartArea: false,
-                lineWidth: 1,
-                color: 'rgb(255, 200, 0)',
-              },
-              ticks: {
-                stepSize: 50,
-              },
-              axis: 'y',
-              border: {
-                width: 1,
-              }
+        x: {
+          type: 'time',
+          adapters: {
+            date: {
+          locale: it
             }
           },
-          plugins: {
-            tooltip: {
-              mode: 'index',
-              intersect: false,
-            },
-            title: {
-              display: true,
-              text: 'Andamento Performance Giornaliera'
-            },
-            legend: {
-              display: true,
-              position: 'top',
-            },
-            datalabels: {
-              display: (context: any) => {
-                const value = context.dataset.data[context.dataIndex] as number;
-                if (typeof value !== 'number') {
-                  return false;
-                }
-                if (context.dataset.yAxisID === 'yQuizzes') {
-                  return value !== 0;
-                }
-                return true;
-              },
-              anchor: 'end',
-              align: 'center',
-              color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
-              font: {
-                weight: 'bold',
-                size: 12
-              },
-              formatter: (value: number, context: any) => {
-                if (typeof value !== 'number') {
-                  return '';
-                }
-                if (context.dataset.yAxisID === 'yAccuracy') {
-                  return value.toFixed(2) + '%';
-                } else {
-                  return Math.round(value).toString();
-                }
-              }
-            },
-            zoom: {
-              pan: {
-                enabled: true,
-                mode: 'x',
-                modifierKey: 'ctrl',
-              },
-              zoom: {
-                wheel: {
-                  enabled: true,
-                  modifierKey: 'ctrl',
-                },
-                pinch: {
-                  enabled: true
-                },
-                mode: 'x',
-              },
-              limits: {
-                x: { minRange: 1 }
-              }
+          time: {
+            unit: 'day',
+            tooltipFormat: 'd MMM yyyy',
+            displayFormats: {
+          day: 'd MMM'
             }
+          },
+          title: {
+            display: true,
+            text: 'Data'
+          }
+        },
+        yQuizzes: {
+          suggestedMax: 1200,
+          type: 'linear',
+          position: 'left',
+          min: 0,
+          title: {
+            display: true,
+            text: 'Domande '
+          },
+          grid: {
+            drawOnChartArea: false,
+            lineWidth: 1,
+            color: 'rgb(255, 200, 0)',
+          },
+          ticks: {
+            stepSize: 50,
+          },
+          axis: 'y',
+          border: {
+            width: 1,
+          }
+        }
+          },
+          plugins: {
+        tooltip: {
+          enabled: !this.isMobile,
+          mode: 'index',
+          intersect: false,
+        },
+        title: {
+          display: true,
+          text: 'Andamento Performance Giornaliera'
+        },
+        legend: {
+          display: true,
+          position: 'top',
+        },
+        datalabels: {
+          display: (context: any) => {
+            const value = context.dataset.data[context.dataIndex] as number;
+            if (typeof value !== 'number') {
+          return false;
+            }
+            if (context.dataset.yAxisID === 'yQuizzes') {
+          return value !== 0;
+            }
+            return true;
+          },
+          anchor: 'end',
+          align: 'center',
+          color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+          font: {
+            weight: 'bold',
+            size: 12
+          },
+          formatter: (value: number, context: any) => {
+            if (typeof value !== 'number') {
+          return '';
+            }
+            if (context.dataset.yAxisID === 'yAccuracy') {
+          return value.toFixed(2) + '%';
+            } else {
+          return Math.round(value).toString();
+            }
+          }
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x',
+            modifierKey: 'ctrl',
+          },
+          zoom: {
+            wheel: {
+          enabled: true,
+          modifierKey: 'ctrl',
+            },
+            pinch: {
+          enabled: true
+            },
+            mode: 'x',
+          },
+          limits: {
+            x: { minRange: 1 }
+          }
+        }
           }
         } as ChartOptions,
         plugins: [ChartDataLabels, zoomPlugin.default]
@@ -832,6 +837,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           plugins: {
             tooltip: {
+              enabled: !this.isMobile,
               mode: 'index',
               intersect: false,
             },
@@ -2085,5 +2091,88 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       plugins: [ChartDataLabels]
     };
     this.revisionChart = new Chart(ctx, chartDailyConfig);
+  }
+
+  openChartOnNewPage(chartType: string): void {
+    if (!this.isMobile){
+      return;
+    }
+    // Find the chart instance by type
+    let chart: Chart | undefined;
+    switch (chartType) {
+      case 'topic':
+        chart = this.topicChart;
+        break;
+      case 'daily':
+        chart = this.dailyChart;
+        break;
+      case 'dailyPrecision':
+        chart = this.dailyPrecisionChart;
+        break;
+      case 'today':
+        chart = this.todayChart;
+        break;
+      case 'selectedDate':
+        chart = this.selectedDateChart;
+        break;
+      case 'revision':
+        chart = this.revisionChart;
+        break;
+      default:
+        this.alertService.showAlert("Errore", "Tipo di grafico non riconosciuto.");
+        return;
+    }
+    if (!chart) {
+      this.alertService.showAlert("Errore", "Grafico non disponibile.");
+      return;
+    }
+
+    // Try to zoom in on the most recent 7 data points (if available)
+    const xScale = chart.scales['x'];
+    if (xScale && xScale.getLabels && typeof xScale.getLabels === 'function') {
+      const labels = xScale.getLabels();
+      if (labels && labels.length > 7) {
+        // Set min/max to show only the last 7 labels
+        const minLabel = labels[labels.length - 7];
+        const maxLabel = labels[labels.length - 1];
+        if (xScale.options) {
+          xScale.options.min = minLabel;
+          xScale.options.max = maxLabel;
+        }
+        chart.update();
+      }
+    } else if (xScale && xScale.min !== undefined && xScale.max !== undefined && xScale.ticks && xScale.ticks.length > 7) {
+      // Fallback for older Chart.js versions
+      const ticks = xScale.ticks;
+      xScale.min = ticks[ticks.length - 7].value;
+      xScale.max = ticks[ticks.length - 1].value;
+      chart.update();
+    }
+
+    // Get the chart's canvas as a data URL
+    const canvas = chart.canvas;
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
+
+    // Open the image in a new browser tab
+    const win = window.open();
+    if (win) {
+      win.document.write(`
+      <html>
+        <head>
+        <title>Grafico - ${chartType}</title>
+        <style>
+          body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9f9f9; }
+          img { max-width: 98vw; max-height: 98vh; border: 1px solid #ccc; }
+        </style>
+        </head>
+        <body>
+        <img src="${dataUrl}" alt="Grafico ${chartType}" />
+        </body>
+      </html>
+      `);
+      win.document.close();
+    } else {
+      this.alertService.showAlert("Errore", "Impossibile aprire una nuova finestra per il grafico.");
+    }
   }
 }

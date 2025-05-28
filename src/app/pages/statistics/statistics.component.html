@@ -168,7 +168,7 @@
           (Ultimi {{ dailyPerformance.length }}
           giorni)</h2>
         <div
-          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          class="bg-white dark:bg-gray-800 p-1 sm:p-1 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
           <div *ngIf="dailyPerformance.length > 0; else noDailyDataPrecisione" class="h-64 sm:h-96 md:h-[450px]">
             <canvas #dailyPerformancePrecisionChart
               style="touch-action: pinch-zoom; -ms-touch-action: pinch-zoom;"></canvas>
@@ -188,7 +188,7 @@
           (Ultimi {{ dailyRevisionPerformance.length }}
           giorni)</h2>
         <div
-          class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+          class="bg-white dark:bg-gray-800 p-1 sm:p-1 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
           <div *ngIf="dailyRevisionPerformance.length > 0; else noDailyRevisionData" class="h-64 sm:h-96 md:h-[450px]">
             <canvas #dailyRevisionPerformanceChart></canvas>
           </div>
