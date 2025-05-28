@@ -351,7 +351,20 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   viewResults(attemptId: string): void {
     const currentAttempt: QuizAttempt | undefined = this.allQuizAttempts.find(att => att.id === attemptId);
     if (currentAttempt && (currentAttempt.status === 'in-progress' || currentAttempt.status === 'in svolgimento') && !this.isStatsViewer && this.authService.getCurrentUserId() === currentAttempt.userId) {
-      this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?").then(result => {
+
+      const customBtns: AlertButton[] = [{
+        text: 'Annulla',
+        role: 'cancel',
+        cssClass: 'bg-gray-300 hover:bg-gray-500'
+      } as AlertButton,
+      {
+        text: 'Riprendi Quiz',
+        role: 'confirm',
+        cssClass: 'bg-indigo-500 hover:bg-indigo-700 text-white', // Make delete more prominent
+        data: 'ok_confirmed'
+      } as AlertButton];
+
+      this.alertService.showConfirmationDialog("Attenzione", "Il quiz selezionato risulta ancora non completato: vuoi riprenderlo?", customBtns).then(result => {
         if (!result || result === 'cancel' || !result.role || result.role === 'cancel') {
          return false;
         }
