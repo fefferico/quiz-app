@@ -2,13 +2,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Question } from '../../models/question.model'; // Adjust path if necessary
 import { AnsweredQuestion, QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
-import { AppDB } from './appDB';
 import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { Subscription } from 'rxjs'; // Added import
 import { User } from '../../models/user.model';
 import { Contest } from '../../models/contes.model';
-import { error } from 'console';
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -19,13 +17,21 @@ interface BaseSupabaseResponse {
   // but handleSupabaseFetch primarily uses 'data' and 'error'.
 }
 
+export interface ContestQuestions {
+  contest?: number,
+  questions?: Question[]
+}
+
 @Injectable({
   providedIn: 'root' // Ensures this service is a singleton
 })
 export class DatabaseService implements OnDestroy {
   private supabase: SupabaseClient;
-  private isDbInitialized = false; // Added: Flag to track DB initialization
   private authSubscription: Subscription | undefined; // Added: For managing subscription
+
+
+  // Keeps track of fetched questions for each contest (by contestId)
+  allDbQuestions: { [contestId: number]: ContestQuestions } = {};
 
   constructor(
     private supabaseService: SupabaseService,
@@ -1117,45 +1123,25 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-  /*
-  Example Supabase RPC function for distinct public_contest:
-  CREATE OR REPLACE FUNCTION get_distinct_public_contests()
-  RETURNS TABLE(public_contest TEXT) AS $$
-  BEGIN
-    RETURN QUERY SELECT DISTINCT q.public_contest FROM questions q WHERE q.public_contest IS NOT NULL AND q.public_contest <> '';
-  END;
-  $$ LANGUAGE plpgsql;
-  */
-
-
   async getQuestionsByPublicContestForSimulation(contestIdentifier: Contest): Promise<Question[]> {
     if (!contestIdentifier) return [];
 
     let topicDistribution: { topic: string | string[]; count: number }[] = [];
     if (contestIdentifier.name && contestIdentifier.name.toLowerCase().trim().indexOf('polizia') >= 0) {
-      // This method simulates a test with 100 quiz questions distributed as follows:
-      // 20% CULTURA GENERALE - Cultura Generale (20 questions)
-      // 12% ITALIANO - Letteratura (12 questions)
-      // 12% ITALIANO - Grammatica or Ragionamento Critico - Verbale (12 questions)
-      // 12% MATEMATICA or Ragionamento Logico Matematico (12 questions)
-      // 12% STORIA - Storia (12 questions)
-      // 12% EDUCAZIONE CIVICA - Educazione Civica (12 questions)
-      // 12% INGLESE - Lingua Inglese (12 questions)
-      // 8% INFORMATICA - Informatica (8 questions)
       topicDistribution = [
-        { topic: 'CULTURA GENERALE', count: 20 },
+        { topic: 'CULTURA GENERALE', count: 14 },
         { topic: 'Letteratura', count: 12 },
         { topic: ['Grammatica', 'RAGIONAMENTO CRITICO'], count: 12 },
         { topic: ['MATEMATICA', 'RAGIONAMENTO LOGICO'], count: 12 },
         { topic: 'STORIA', count: 12 },
-        { topic: 'COSTITUZIONE', count: 12 },
+        { topic: 'COSTITUZIONE', count: 14 },
         { topic: 'INGLESE', count: 12 },
-        { topic: 'INFORMATICA', count: 8 }
+        { topic: 'INFORMATICA', count: 12 }
       ];
     }
 
     // Try to fetch all questions that have never been encountered
-    const allQuestions: Question[] = await this.fetchAllNeverEncounteredRows(contestIdentifier.id);
+    const allQuestions: Question[] = await this.fetchAllRows(contestIdentifier.id);
     const selectedQuestions: Question[] = [];
 
     for (const dist of topicDistribution) {
@@ -1318,6 +1304,9 @@ export class DatabaseService implements OnDestroy {
   }
 
   async fetchAllRows(contestId: number, tableName: string = "questions", userId?: number): Promise<Question[]> {
+    if (this.allDbQuestions && this.allDbQuestions[contestId] && this.allDbQuestions[contestId].questions && this.allDbQuestions[contestId].questions.length > 0){
+      return Promise.resolve(this.allDbQuestions[contestId].questions);
+    }
     const chunkSize = 1000; // Supabase limit
     let allRows: Question[] = [];
     let start = 0;
@@ -1340,7 +1329,12 @@ export class DatabaseService implements OnDestroy {
       start += chunkSize; // Move to the next chunk
     }
 
-    return allRows.map(row => this.mapQuestionFromSupabase(row));
+    this.allDbQuestions[contestId] = {
+      contest: contestId,
+      questions: allRows.map(row => this.mapQuestionFromSupabase(row))
+    };
+
+    return this.allDbQuestions[contestId].questions ?? [];
   }
 
   async countAllRows(contestId: number, tableName: string = "questions", userId?: number): Promise<number> {
