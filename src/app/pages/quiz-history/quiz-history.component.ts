@@ -71,9 +71,11 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
+  isAdmin: boolean = false;
 
   ngOnInit(): void {
     this.isStatsViewer = this.authService.isStatsViewer();
+    this.isAdmin = this.authService.isAdmin();
 
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
@@ -391,13 +393,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
 
     if (resultsPercentage >= 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-green-300 dark:border-green-700 hover:shadow-lg hover:bg-green-300 dark:hover:bg-green-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-green-100 dark:bg-green-900 shadow-md rounded-lg border border-4 border-green-300 dark:border-green-700 hover:shadow-lg hover:bg-green-300 dark:hover:bg-green-700 transition-shadow duration-200 text-gray-700';
     } else if (resultsPercentage >= 50 && resultsPercentage < 75) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-yellow-300 dark:border-yellow-700 hover:shadow-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-yellow-100 dark:bg-yellow-900 shadow-md rounded-lg border border-4 border-yellow-300 dark:border-yellow-700 hover:shadow-lg hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-shadow duration-200 text-gray-700';
     } else if (resultsPercentage >= 25 && resultsPercentage < 50) {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-orange-300 dark:border-orange-700 hover:shadow-lg hover:bg-orange-300 dark:hover:bg-orange-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-orange-100 dark:bg-orange-900 shadow-md rounded-lg border border-4 border-orange-300 dark:border-orange-700 hover:shadow-lg hover:bg-orange-300 dark:hover:bg-orange-700 transition-shadow duration-200 text-gray-700';
     } else {
-      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-red-300 dark:border-red-700 hover:shadow-lg hover:bg-red-300 dark:hover:bg-red-700 transition-shadow duration-200 text-gray-700 hover:text-white';
+      classes = 'flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-red-100 dark:bg-red-900 shadow-md rounded-lg border border-4 border-red-300 dark:border-red-700 hover:shadow-lg hover:bg-red-300 dark:hover:bg-red-700 transition-shadow duration-200 text-gray-700';
     }
     return classes;
   }

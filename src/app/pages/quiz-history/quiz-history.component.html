@@ -61,13 +61,13 @@
           [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()" placeholder="0-100"
           class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
-      <!-- Reset Button -->
-      <div class="sm:col-span-1 lg:col-span-1 flex items-end">
-        <button (click)="resetFilters()"
-          class="w-full mt-1 sm:mt-0 bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-md shadow-sm text-sm">
-          Resetta Filtri
-        </button>
-      </div>
+    </div>
+    <!-- Reset Button -->
+    <div class="flex justify-center mt-2">
+      <button (click)="resetFilters()"
+        class="w-half mt-1 sm:mt-0 bg-gray-500 hover:bg-gray-600 text-white dark:bg-gray-600 dark:hover:bg-gray-500 font-medium py-2 px-4 rounded-md shadow-sm text-sm">
+        Resetta Filtri
+      </button>
     </div>
   </section>
   <!-- End Filter Section -->
@@ -86,7 +86,7 @@
   <div *ngIf="!isLoading && !errorLoading">
     <div *ngIf="allQuizAttempts.length > 0"> <!-- Check allQuizAttempts for showing "Clear All" -->
       <div class="text-center sm:text-right mb-4" *ngIf="allQuizAttempts.length > 1">
-        <button *ngIf="!isStatsViewer" (click)="clearAllHistory()"
+        <button *ngIf="isAdmin" (click)="clearAllHistory()"
           class="w-full sm:w-auto bg-red-500 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-500 text-sm font-medium py-2 px-4 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400">
           <fa-icon class="ml-2 fa-lg" [icon]="faDelete"></fa-icon>
           Cancella tutto lo storico quiz
@@ -111,17 +111,26 @@
               </span>
             </p>
             <p class="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span class="font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1"> Totali:
+              <span
+                class="font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1">
+                Totali:
                 {{attempt?.totalQuestionsInQuiz}}</span>
-              <span class="font-extrabold border rounded bg-green-300 dark:bg-green-500 dark:text-white border-green-500 px-1 mr-1"> Corrette:
+              <span
+                class="font-extrabold border rounded bg-green-300 dark:bg-green-500 dark:text-white border-green-500 px-1 mr-1">
+                Corrette:
                 {{getCorrectCountForAttempt(attempt)}}</span>
-              <span class="font-extrabold border rounded bg-red-300 dark:bg-red-500 dark:text-white border-red-500 px-1 mr-1"> Errate:
+              <span
+                class="font-extrabold border rounded bg-red-300 dark:bg-red-500 dark:text-white border-red-500 px-1 mr-1">
+                Errate:
                 {{getWrongCountForAttempt(attempt)}}</span>
-              <span class="font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1"> Saltate:
+              <span
+                class="font-extrabold border rounded bg-yellow-300 dark:bg-yellow-500 dark:text-white border-yellow-500 px-1">
+                Saltate:
                 {{getSkipCountForAttempt(attempt)}}</span>
             </p>
             <p class="text-xs dark:text-white mt-1">
-              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} {{ getQuizType(attempt)}}  {{ getQuizTitle(attempt)}}
+              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} {{ getQuizType(attempt)}} {{
+              getQuizTitle(attempt)}}
             </p>
             <p class="text-xs dark:text-white mt-1">
               ID: {{ attempt.id }}
@@ -132,18 +141,18 @@
           </div>
 
           <div *ngIf="!isStatsViewer" class="flex-shrink-0 mt-2 sm:mt-0 text-center">
-            <button (click)="repeatQuiz(attempt.id)" aria-label="Ripeti intero quiz"
-              title="Ripeti intero quiz"
+            <button (click)="repeatQuiz(attempt.id)" aria-label="Ripeti intero quiz" title="Ripeti intero quiz"
               class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 focus:outline-none p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-200 dark:hover:bg-opacity-30 transition-colors">
               <fa-icon class="px-2 fa-lg" [icon]="faRepeat" aria-label="Ripeti intero quiz"></fa-icon>
             </button>
             <button (click)="repeatWrongQuiz(attempt.id)" aria-label="Ripeti domande sbagliate/saltate"
               title="Ripeti domande sbagliate/saltate"
               class="text-orange-400 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 focus:outline-none p-2 rounded-full hover:bg-orange-100 dark:hover:bg-orange-200 dark:hover:bg-opacity-30 transition-colors">
-              <fa-icon class="fa-lg pl-1" [icon]="faExclamation" aria-label="Ripeti domande sbagliate/saltate"></fa-icon>
+              <fa-icon class="fa-lg pl-1" [icon]="faExclamation"
+                aria-label="Ripeti domande sbagliate/saltate"></fa-icon>
               <fa-icon class="fa-lg pr-1" [icon]="faRepeat" aria-label="Ripeti domande sbagliate/saltate"></fa-icon>
             </button>
-            <button (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
+            <button *ngIf="isAdmin" (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
               title="Elimina questo tentativo quiz"
               class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-200 dark:hover:bg-opacity-30 transition-colors">
               <fa-icon class="px-2 fa-lg" [icon]="faDelete" aria-label="Elimina questo tentativo quiz"></fa-icon>

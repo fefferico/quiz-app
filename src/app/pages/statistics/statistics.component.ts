@@ -131,6 +131,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   spinnerService = inject(SpinnerService);
 
   isStatsViewer: boolean = false;
+  isAdmin: boolean = false;
   isMobile: boolean = false;
 
   // -- icons
@@ -207,6 +208,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Set the default locale for all charts
     Chart.defaults.locale = 'it';
     this.isStatsViewer = this.authService.isStatsViewer();
+    this.isAdmin = this.authService.isAdmin();
 
     const currentContest = this.contestSelectionService.checkForContest();
     if (currentContest === null) {
@@ -1746,13 +1748,13 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           'rgb(255, 200, 0)'  // Corrette
         ],
         borderColor: [
-          'rgb(54, 162, 235)', // Quiz Svolti
-          'rgb(24, 218, 69)', // Domande
-          'rgb(255, 99, 132)',// Sbagliate
+          'rgb(27, 126, 192)', // Quiz Svolti
+          'rgb(18, 180, 55)', // Domande
+          'rgb(222, 50, 87)',// Sbagliate
           // 'rgba(255, 206, 86, 1)', // Saltate/Non Risposte
-          'rgb(255, 200, 0)'// Corrette
+          'rgb(255, 166, 0)'// Corrette
         ],
-        borderWidth: 1
+        borderWidth: 2
       }]
     };
 
@@ -1882,16 +1884,16 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             return;
           }
           break;
-        case 3: /* Saltate/Non Risposte */
-          if ((this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
-            questionIdsToPractice = this.todayDetailedPerformance.skippedAnswerIds ?? [];
-            modalTitle = 'Rivedi Saltate/Non Risposte di Oggi';
-          } else {
-            this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi.");
-            return;
-          }
-          break;
-        case 4: /* Corrette */
+        // case 3: /* Saltate/Non Risposte */
+        //   if ((this.todayDetailedPerformance.skippedAnswerCount ?? 0) > 0) {
+        //     questionIdsToPractice = this.todayDetailedPerformance.skippedAnswerIds ?? [];
+        //     modalTitle = 'Rivedi Saltate/Non Risposte di Oggi';
+        //   } else {
+        //     this.alertService.showAlert("Info", "Nessuna domanda saltata o non risposta per oggi.");
+        //     return;
+        //   }
+        //   break;
+        case 3: /* Corrette */
           if ((this.todayDetailedPerformance.correctAnswerCount ?? 0) > 0) {
             questionIdsToPractice = this.todayDetailedPerformance.correctAnswerIds ?? [];
             modalTitle = 'Rivedi Corrette di Oggi';
