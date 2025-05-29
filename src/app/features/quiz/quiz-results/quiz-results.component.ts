@@ -208,8 +208,14 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   toggleAccordion(topic: string): void {
     const currentState = this.accordionState.get(topic);
     this.accordionState.set(topic, !currentState);
-    // No need for cdr.detectChanges() here usually, as Angular's change detection
-    // should pick up the change to accordionState if it's used in an *ngIf in the template.
+  }
+
+  openAccordion(topic: string): void {
+    this.accordionState.set(topic, true);
+  }
+
+  closeAccordion(topic: string): void {
+    this.accordionState.set(topic, false);
   }
 
   // --- END NEW ---
@@ -505,6 +511,17 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
         questions: filteredGroups[topic]
       }))
       .filter(topic => topic.questions && topic.questions.length > 0);
-  }
 
+      this.groupedQuestions.forEach((groupedQuestion,index)=>{
+        if (filterType !== 'all'){
+          this.openAccordion(groupedQuestion.topic);
+        } else {
+          if (index === 0){
+            this.openAccordion(groupedQuestion.topic);
+          } else {
+            this.closeAccordion(groupedQuestion.topic);
+          }
+        }
+      })
+  }
 }

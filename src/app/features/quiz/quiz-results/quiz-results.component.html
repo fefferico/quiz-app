@@ -16,50 +16,83 @@
   </div>
 
   <div *ngIf="quizAttempt && !isLoading && !errorLoading">
-    <header class="mb-8 p-4 sm:p-6 bg-indigo-600 text-white dark:bg-indigo-700 rounded-lg shadow-lg text-center">
-      <h1 class="text-3xl sm:text-4xl font-bold">Risultato</h1>
-      <p class="text-xl sm:text-2xl mt-2">
-        Il tuo punteggio
-        <span class="font-extrabold">{{ quizAttempt.score | number:'1.0-5' }}</span> /
-        <span class="font-extrabold">{{ maxScore | number:'1.0-5' }}</span>
-      </p>
-      <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
-        class="text-xs sm:text-xl mt-2">
-        <span class="font-extrabold text-green-300 dark:text-green-400"> Di cui corrette: {{ correctQuestionIds.length
-          }} ({{ (correctQuestionIds.length /
-          (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
-      </p>
-      <p *ngIf="quizAttempt && quizAttempt.answeredQuestions && quizAttempt.answeredQuestions.length"
-        class="text-xs sm:text-xl mt-2">
-        <span class="font-extrabold text-red-300 dark:text-red-400"> Di cui errate: {{
-          wrongQuestionIds.length }} ({{
-          (wrongQuestionIds.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)</span>
-      </p>
-      <p *ngIf="quizAttempt && quizAttempt.unansweredQuestions && quizAttempt.unansweredQuestions.length"
-        class="text-xs sm:text-xl mt-2">
-        <span class="font-extrabold text-yellow-300 dark:text-yellow-400"> Di cui saltate: {{
-          quizAttempt.unansweredQuestions.length }} ({{
-          (quizAttempt.unansweredQuestions.length / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1'
-          }}%)</span>
-      <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-5">
-        Ora di fine: {{ quizAttempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}
-      </p>
-      <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
-        Durata quiz: {{ calcDurataQuiz(quizAttempt) }}
-      </p>
-      <p class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
-        ID: {{ quizAttempt.id }}
-      </p>
-      <p *ngIf="quizAttempt.settings.quizType" class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
-        Tipologia: {{ quizAttempt.settings.quizType }}
-      </p>
-      <p *ngIf="quizAttempt.settings.quizTitle" class="text-sm text-indigo-200 dark:text-indigo-300 mt-1">
-        Titolo: {{ quizAttempt.settings.quizTitle }}
-      </p>
-
+    <header
+      class="mb-8 p-4 sm:p-8 bg-indigo-600 text-white dark:bg-indigo-700 rounded-lg shadow-lg text-center flex flex-col items-center">
+      <h1 class="text-3xl sm:text-4xl font-bold mb-2">Risultato</h1>
+      <div class="flex flex-col items-center flex-1 mb-3">
+        <p class="text-xl sm:text-2xl">
+          Il tuo punteggio
+          <span class="font-extrabold">{{ quizAttempt.score | number:'1.0-5' }}</span> /
+          <span class="font-extrabold">{{ maxScore | number:'1.0-5' }}</span>
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:justify-center sm:items-end gap-4 w-full mb-4 bg-indigo-400 rounded py-2">
+        <div class="flex flex-col items-center flex-1 bg-green-500 rounded mx-2 text-white py-2">
+          <p *ngIf="quizAttempt && quizAttempt.answeredQuestions" class="text-xs sm:text-lg">
+            <span class="font-extrabold">
+              Corrette: {{ correctQuestionIds.length || 0 }}
+              ({{ ((correctQuestionIds.length || 0) / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)
+            </span>
+          </p>
+          <p class="text-xs">
+            +{{quizAttempt.allQuestions[0].questionSnapshot.scoreIsCorrect}} pt a domanda
+          </p>
+          <p class="text-xs">
+            Pt totali corrette: {{(quizAttempt.allQuestions[0].questionSnapshot.scoreIsCorrect * (correctQuestionIds.length || 0)) | number:'1.0-3'}} pt
+          </p>
+        </div>
+        <div class="flex flex-col items-center flex-1 bg-red-500 rounded mx-2 text-white py-2">
+          <p *ngIf="quizAttempt && quizAttempt.answeredQuestions" class="text-xs sm:text-lg">
+            <span class="font-extrabold">
+              Errate: {{ wrongQuestionIds.length || 0 }}
+              ({{ ((wrongQuestionIds.length || 0) / (quizAttempt.totalQuestionsInQuiz) * 100) | number:'1.0-1' }}%)
+            </span>
+          </p>
+          <p class="text-xs">
+            -{{quizAttempt.allQuestions[0].questionSnapshot.scoreIsWrong}} pt a domanda
+          </p>
+          <p class="text-xs">
+            Pt totali errate: {{(quizAttempt.allQuestions[0].questionSnapshot.scoreIsWrong * (wrongQuestionIds.length || 0)) | number:'1.0-3'}} pt
+          </p>
+        </div>
+        <div class="flex flex-col items-center flex-1 bg-yellow-500 rounded mx-2 text-white py-2">
+          <p *ngIf="quizAttempt && quizAttempt.unansweredQuestions" class="text-xs sm:text-lg">
+            <span class="font-extrabold">
+              Saltate: {{ quizAttempt.unansweredQuestions.length || 0 }}
+              ({{ ((quizAttempt.unansweredQuestions.length || 0) / (quizAttempt.totalQuestionsInQuiz) * 100) |
+              number:'1.0-1'
+              }}%)
+            </span>
+          </p>
+          <p class="text-xs">
+            {{(quizAttempt.unansweredQuestions[0]?.questionSnapshot?.scoreIsSkip || 0)}} pt a domanda
+          </p>
+          <p class="text-xs">
+            Pt totali saltate: {{(quizAttempt.allQuestions[0].questionSnapshot.scoreIsSkip * (quizAttempt.unansweredQuestions.length || 0)) | number:'1.0-3'}} pt
+          </p>
+        </div>
+      </div>
+      <div class="w-full max-w-2xl mx-auto mb-2">
+        <p class="text-sm text-indigo-200 dark:text-indigo-300">
+          <strong>Ora di fine:</strong> {{ quizAttempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}
+        </p>
+        <p class="text-sm text-indigo-200 dark:text-indigo-300">
+          <strong>Durata quiz:</strong> {{ calcDurataQuiz(quizAttempt) }}
+        </p>
+        <p class="text-sm text-indigo-200 dark:text-indigo-300">
+          <strong>ID:</strong> {{ quizAttempt.id }}
+        </p>
+        <p *ngIf="quizAttempt.settings.quizType" class="text-sm text-indigo-200 dark:text-indigo-300">
+          Tipologia: {{ quizAttempt.settings.quizType }}
+        </p>
+        <p *ngIf="quizAttempt.settings.quizTitle"
+          class="text-sm text-indigo-200 dark:text-indigo-300 col-span-1 sm:col-span-2">
+          Titolo: {{ quizAttempt.settings.quizTitle }}
+        </p>
+      </div>
       <div *ngIf="quizAttempt && !isLoading && !errorLoading" class="flex justify-center mt-4">
-        <button (click)="exportResultsToPDF()" title="Esporta Risultati in PDF" class="bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold py-2 px-3 rounded-lg shadow-md text-sm
-                           flex items-center">
+        <button (click)="exportResultsToPDF()" title="Esporta Risultati in PDF"
+          class="bg-blue-500 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-500 font-semibold py-2 px-3 rounded-lg shadow-md text-sm flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd"
               d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
@@ -70,30 +103,32 @@
       </div>
     </header>
 
-    <div class="my-4 flex flex-col sm:flex-row gap-4 justify-center items-center text-center min-width-">
-      <button (click)="applyFilters('correct')"
-        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-green-500 hover:bg-green-800 dark:bg-green-700 dark:hover:bg-green-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
-        <fa-icon [icon]="faCheckCircle" class="text-white dark:white-gray-400"></fa-icon>
-        Corrette
-      </button>
-
-      <button (click)="applyFilters('wrong')"
-        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-red-500 hover:bg-red-800 dark:bg-red-700 dark:hover:bg-red-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
-        <fa-icon [icon]="faCircleXmark" class="text-white dark:white-gray-400"></fa-icon>
-        Sbagliate
-      </button>
-
-      <button (click)="applyFilters('skipped')"
-        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-yellow-500 hover:bg-yellow-800 dark:bg-yellow-700 dark:hover:bg-yellow-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
-        <fa-icon [icon]="faExclamationCircle" class="text-white dark:white-gray-400"></fa-icon>
-        Saltate
-      </button>
-
-      <button (click)="applyFilters('all')"
-        class="rounded flex items-center gap-2 p-3 sm:p-4 bg-indigo-500 hover:bg-indigo-800 dark:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none transition-colors duration-150 min-w-[200px] justify-center text-white">
-        <fa-icon [icon]="faList" class="text-white dark:white-gray-400"></fa-icon>
-        Tutte
-      </button>
+    <div class="my-6 px-4 py-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow flex flex-col items-center">
+      <label class="block text-center text-base sm:text-lg font-semibold mb-3 text-gray-700 dark:text-gray-200">
+        Filtra risposte per:
+      </label>
+      <div class="flex flex-wrap gap-3 justify-center w-full">
+        <button (click)="applyFilters('correct')"
+          class="rounded flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 focus:outline-none transition-colors duration-150 min-w-[140px] justify-center text-white font-medium shadow">
+          <fa-icon [icon]="faCheckCircle" class="text-white"></fa-icon>
+          Corrette
+        </button>
+        <button (click)="applyFilters('wrong')"
+          class="rounded flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 focus:outline-none transition-colors duration-150 min-w-[140px] justify-center text-white font-medium shadow">
+          <fa-icon [icon]="faCircleXmark" class="text-white"></fa-icon>
+          Sbagliate
+        </button>
+        <button (click)="applyFilters('skipped')"
+          class="rounded flex items-center gap-2 px-5 py-2.5 bg-yellow-500 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-500 focus:outline-none transition-colors duration-150 min-w-[140px] justify-center text-white font-medium shadow">
+          <fa-icon [icon]="faExclamationCircle" class="text-white"></fa-icon>
+          Saltate
+        </button>
+        <button (click)="applyFilters('all')"
+          class="rounded flex items-center gap-2 px-5 py-2.5 bg-indigo-500 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 focus:outline-none transition-colors duration-150 min-w-[140px] justify-center text-white font-medium shadow">
+          <fa-icon [icon]="faList" class="text-white"></fa-icon>
+          Tutte
+        </button>
+      </div>
     </div>
 
 
@@ -161,7 +196,8 @@
     </div>
     <!-- End questions grouped by topic -->
 
-    <div *ngIf="!authService.isStatsViewer()" class="w-full mt-4 inline-grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+    <div *ngIf="!authService.isStatsViewer()"
+      class="w-full mt-4 inline-grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
       <button (click)="repeatQuiz()"
         class="text-sm sm:text-base w-full inline-block sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400 font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md hover:shadow-lg transition duration-150">
         <fa-icon class="mr-2" [icon]="repeatIcon"></fa-icon>

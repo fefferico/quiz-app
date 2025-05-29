@@ -23,7 +23,14 @@ import { DatabaseService } from '../../core/services/database.service';
 import { AnsweredQuestion, QuizAttempt, QuizSettings } from '../../models/quiz.model'; // Added QuestionSnapshotInfo
 import { Question } from '../../models/question.model';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
+// Add TypeScript declaration for autoTable to avoid TS error
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (...args: any[]) => jsPDF;
+  }
+}
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
@@ -1166,12 +1173,14 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       doc.setFont('helvetica', 'bold');
       doc.text(`Copertura Argomenti ${currentContest.name ? `(${currentContest.name})` : ''}`, 10, yPos);
       yPos += 7;
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Argomento', 'Domande nel DB', 'Domande Incontrate', 'Copertura (%)', 'N° volte corrette', 'N° volte errate']],
         body: this.topicCoverage.map(tc => [
           tc.topic, tc.totalQuestionsInTopicBank.toString(), tc.questionsEncountered.toString(),
-          new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0')
+          new PercentPipe('en-US').transform(tc.coveragePercentage, '1.0-0'),
+          tc.totalQuestionsCorrectlyAnswered?.toString() ?? '',
+          tc.totalQuestionsWronglyAnswered?.toString() ?? ''
         ]),
         theme: 'striped', styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
         headStyles: { fillColor: [75, 85, 99], fontSize: 8.5, fontStyle: 'bold', halign: 'center' }, // gray-500
@@ -1225,6 +1234,52 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         yPos += imgHeight + lineHeight;
       } catch (e) {
         console.error("Error PDF Daily Chart:", e);
+        yPos += lineHeight;
+      }
+      yPos += sectionSpacing / 2;
+    }
+
+    // Add Daily Precision Chart
+    if (this.dailyPrecisionChart && this.dailyPerformance.length > 0) {
+      checkYPos(100);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Precisione Giornaliera ${currentContest.name ? `(${currentContest.name})` : ''}`, margin, yPos);
+      yPos += lineHeight * 1.5;
+      try {
+        const chartImage = this.dailyPrecisionChart.toBase64Image('image/png', 1.0);
+        const imgProps = this.dailyPrecisionChart.canvas;
+        const aspectRatio = imgProps.width / imgProps.height;
+        const imgWidth = Math.min(contentWidth, 170);
+        const imgHeight = imgWidth / aspectRatio;
+        checkYPos(imgHeight + lineHeight);
+        doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+        yPos += imgHeight + lineHeight;
+      } catch (e) {
+        console.error("Error PDF Daily Precision Chart:", e);
+        yPos += lineHeight;
+      }
+      yPos += sectionSpacing / 2;
+    }
+
+    // Add Daily Revision Chart
+    if (this.revisionChart && this.dailyRevisionPerformance.length > 0) {
+      checkYPos(100);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Andamento Revisioni Giornaliero ${currentContest.name ? `(${currentContest.name})` : ''}`, margin, yPos);
+      yPos += lineHeight * 1.5;
+      try {
+        const chartImage = this.revisionChart.toBase64Image('image/png', 1.0);
+        const imgProps = this.revisionChart.canvas;
+        const aspectRatio = imgProps.width / imgProps.height;
+        const imgWidth = Math.min(contentWidth, 170);
+        const imgHeight = imgWidth / aspectRatio;
+        checkYPos(imgHeight + lineHeight);
+        doc.addImage(chartImage, 'PNG', margin + (contentWidth - imgWidth) / 2, yPos, imgWidth, imgHeight);
+        yPos += imgHeight + lineHeight;
+      } catch (e) {
+        console.error("Error PDF Daily Revision Chart:", e);
         yPos += lineHeight;
       }
       yPos += sectionSpacing / 2;
