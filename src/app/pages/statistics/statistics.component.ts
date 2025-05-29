@@ -615,7 +615,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgb(24, 218, 69)',
             borderColor: 'rgb(24, 218, 69)',
             borderWidth: 2,
-            yAxisID: 'yQuizzes'
+            yAxisID: 'yQuizzes',
           },
           {
             type: 'line' as const,
@@ -1671,94 +1671,128 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const data = this.todayDetailedPerformance;
     const chartData = {
-      labels: ['Quiz Svolti', 'Domande', 'Sbagliate', 'Saltate/Non Risposte', 'Corrette'],
+      labels: ['Quiz Svolti', 'Domande', 'Sbagliate',
+        // 'Saltate/Non Risposte',
+        'Corrette'],
       datasets: [{
         label: `Performance di Oggi (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
         data: [
           data.quizzesTaken,
           (data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0),
           data.wrongAnswerCount ?? 0,
-          data.skippedAnswerCount ?? 0,
+          // data.skippedAnswerCount ?? 0,
           data.correctAnswerCount ?? 0
         ],
         backgroundColor: [
-          'rgba(213, 217, 220, 0.6)',// Quiz Svolti
-          'rgba(54, 162, 235, 0.6)', // Domande
-          'rgba(255, 99, 132, 0.6)', // Sbagliate
-          'rgba(255, 206, 86, 0.6)', // Saltate/Non Risposte
-          'rgba(75, 192, 192, 0.6)'  // Corrette
+          'rgb(54, 162, 235)',// Quiz Svolti
+          'rgb(24, 218, 69)', // Domande
+          'rgb(255, 99, 132)', // Sbagliate
+          // 'rgba(255, 206, 86, 0.6)', // Saltate/Non Risposte
+          'rgb(255, 200, 0)'  // Corrette
         ],
         borderColor: [
-          'rgba(145,149,154,0.82)', // Quiz Svolti
-          'rgba(54, 162, 235, 1)', // Domande
-          'rgba(255, 99, 132, 1)',// Sbagliate
-          'rgba(255, 206, 86, 1)', // Saltate/Non Risposte
-          'rgba(75, 192, 192, 1)'// Corrette
+          'rgb(54, 162, 235)', // Quiz Svolti
+          'rgb(24, 218, 69)', // Domande
+          'rgb(255, 99, 132)',// Sbagliate
+          // 'rgba(255, 206, 86, 1)', // Saltate/Non Risposte
+          'rgb(255, 200, 0)'// Corrette
         ],
-        borderWidth: 10
+        borderWidth: 1
       }]
     };
-    const chartTodayConfig: ChartConfiguration = {
-      type: 'bar', data: chartData,
-      options: {
-        responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-        layout: {
-          padding: {
-            top: 30 // Add space from the top bar
-          }
-        },
-        scales: {
-          x: {
-            ticks: {
-              stepSize: 1, font: {
-                size: 18, // Make labels bigger
-                weight: 'bold'
-              },
-              color: '#222' // Make labels darker
-            },
-          },
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'Conteggio' },
-            ticks: {
-              stepSize: 1
-            },
-            suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0)) + 2 // Add 2 to the max value for top space
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
-            font: {
-              size: 22,
-              weight: 'bold',
-              family: 'Arial, Helvetica, sans-serif'
-            },
-            color: '#111'
-          },
-          datalabels: {
-            display: true,
-            anchor: 'center',
-            align: 'center',
-            color: '#222',
-            font: {
-              weight: 'bold',
-              size: 20
-            },
-            formatter: function (value: any) {
-              return value;
+
+    import('chartjs-plugin-zoom').then(zoomPlugin => {
+      const chartTodayConfig: ChartConfiguration = {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'x',
+          layout: {
+            padding: {
+              top: 30 // Add space from the top bar
             }
+          },
+          scales: {
+            x: {
+              ticks: {
+                stepSize: 1,
+                color: '#222' // Make labels darker
+              },
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Conteggio' },
+              ticks: {
+                stepSize: 1
+              },
+              suggestedMax: ((data.wrongAnswerCount ?? 0) + (data.skippedAnswerCount ?? 0) + (data.correctAnswerCount ?? 0)) + 2 // Add 2 to the max value for top space
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                // Show all legend items, even if only one dataset
+                generateLabels: (chart) => {
+                  // Use chartData.labels to generate legend items for each bar
+                  return chartData.labels.map((label, i) => ({
+                    text: label,
+                    fillStyle: chartData.datasets[0].backgroundColor[i],
+                    strokeStyle: chartData.datasets[0].borderColor[i],
+                    lineWidth: chartData.datasets[0].borderWidth,
+                    hidden: false,
+                    index: i
+                  }));
+                }
+              },
+              onClick: () => { } // Disable legend click to hide bars
+            },
+            title: {
+              display: true,
+              text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
+              color: '#111'
+            },
+            datalabels: {
+              display: true,
+              anchor: 'center',
+              align: 'center',
+              color: '#222',
+              formatter: function (value: any) {
+                return value;
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'x',
+                modifierKey: 'ctrl',
+              },
+              zoom: {
+                wheel: {
+                  enabled: true,
+                  modifierKey: 'ctrl',
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'x',
+              },
+              limits: {
+                x: { minRange: 1 }
+              }
+            }
+          },
+          onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
+            this.handleTodayChartClick(event, elements, chart);
           }
-        },
-        onClick: (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
-          this.handleTodayChartClick(event, elements, chart);
-        }
-      } as ChartOptions,
-      plugins: [ChartDataLabels]
-    };
-    this.todayChart = new Chart(ctxToday, chartTodayConfig);
+        } as ChartOptions,
+        plugins: [ChartDataLabels, zoomPlugin.default]
+      };
+      this.todayChart = new Chart(ctxToday, chartTodayConfig);
+    });
   }
 
   async handleTodayChartClick(event: ChartEvent, elements: ActiveElement[], chart: Chart): Promise<void> {
@@ -1947,161 +1981,179 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
           type: 'line' as const,
           label: 'Precisione Media (%)',
           data: accuracyData,
-          borderColor: 'rgba(255, 159, 64, 1)',
-          backgroundColor: 'rgba(255, 159, 64, 0.2)',
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
           yAxisID: 'yAccuracy',
           tension: 0.1,
           fill: false
         },
         {
-          type: 'bar' as const,
+          type: 'line' as const,
           label: 'Domande svolte',
           data: totalAttemptedData,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: 'rgb(24, 218, 69)',
+          borderColor: 'rgb(24, 218, 69)',
           borderWidth: 2,
-          yAxisID: 'yQuizzes'
+          yAxisID: 'yQuizzes',
+          fill: false
         },
+
         {
-          type: 'bar' as const,
+          type: 'line' as const,
           label: 'Risposte errate',
           data: totalIncorrectData,
           backgroundColor: 'rgba(255, 99, 132, 0.6)',
           borderColor: 'rgba(255, 99, 132, 1)',
           borderWidth: 2,
-          yAxisID: 'yQuizzes'
+          yAxisID: 'yQuizzes',
+          fill: false
         },
         {
-          type: 'bar' as const,
-          label: 'Risposte saltate',
-          data: totalSkippedData,
-          backgroundColor: 'rgba(255, 206, 86, 0.6)',
-          borderColor: 'rgba(255, 206, 86, 1)',
-          borderWidth: 2,
-          yAxisID: 'yQuizzes'
-        },
-        {
-          type: 'bar' as const,
+          type: 'line' as const,
           label: 'Risposte Corrette',
           data: totalCorrectData,
-          backgroundColor: 'rgba(75, 192, 192, 0.7)',
-          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgb(255, 200, 0)',
+          borderColor: 'rgb(255, 200, 0)',
           borderWidth: 2,
-          yAxisID: 'yQuizzes'
+          yAxisID: 'yQuizzes',
+          fill: false
         },
       ]
     };
 
-    const chartDailyConfig: ChartConfiguration = {
-      type: 'bar',
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          intersect: false,
-          mode: 'index',
-        },
-        scales: {
-          x: {
-            type: 'time',
-            adapters: {
-              date: {
-                locale: it
-              }
-            },
-            time: {
-              unit: 'day',
-              tooltipFormat: 'd MMM yyyy',
-              displayFormats: {
-                day: 'd MMM'
-              }
-            },
-            title: {
-              display: true,
-              text: 'Data'
-            }
-          },
-          yAccuracy: {
-            type: 'linear',
-            position: 'left',
-            min: 0,
-            max: 100,
-            title: {
-              display: true,
-              text: 'Precisione (%)'
-            },
-            ticks: {
-              callback: value => value + '%'
-            },
-            grid: {
-              drawOnChartArea: true
-            }
-          },
-          yQuizzes: {
-            suggestedMax: maxTotalAnswered + 2,
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            title: {
-              display: true,
-              text: 'Conteggio'
-            },
-            grid: {
-              drawOnChartArea: false,
-            },
-            ticks: {
-              stepSize: 1
-            }
-          }
-        },
-        plugins: {
-          tooltip: {
-            mode: 'index',
+    import('chartjs-plugin-zoom').then(zoomPlugin => {
+      const chartDailyConfig: ChartConfiguration = {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
             intersect: false,
+            mode: 'index',
           },
-          title: {
-            display: true,
-            text: 'Andamento Revisioni Giornaliero'
-          },
-          legend: {
-            display: true,
-            position: 'top',
-          },
-          datalabels: {
-            display: (context: any) => {
-              const value = context.dataset.data[context.dataIndex] as number;
-              if (typeof value !== 'number') {
-                return false;
+          scales: {
+            x: {
+              type: 'time',
+              adapters: {
+                date: {
+                  locale: it
+                }
+              },
+              time: {
+                unit: 'day',
+                tooltipFormat: 'd MMM yyyy',
+                displayFormats: {
+                  day: 'd MMM'
+                }
+              },
+              title: {
+                display: true,
+                text: 'Data'
               }
-              if (context.dataset.yAxisID === 'yQuizzes') {
-                return value !== 0;
-              }
-              return true;
             },
-            anchor: 'end',
-            align: 'center',
-            color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
-            font: {
-              weight: 'bold',
-              size: 12
-            },
-            formatter: (value: number, context: any) => {
-              if (typeof value !== 'number') {
-                return '';
+            yAccuracy: {
+              type: 'linear',
+              position: 'left',
+              min: 0,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Precisione (%)'
+              },
+              ticks: {
+                callback: value => value + '%'
+              },
+              grid: {
+                drawOnChartArea: true
               }
-              if (context.dataset.yAxisID === 'yAccuracy') {
-                return value.toFixed(2) + '%';
-              } else {
-                return Math.round(value).toString();
+            },
+            yQuizzes: {
+              suggestedMax: maxTotalAnswered + 2,
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              title: {
+                display: true,
+                text: 'Conteggio'
+              },
+              grid: {
+                drawOnChartArea: false,
+              },
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              enabled: !this.isMobile,
+              mode: 'index',
+              intersect: false,
+            },
+            title: {
+              display: true,
+              text: 'Andamento Revisioni Giornaliero'
+            },
+            legend: {
+              display: true,
+              position: 'top',
+            },
+            datalabels: {
+              display: (context: any) => {
+                const value = context.dataset.data[context.dataIndex] as number;
+                if (typeof value !== 'number') {
+                  return false;
+                }
+                if (context.dataset.yAxisID === 'yQuizzes') {
+                  return value !== 0;
+                }
+                return true;
+              },
+              anchor: 'end',
+              align: 'center',
+              color: document.documentElement.classList.contains('dark') ? '#E2E8F0' : '#2e2f30',
+              font: {
+                weight: 'bold',
+                size: 12
+              },
+              formatter: (value: number, context: any) => {
+                if (typeof value !== 'number') {
+                  return '';
+                }
+                if (context.dataset.yAxisID === 'yAccuracy') {
+                  return value.toFixed(2) + '%';
+                } else {
+                  return Math.round(value).toString();
+                }
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'x',
+                modifierKey: 'ctrl',
+              },
+              zoom: {
+                wheel: {
+                  enabled: true,
+                  modifierKey: 'ctrl',
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'x',
+              },
+              limits: {
+                x: { minRange: 1 }
               }
             }
           }
-        }
-      } as ChartOptions,
-      plugins: [ChartDataLabels]
-    };
-    this.revisionChart = new Chart(ctx, chartDailyConfig);
+        } as ChartOptions,
+        plugins: [ChartDataLabels, zoomPlugin.default]
+      };
+      this.revisionChart = new Chart(ctx, chartDailyConfig);
+    });
   }
 
   openChartOnNewPage(chartType: string): void {
