@@ -2143,53 +2143,62 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      // Try to zoom in on the most recent 7 data points (if available)
-      const xScale = chart.scales['x'];
-      if (xScale && xScale.getLabels && typeof xScale.getLabels === 'function') {
-        const labels = xScale.getLabels();
-        if (labels && labels.length > 7) {
-          // Set min/max to show only the last 7 labels
-          const minLabel = labels[labels.length - 7];
-          const maxLabel = labels[labels.length - 1];
-          if (xScale.options) {
-            xScale.options.min = minLabel;
-            xScale.options.max = maxLabel;
-          }
-          chart.update();
+      // if (chart.options && chart.options.plugins && typeof chart.options.plugins === 'object') {
+      //   (chart.options.plugins as any).legend = { display: false };
+      //   chart.update();
+      // }
+      // Reset the chart zoom/pan so the entire chart is visible
+      if (chart.resetZoom && typeof chart.resetZoom === 'function') {
+        chart.resetZoom();
+      } else if (chart.options && chart.options.scales && chart.options.scales['x']) {
+        // Fallback: clear min/max on x axis
+        if (chart.options.scales['x'].min !== undefined) {
+          delete chart.options.scales['x'].min;
         }
-      } else if (xScale && xScale.min !== undefined && xScale.max !== undefined && xScale.ticks && xScale.ticks.length > 7) {
-        // Fallback for older Chart.js versions
-        const ticks = xScale.ticks;
-        xScale.min = ticks[ticks.length - 7].value;
-        xScale.max = ticks[ticks.length - 1].value;
-        chart.update();
+        if (chart.options.scales['x'].max !== undefined) {
+          delete chart.options.scales['x'].max;
+        }
       }
+      chart.update();
 
-      // Get the chart's canvas as a data URL
-      const canvas = chart.canvas;
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      // Wait for the chart to finish rendering before capturing the image
+      this.spinnerService.show("Caricamento grafico...");
+      setTimeout(() => {
+        const canvas = chart.canvas;
+        // Create an offscreen canvas for 2x zoom
+        const zoomFactor = 2;
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = canvas.width * zoomFactor;
+        offCanvas.height = canvas.height * zoomFactor;
+        const offCtx = offCanvas.getContext('2d');
+        if (offCtx) {
+          offCtx.scale(zoomFactor, zoomFactor);
+          offCtx.drawImage(canvas, 0, 0);
+        }
+        const dataUrl = offCanvas.toDataURL('image/png', 1.0);
 
-      // Open the image in a new browser tab
-      const win = window.open();
-      if (win) {
-        win.document.write(`
-      <html>
-        <head>
-        <title>Grafico - ${chartType}</title>
-        <style>
-          body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9f9f9; }
-          img { max-width: 98vw; max-height: 98vh; border: 1px solid #ccc; }
-        </style>
-        </head>
-        <body>
-        <img src="${dataUrl}" alt="Grafico ${chartType}" />
-        </body>
-      </html>
-      `);
-        win.document.close();
-      } else {
-        this.alertService.showAlert("Errore", "Impossibile aprire una nuova finestra per il grafico.");
-      }
+        // Open the image in a new browser tab
+        const win = window.open();
+        if (win) {
+          win.document.title = `Grafico - ${chartType}`;
+          // Add styles
+          const style = win.document.createElement('style');
+          style.textContent = `
+        body { margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9f9f9; }
+        img { max-width: 98vw; max-height: 98vh; border: 1px solid #ccc; }
+          `;
+          win.document.head.appendChild(style);
+          // Add image
+          const img = win.document.createElement('img');
+          img.src = dataUrl;
+          img.alt = `Grafico ${chartType}`;
+          win.document.body.appendChild(img);
+        } else {
+          this.alertService.showAlert("Errore", "Impossibile aprire una nuova finestra per il grafico.");
+        }
+
+        this.spinnerService.hide();
+      }, 1500);
     })
 
   }
