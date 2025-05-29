@@ -142,7 +142,7 @@
       </section>
 
       <!-- Daily Performance Trend Chart -->
-      <section class="mb-10">
+      <section class="mb-10" (click)="openChartOnNewPage('daily')">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Andamento giornaliero -
           domande
           (Ultimi {{ dailyPerformance.length }}
@@ -162,7 +162,7 @@
         </div>
       </section>
 
-      <section class="mb-10">
+      <section class="mb-10" (click)="openChartOnNewPage('dailyPrecision')">
         <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Andamento giornaliero -
           precisione
           (Ultimi {{ dailyPerformance.length }}
