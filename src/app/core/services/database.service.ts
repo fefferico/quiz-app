@@ -1148,7 +1148,7 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
-  private getQuestionsByTopicDistribution(topicDistribution: TopicDistribution[], questions: Question[]): Question[] {
+  public getQuestionsByTopicDistribution(topicDistribution: TopicDistribution[], questions: Question[]): Question[] {
     // Try to fetch all questions that have never been encountered
     const selectedQuestions: Question[] = [];
 

@@ -351,24 +351,24 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     let topicDistribution: TopicDistribution[];
 
-    if (this.selectedPublicContest.id === 1){
+    if (this.selectedPublicContest.id === 5) {
       topicDistribution = [
-      { topic: 'CULTURA GENERALE', count: 12 },
-      { topic: 'ITALIANO - Letteratura', count: 12 },
-      { topic: ['ITALIANO - Grammatica'], count: 12 },
-      { topic: ['RAGIONAMENTO CRITICO - VERBALE'], count: 10 },
-      { topic: ['MATEMATICA'], count: 12 },
-      { topic: ['RAGIONAMENTO LOGICO - MATEMATICO'], count: 10 },
-      { topic: 'STORIA', count: 12 },
-      { topic: 'COSTITUZIONE', count: 10 },
-      { topic: 'INGLESE', count: 10 },
-      { topic: 'INFORMATICA', count: 10 }
-    ];
+        { topic: 'CULTURA GENERALE', count: 12 },
+        { topic: 'ITALIANO - Letteratura', count: 12 },
+        { topic: 'ITALIANO - Grammatica', count: 12 },
+        { topic: 'RAGIONAMENTO CRITICO - VERBALE', count: 10 },
+        { topic: 'MATEMATICA', count: 12 },
+        { topic: 'RAGIONAMENTO LOGICO - MATEMATICO', count: 10 },
+        { topic: 'STORIA', count: 12 },
+        { topic: 'COSTITUZIONE', count: 10 },
+        { topic: 'INGLESE', count: 10 },
+        { topic: 'INFORMATICA', count: 10 }
+      ];
     } else {
       topicDistribution = []
     }
 
-    const neverEncounteredQuestion = await this.dbService.getNeverAnsweredQuestions(this.selectedPublicContest!.id, this.authService.getCurrentUserId(), topicDistribution);
+    let neverEncounteredQuestion = await this.dbService.getNeverAnsweredQuestions(this.selectedPublicContest!.id, this.authService.getCurrentUserId(), topicDistribution);
 
     const missingTopics = availableTopics.filter(td => {
       const topicNames = Array.isArray(td.topic) ? td.topic : [td.topic];
@@ -386,12 +386,24 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       missingNames = missingTopics
         .map(td => Array.isArray(td.topic) ? td.topic.join(' / ') : td.topic)
         .join(', ');
+      // ridistribuisco equamente le 100 domande
+      const totalQuestions = 100;
+      const numTopics = availableTopics.length;
+      const evenCount = Math.floor(totalQuestions / numTopics);
+      const remainder = totalQuestions % numTopics;
+
+      topicDistribution = availableTopics.map((td, idx) => ({
+        topic: td.topic,
+        count: evenCount + (idx < remainder ? 1 : 0)
+      }));
+      neverEncounteredQuestion = this.dbService.getQuestionsByTopicDistribution(topicDistribution, neverEncounteredQuestion);
+
     }
 
     if (missingNames) {
       this.alertService.showAlert(
         "Attenzione",
-        `Sono state già affrontate tutte le domande per i seguenti argomenti: ${missingNames}. Verranno pertanto proposti soltanto gli altri argomenti. Qualora si volesse effettuare un quiz con incluse anche domande di argomenti già completati, si consiglia di usare la funzione 'Simula prova'`
+        `Sono state già affrontate tutte le domande per i seguenti argomenti: ${missingNames}. Verranno pertanto proposti soltanto gli altri argomenti ridistribuiti su 100 domande. Qualora si volesse effettuare un quiz con incluse anche domande di argomenti già completati, si consiglia di usare la funzione 'Simula prova'`
       ).then(() => {
         this.prepareAndOpenModal(
           //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
