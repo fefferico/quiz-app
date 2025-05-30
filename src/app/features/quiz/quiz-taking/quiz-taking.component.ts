@@ -362,11 +362,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             }
           }
 
-          const topicDistributionParam = actualParams['topicDistribution'] || '';
+          const topicDistributionParam = actualParams['topicDistribution'] || {};
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
           if (topicDistributionParam) {
             try {
-              selectedTopicDistribution = JSON.parse(topicDistributionParam);
+              selectedTopicDistribution = topicDistributionParam;
             } catch (e) {
               console.error('Error parsing topicDistribution:', e);
             }

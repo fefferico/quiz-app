@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core'; // Add OnD
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DatabaseService } from '../../core/services/database.service';
-import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
+import { QuizAttempt, QuizSettings, TopicDistribution } from '../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
@@ -344,12 +344,72 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       //await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
       this.spinnerService.hide();
     }
-    this.prepareAndOpenModal(
-      //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
-      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!),
-      this.quizSettings,
-      'never_encountered'
-    );
+
+    const availableTopics = await this.dbService.getAvailableTopics(this.selectedPublicContest.id);
+
+    console.log(availableTopics)
+
+    let topicDistribution: TopicDistribution[];
+
+    if (this.selectedPublicContest.id === 1){
+      topicDistribution = [
+      { topic: 'CULTURA GENERALE', count: 12 },
+      { topic: 'ITALIANO - Letteratura', count: 12 },
+      { topic: ['ITALIANO - Grammatica'], count: 12 },
+      { topic: ['RAGIONAMENTO CRITICO - VERBALE'], count: 10 },
+      { topic: ['MATEMATICA'], count: 12 },
+      { topic: ['RAGIONAMENTO LOGICO - MATEMATICO'], count: 10 },
+      { topic: 'STORIA', count: 12 },
+      { topic: 'COSTITUZIONE', count: 10 },
+      { topic: 'INGLESE', count: 10 },
+      { topic: 'INFORMATICA', count: 10 }
+    ];
+    } else {
+      topicDistribution = []
+    }
+
+    const neverEncounteredQuestion = await this.dbService.getNeverAnsweredQuestions(this.selectedPublicContest!.id, this.authService.getCurrentUserId(), topicDistribution);
+
+    const missingTopics = availableTopics.filter(td => {
+      const topicNames = Array.isArray(td.topic) ? td.topic : [td.topic];
+      return !topicNames.some(t =>
+        neverEncounteredQuestion.some(q =>
+          Array.isArray(q.topic)
+            ? q.topic.includes(t)
+            : q.topic === t
+        )
+      );
+    });
+
+    let missingNames = '';
+    if (missingTopics.length > 0) {
+      missingNames = missingTopics
+        .map(td => Array.isArray(td.topic) ? td.topic.join(' / ') : td.topic)
+        .join(', ');
+    }
+
+    if (missingNames) {
+      this.alertService.showAlert(
+        "Attenzione",
+        `Sono state già affrontate tutte le domande per i seguenti argomenti: ${missingNames}. Verranno pertanto proposti soltanto gli altri argomenti. Qualora si volesse effettuare un quiz con incluse anche domande di argomenti già completati, si consiglia di usare la funzione 'Simula prova'`
+      ).then(() => {
+        this.prepareAndOpenModal(
+          //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
+          () => Promise.resolve(neverEncounteredQuestion),
+          this.quizSettings!,
+          'never_encountered'
+        );
+      })
+    } else {
+      this.prepareAndOpenModal(
+        //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
+        () => Promise.resolve(neverEncounteredQuestion),
+        this.quizSettings,
+        'never_encountered'
+      );
+    }
+
+
   }
 
   startSimulationContestQuizNow(): void {

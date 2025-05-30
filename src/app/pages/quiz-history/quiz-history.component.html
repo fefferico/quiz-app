@@ -99,10 +99,16 @@
         <div *ngFor="let attempt of quizAttempts" (click)="viewResults(attempt.id)" [ngClass]="getResultClass(attempt)">
 
           <div class="flex-grow mb-3 sm:mb-0 w-50 sm:w-auto">
-            <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
-              {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{
-              (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
-            </p>
+            <div class="flex justify-between">
+              <p class="text-sm text-indigo-600 dark:text-indigo-400 font-semibold">
+                {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{
+                (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
+              </p>
+              <p class="text-xs dark:text-white w-fit" [ngClass]="getStatusLabelColor(attempt)">
+                Stato: {{ getStatusLabelText(attempt) }}
+              </p>
+            </div>
+            
             <p class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1">
               Punteggio: {{ attempt.score }} / {{ getMaxResultForAttempt(attempt) }}
               <span class="text-gray-600 dark:text-gray-400 font-normal">
@@ -110,7 +116,7 @@
                 }}%)
               </span>
             </p>
-            <p class="flex text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p class="flex text-l text-gray-500 dark:text-gray-400 mt-1">
               <span
                 class="font-extrabold border rounded bg-indigo-300 dark:bg-indigo-500 dark:text-white border-indigo-500 px-1 mr-1">
                 Totali:
@@ -128,16 +134,17 @@
                 Saltate:
                 {{getSkipCountForAttempt(attempt)}}</span>
             </p>
-            <p class="text-xs dark:text-white mt-1">
-              Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }} {{ getQuizType(attempt)}} {{
-              getQuizTitle(attempt)}}
-            </p>
-            <p class="text-xs dark:text-white mt-1">
-              ID: {{ attempt.id }}
-            </p>
-            <p class="text-xs dark:text-white mt-1 w-fit" [ngClass]="getStatusLabelColor(attempt)">
-              Stato: {{ getStatusLabelText(attempt) }}
-            </p>
+            <div class="mt-1">
+              <p class="text-xs dark:text-white" style="word-break:break-word;">
+                Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }}
+              </p>
+              <p class="text-l font-bold dark:text-white" style="word-break:break-word;">
+                Tipologia: {{ getQuizType(attempt) }}
+              </p>
+              <p class="text-xs dark:text-white mb-2">
+                ID: {{ attempt.id }}
+              </p>
+            </div>
           </div>
 
           <div *ngIf="!isStatsViewer" class="flex-shrink-0 mt-2 sm:mt-0 text-center">

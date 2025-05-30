@@ -27,3 +27,9 @@ export enum QuestionDifficulty {
   Medium = "Medium",
   Hard = "Hard"
 }
+
+
+export interface ContestQuestions {
+  contest?: number,
+  questions?: Question[]
+}

@@ -33,7 +33,7 @@ declare module 'jspdf' {
 }
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
-import { GenericData } from '../../models/statistics.model';
+import { DailyMap, DailyPerformanceData, DailyPerformanceDataDetailed, GenericData, TopicCoverageData, TopicPerformanceData } from '../../models/statistics.model';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
@@ -53,60 +53,6 @@ import { SpinnerService } from '../../core/services/spinner.service';
 import { Contest } from '../../models/contes.model';
 
 Chart.register(...registerables);
-
-interface TopicPerformanceData {
-  topic: string;
-  correct: number;
-  total: number;
-  accuracy: number;
-  questionIds: string[];
-}
-
-interface DailyPerformanceData {
-  date: string;
-  quizzesTaken: number;
-  totalCorrect: number;
-  totalIncorrect: number;
-  totalSkipped: number;
-  totalAttemptedInDay: number;
-  averageAccuracy: number;
-}
-
-interface TopicWrongAnswerData {
-  topic: string;
-  wrongAnswers: number;
-  totalAnswersInTopic: number;
-  percentageOfGlobalWrong: number;
-  topicSpecificFailureRate: number;
-}
-
-interface DailyPerformanceDataDetailed {
-  date: string;
-  quizzesTaken: number;
-  wrongAnswerIds: string[];
-  correctAnswerIds?: string[];
-  skippedAnswerIds?: string[];
-  correctAnswerCount?: number;
-  wrongAnswerCount?: number;
-  skippedAnswerCount?: number;
-}
-
-interface TopicCoverageData {
-  topic: string;
-  totalQuestionsInTopicBank: number;
-  questionsEncountered: number;
-  coveragePercentage: number;
-  totalQuestionsCorrectlyAnswered: number;
-  correctPercentage: number;
-  totalQuestionsWronglyAnswered: number;
-}
-
-interface DailyMap {
-  quizzes: number,
-  correct: number,
-  incorrect: number,
-  skipped: number
-}
 
 
 @Component({

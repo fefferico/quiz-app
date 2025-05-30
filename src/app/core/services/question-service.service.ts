@@ -49,12 +49,16 @@ export class QuestionService {
         return;
       }
     }
+    this.spinnerService.show("Recupero domande in corso...");
     const questionIds = currentAttempt.allQuestions.map(qInfo => qInfo.questionId);
     if (questionIds.length === 0) {
       this.alertService.showAlert("Attenzione", "Nessuna domanda trovata in questo tentativo da ripetere.").then(() => {
         return;
+      }).finally(() => {
+        this.spinnerService.hide();
       })
     } else {
+      this.spinnerService.hide();
       this.onInternalSubmit(currentAttempt, questionIds);
     }
   }

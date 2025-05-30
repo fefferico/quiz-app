@@ -24,3 +24,58 @@ export interface GenericData {
   questionIds: string[]; // IDs of questions in this topic
   isMaxReached?: boolean; // Indicates if the max number of questions has been reached
 }
+
+
+export interface TopicPerformanceData {
+  topic: string;
+  correct: number;
+  total: number;
+  accuracy: number;
+  questionIds: string[];
+}
+
+export interface DailyPerformanceData {
+  date: string;
+  quizzesTaken: number;
+  totalCorrect: number;
+  totalIncorrect: number;
+  totalSkipped: number;
+  totalAttemptedInDay: number;
+  averageAccuracy: number;
+}
+
+export interface TopicWrongAnswerData {
+  topic: string;
+  wrongAnswers: number;
+  totalAnswersInTopic: number;
+  percentageOfGlobalWrong: number;
+  topicSpecificFailureRate: number;
+}
+
+export interface DailyPerformanceDataDetailed {
+  date: string;
+  quizzesTaken: number;
+  wrongAnswerIds: string[];
+  correctAnswerIds?: string[];
+  skippedAnswerIds?: string[];
+  correctAnswerCount?: number;
+  wrongAnswerCount?: number;
+  skippedAnswerCount?: number;
+}
+
+export interface TopicCoverageData {
+  topic: string;
+  totalQuestionsInTopicBank: number;
+  questionsEncountered: number;
+  coveragePercentage: number;
+  totalQuestionsCorrectlyAnswered: number;
+  correctPercentage: number;
+  totalQuestionsWronglyAnswered: number;
+}
+
+export interface DailyMap {
+  quizzes: number,
+  correct: number,
+  incorrect: number,
+  skipped: number
+}

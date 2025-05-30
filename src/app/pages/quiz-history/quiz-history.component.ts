@@ -255,7 +255,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    return quizSettings.quizType || quizAttempt.quizType ? ' | Tipologia: ' + quizAttempt.quizType : ' | Tipologia: ' + quizAttempt.quizType;
+    return quizSettings && quizSettings.quizType !== undefined ? (quizAttempt.quizType ?? '') : '';
   }
 
   getQuizTitle(quizAttempt: QuizAttempt): string {

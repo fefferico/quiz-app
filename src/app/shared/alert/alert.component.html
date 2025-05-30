@@ -23,3 +23,15 @@
 
   </div>
 </div>
+
+<style>
+  :host {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    pointer-events: none;
+  }
+  :host > div {
+    pointer-events: auto;
+  }
+</style>

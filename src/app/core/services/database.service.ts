@@ -1,12 +1,13 @@
 // src/app/core/services/database.service.ts
 import { Injectable, OnDestroy } from '@angular/core';
 import { Question } from '../../models/question.model'; // Adjust path if necessary
-import { AnsweredQuestion, QuizAttempt, TopicCount } from '../../models/quiz.model';   // Adjust path if necessary
+import { AnsweredQuestion, QuizAttempt, TopicCount, TopicDistribution } from '../../models/quiz.model';   // Adjust path if necessary
 import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { Subscription } from 'rxjs'; // Added import
 import { User } from '../../models/user.model';
 import { Contest } from '../../models/contes.model';
+import { TopicCoverageData } from '../../models/statistics.model';
 
 // Define a more specific interface for the expected Supabase response structure
 // This helps in typing the 'data' and 'error' properties consistently.
@@ -32,6 +33,7 @@ export class DatabaseService implements OnDestroy {
 
   // Keeps track of fetched questions for each contest (by contestId)
   allDbQuestions: { [contestId: number]: ContestQuestions } = {};
+  allTopics: { topic: string; count: number }[] = [];
 
   constructor(
     private supabaseService: SupabaseService,
@@ -444,7 +446,7 @@ export class DatabaseService implements OnDestroy {
 
   async getNeverEncounteredRandomQuestionsByParams(
     contestId: number,
-    count: number,
+    count?: number,
     topics: string[] = [],
     keywords: string[] = [],
     questionIDs: string[] = [], // Corrected typo: questiondIDs -> questionIDs
@@ -883,6 +885,29 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
+  async getNeverAnsweredQuestions(contestId: number, userId: number, topicDistribution: TopicDistribution[]): Promise<Question[]> {
+    // Fetch all questions for the contest
+    const allQuestions: Question[] = await this.fetchAllRows(contestId);
+
+    // Fetch all quiz attempts for this contest and user
+    const quizAttempts = await this.getAllQuizAttemptsByContest(contestId, userId);
+
+    // Collect all answered question IDs from all attempts
+    const answeredIds = new Set<string>();
+    for (const attempt of quizAttempts) {
+      if (Array.isArray(attempt.answeredQuestions)) {
+        for (const aq of attempt.answeredQuestions) {
+          if (aq && aq.questionId) {
+            answeredIds.add(aq.questionId);
+          }
+        }
+      }
+    }
+
+    // Filter questions that have never been answered
+    return this.getQuestionsByTopicDistribution(topicDistribution,allQuestions.filter(q => !answeredIds.has(q.id)));
+  }
+
   async getNeverAnsweredQuestionIds(contestId: number, userId?: string): Promise<string[]> {
     const operationName = `getNeverAnsweredQuestionIds` + (contestId ? ` for contest ${contestId}` : '');
     let supabaseQuery = this.supabase.from('questions').select('id')
@@ -1123,6 +1148,36 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
+  private getQuestionsByTopicDistribution(topicDistribution: TopicDistribution[], questions: Question[]): Question[] {
+    // Try to fetch all questions that have never been encountered
+    const selectedQuestions: Question[] = [];
+
+    for (const dist of topicDistribution) {
+      let candidates: Question[];
+      if (Array.isArray(dist.topic)) {
+        candidates = questions.filter(q =>
+        (Array.isArray(dist.topic)
+          ? dist.topic.some((t: string) => (q.topic ?? '').trim().toLowerCase().indexOf((t as string).trim().toLowerCase()) >= 0)
+          : (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0)
+        );
+      } else {
+        candidates = questions.filter(q => (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0);
+      }
+      // Shuffle candidates
+      candidates = candidates.sort(() => 0.5 - Math.random());
+      selectedQuestions.push(...candidates.slice(0, dist.count));
+    }
+
+    // If less than 100 due to missing topics, fill with random remaining questions
+    if (selectedQuestions.length < 100) {
+      const remaining = questions.filter(q => !selectedQuestions.some(sq => sq.id === q.id));
+      const needed = 100 - selectedQuestions.length;
+      selectedQuestions.push(...remaining.sort(() => 0.5 - Math.random()).slice(0, needed));
+    }
+
+    return selectedQuestions;
+  }
+
   async getQuestionsByPublicContestForSimulation(contestIdentifier: Contest): Promise<Question[]> {
     if (!contestIdentifier) return [];
 
@@ -1142,30 +1197,7 @@ export class DatabaseService implements OnDestroy {
 
     // Try to fetch all questions that have never been encountered
     const allQuestions: Question[] = await this.fetchAllRows(contestIdentifier.id);
-    const selectedQuestions: Question[] = [];
-
-    for (const dist of topicDistribution) {
-      let candidates: Question[];
-      if (Array.isArray(dist.topic)) {
-        candidates = allQuestions.filter(q =>
-        (Array.isArray(dist.topic)
-          ? dist.topic.some((t: string) => (q.topic ?? '').trim().toLowerCase().indexOf((t as string).trim().toLowerCase()) >= 0)
-          : (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0)
-        );
-      } else {
-        candidates = allQuestions.filter(q => (q.topic ?? '').trim().toLowerCase().indexOf((dist.topic as string).trim().toLowerCase()) >= 0);
-      }
-      // Shuffle candidates
-      candidates = candidates.sort(() => 0.5 - Math.random());
-      selectedQuestions.push(...candidates.slice(0, dist.count));
-    }
-
-    // If less than 100 due to missing topics, fill with random remaining questions
-    if (selectedQuestions.length < 100) {
-      const remaining = allQuestions.filter(q => !selectedQuestions.some(sq => sq.id === q.id));
-      const needed = 100 - selectedQuestions.length;
-      selectedQuestions.push(...remaining.sort(() => 0.5 - Math.random()).slice(0, needed));
-    }
+    const selectedQuestions: Question[] = this.getQuestionsByTopicDistribution(topicDistribution, allQuestions);
 
     return selectedQuestions.slice(0, 100);
   }
@@ -1416,5 +1448,21 @@ export class DatabaseService implements OnDestroy {
       // Add other fields as needed, mapping snake_case to camelCase
     };
     return userResult;
+  }
+
+  public async getAvailableTopics(contestId: number): Promise<{ topic: string; count: number }[]> {
+    if (this.allTopics && this.allTopics.length > 0){
+      return this.allTopics;
+    }
+    const allQuestions = await this.fetchAllRows(contestId); // fetch all questions across contests
+    const data = allQuestions.map(q => ({ topic: q.topic }));
+    const topicMap: { [key: string]: number } = {};
+    (data ?? []).forEach((row: any) => {
+      if (row.topic) {
+        topicMap[row.topic as string] = (topicMap[row.topic as string] || 0) + 1;
+      }
+    });
+    this.allTopics = Object.entries(topicMap).map(([topic, count]) => ({ topic, count }));
+    return this.allTopics;
   }
 }

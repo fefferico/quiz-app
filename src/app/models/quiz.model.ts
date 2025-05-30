@@ -39,6 +39,11 @@ export interface TopicCount {
   count: number;
 }
 
+export interface TopicDistribution {
+  topic: string | string[]; 
+  count: number
+}
+
 export type QuizType = 'Standard' | 'Esame' | 'Revisione errori' | 'Domande mai risposte' | 'Contest' | 'Timed'; // <-- NEW: For different quiz types
 
 
