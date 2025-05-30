@@ -12,8 +12,17 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-html, body { height: 100%; } // Keep this
-body { margin: 0; }          // Keep this
+html,
+body {
+  height: 100%;
+}
+
+// Keep this
+body {
+  margin: 0;
+}
+
+// Keep this
 
 
 // 3. Custom Component Styles (Example .btn-primary - keep if used)
@@ -28,7 +37,8 @@ body { margin: 0; }          // Keep this
 // 4. Feedback Modal Styles (with dark mode considerations)
 //    It's often better to apply Tailwind dark: classes directly in the component's HTML.
 //    But if you prefer global styles for it:
-.feedback-trigger-button { // Assuming this is for the button that OPENS the modal
+.feedback-trigger-button {
+  // Assuming this is for the button that OPENS the modal
   // Styled primarily with Tailwind in question-feedback.component.html
   // Add any non-Tailwind base styles here if absolutely needed.
 }
@@ -84,3 +94,170 @@ html.sepia-mode body {
 // 8. REMOVE or Refactor #toggle styles - Prefer Tailwind classes in app.component.html
 // #toggle { ... }
 // #toggle:hover { ... }
+
+
+
+.wrapper-tag {
+  display: flex;
+  /* To align circle and text bar side-by-side */
+  align-items: center;
+  /* Vertically align them */
+  position: relative;
+  /* For potential z-index stacking if needed */
+}
+
+.wrapper-tag-icon-part {
+  width: 80px;
+  /* Diameter of the circle */
+  height: 80px;
+  /* Diameter of the circle */
+  border-radius: 50%;
+  /* Makes it a circle */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* To position the exclamation mark within */
+  z-index: 1;
+  /* Ensure circle part is slightly above text part for clean overlap */
+}
+
+.wrapper-tag-text-part {
+  padding: 15px 15px 15px 50px;
+  /* Top, Right, Bottom, Left */
+  /* Crucial: Left padding is large to account for overlap */
+  margin-left: -40px;
+  /* Negative margin to pull it under the circle part */
+  /* Should be - (circle_width / 2) */
+  height: 60px;
+  /* Adjust to look good with the circle */
+  display: flex;
+  align-items: center;
+  /* Vertically center text */
+  border-top-right-radius: 15px;
+  /* Round the top-right corner */
+  border-bottom-right-radius: 15px;
+  /* Round the bottom-right corner */
+  letter-spacing: 1px;
+  font-size: 1.1em;
+}
+
+.wrapper-underline-tag {
+  display: flex;
+  /* To align circle and text bar side-by-side */
+  align-items: center;
+  /* Vertically align them */
+  position: relative;
+  /* For potential z-index stacking if needed */
+}
+
+.wrapper-underline-tag-icon-part {
+  width: 40px;
+  /* Diameter of the circle */
+  height: 40px;
+  /* Diameter of the circle */
+  border-radius: 50%;
+  /* Makes it a circle */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* To position the exclamation mark within */
+  z-index: 1;
+  /* Ensure circle part is slightly above text part for clean overlap */
+}
+
+.wrapper-underline-tag-text-part {
+  padding: 15px 1px 15px 20px;
+  /* Top, Right, Bottom, Left */
+  /* Crucial: Left padding is large to account for overlap */
+  margin-left: -15px;
+  /* Negative margin to pull it under the circle part */
+  /* Should be - (circle_width / 2) */
+  height: 5px;
+  /* Adjust to look good with the circle */
+  display: flex;
+  align-items: center;
+  /* Vertically center text */
+  letter-spacing: 1px;
+  font-size: 1.1em;
+  border: 5px solid;
+  border-left: none;
+  border-top: none;
+  border-right: none;
+
+}
+
+
+
+
+.status-indicator {
+  display: inline-flex;
+  /* Allows it to sit nicely with other elements if needed */
+  align-items: center;
+  /* Vertically aligns icon and label */
+  // background-color: #34A853;
+  /* The green color from your image */
+
+  /* Overall pill shape - calculated based on label height + surrounding padding */
+  /* Label will have inner height of 32px (16px font + 2*8px padding) */
+  /* Badge padding around label is 5px */
+  /* Total height = 32px + 2*5px = 42px. Radius = 42px / 2 = 21px */
+  border-radius: 21px;
+
+  padding-top: 5px;
+  /* Green border thickness above/below the white label */
+  padding-bottom: 5px;
+  padding-right: 5px;
+  /* Green border thickness to the right of the white label */
+  padding-left: 12px;
+  /* Space for the icon on the left */
+
+  box-sizing: border-box;
+  cursor: default;
+  /* Or 'pointer' if it's clickable */
+}
+
+.status-indicator-icon {
+  width: 24px;
+  /* Adjust size as needed */
+  height: 24px;
+  /* White checkmark */
+  stroke-width: 4;
+  /* Thickness of the checkmark lines */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  /* No fill for the checkmark shape */
+  margin-right: 8px;
+  /* Space between icon and the white label */
+  flex-shrink: 0;
+  /* Prevent icon from shrinking if text is long */
+}
+
+.status-indicator-label {
+  // background-color: #FFFFFF;
+  /* White background for the label */
+  // color: #000000;
+  /* Black text color */
+
+  /* Vertical padding + font-size determines height */
+  padding: 8px 18px;
+  /* 8px top/bottom, 18px left/right */
+
+  /* Radius should be half of its inner height. */
+  /* Inner height = 16px (font) + 2 * 8px (padding) = 32px. Radius = 16px. */
+  border-radius: 16px;
+
+  font-weight: bold;
+  font-size: 16px;
+  /* Adjust as needed */
+  text-transform: uppercase;
+  /* Matches "WODERFUL" */
+  letter-spacing: 0.5px;
+  /* Slight letter spacing */
+  line-height: 1;
+  /* Ensures text height is predictable */
+  white-space: nowrap;
+  /* Prevents the label from wrapping to a new line */
+}

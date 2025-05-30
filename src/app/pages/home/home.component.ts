@@ -7,7 +7,7 @@ import { QuizAttempt, QuizSettings } from '../../models/quiz.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
-  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle
+  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle, faExclamationCircle, faQuestionCircle
 } from '@fortawesome/free-solid-svg-icons'; // Added faUndo
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
@@ -86,9 +86,11 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   faStar: IconDefinition = faStar;
   faRepeat: IconDefinition = faRepeat;
   faExclamation: IconDefinition = faExclamation;
+  faExclamationCircle: IconDefinition = faExclamationCircle;
   faPersonMilitaryRifle: IconDefinition = faPersonMilitaryRifle;
   faPlay: IconDefinition = faPlay;
   faQuestion: IconDefinition = faQuestion;
+  faQuestionCircle: IconDefinition = faQuestionCircle;
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
   faLandmark: IconDefinition = faLandmark; // Icon for public contests
 

@@ -211,31 +211,23 @@
       Storico Quiz
     </button>
     <div
-      class="col-span-1 flex flex-col items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 mt-2">
-      <div class="w-full text-center font-semibold text-gray-600 mb-2 ">Riepilogo dati</div>
-      <div class="danger-tag w-full">
-        <div class="danger-icon-part bg-cyan-200">
-          <fa-icon class="opacity-60 text-xl" [icon]="faQuestion"></fa-icon>
-        </div>
-        <div class="danger-text-part bg-cyan-200 text-cyan-900 dark:bg-cyan-900 dark:text-cyan-200 font-semibold px-1 rounded-lg text-lg sm:text-xl shadow-inner cursor-default select-none flex-1">
+      class="col-span-1 flex flex-col items-center gap-2 p-2 border border-gray-400 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 mt-2 w-auto max-w-full">
+      <div class="w-full text-center font-semibold text-gray-800 dark:text-gray-200 pb-2">Riepilogo dati</div>
+      <div class="status-indicator bg-cyan-200 text-cyan-900 ">
+        <fa-icon class="status-indicator-icon" [icon]="faQuestionCircle"></fa-icon>
+        <span class="status-indicator-label bg-white dark:bg-gray-600 dark:text-cyan-200">
           Domande mai risposte {{ selectedPublicContest ? '(' + neverEncounteredQuestionCount + ')' : '' }}
-        </div>
+        </span>
       </div>
-      <div class="danger-tag w-full">
-        <div class="danger-icon-part bg-red-200">
-          <fa-icon class="opacity-60 text-xl" [icon]="faUndoAlt"></fa-icon>
-        </div>
-        <div class="danger-text-part bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200 font-semibold px-1 rounded-lg text-lg sm:text-xl shadow-inner cursor-default select-none flex-1 w-full">
-          Errori di IERI {{ selectedPublicContest ? '(' + yesterdayProblematicQuestionIds.length + ')' : '' }}
-        </div>
+      <div class="status-indicator bg-red-200">
+        <fa-icon class="status-indicator-icon text-red-900" [icon]="faExclamationCircle"></fa-icon>
+        <span class="status-indicator-label bg-white dark:bg-gray-600 dark:text-red-200 text-red-900">Errori di IERI {{ selectedPublicContest ? '(' +
+          yesterdayProblematicQuestionIds.length + ')' : '' }}</span>
       </div>
-      <div class="danger-tag w-full">
-        <div class="danger-icon-part bg-red-200">
-          <fa-icon class="opacity-60 text-xl" [icon]="faUndoAlt"></fa-icon>
-        </div>
-        <div class="danger-text-part bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200 font-semibold px-1 rounded-lg text-lg sm:text-xl shadow-inner cursor-default select-none flex-1">
-          Errori di OGGI {{ selectedPublicContest ? '(' + todayProblematicQuestionIds.length + ')' : '' }}
-        </div>
+      <div class="status-indicator bg-red-200">
+        <fa-icon class="status-indicator-icon text-red-900" [icon]="faExclamationCircle"></fa-icon>
+        <span class="status-indicator-label bg-white dark:bg-gray-600 dark:text-red-200 text-red-900">Errori di OGGI {{ selectedPublicContest ? '(' +
+          todayProblematicQuestionIds.length + ')' : '' }}</span>
       </div>
     </div>
   </div>
