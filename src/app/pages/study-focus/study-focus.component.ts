@@ -144,7 +144,7 @@ export class StudyFocusComponent implements OnInit {
         topics: quizSettings.selectedTopics?.join(','),
         keywords: '',
         // For quiz mode, pass other relevant params
-        topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
+        topicDistribution: quizSettings.topicDistribution ? quizSettings.topicDistribution : [],
         enableTimer: false,
         timerDurationSeconds: 0,
         // get specific question id

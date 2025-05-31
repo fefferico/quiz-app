@@ -45,6 +45,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
   loggedInUser: AppUser | null = null;
 
+  isFrancesco: boolean = false;
+
   // --- General State ---
   isMusicPlaying: boolean = false;
   isQuizSetupModalOpen = false;
@@ -110,6 +112,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     this.loggedInUser = currentUser && 'id' in currentUser ? (currentUser as AppUser) : null;
 
     console.log("Logged in user", this.loggedInUser);
+    this.isFrancesco = this.authService.getCurrentUserId() === 2;
 
     this.contestSubscription = this.contestSelectionService.selectedContest$.subscribe(newlySelectedContest => {
       console.log(`HomeComponent: ContestSelectionService emitted '${newlySelectedContest?.id}'. Current local is '${this.currentLocalContestId?.id}'`);
@@ -331,7 +334,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       selectedTopics: [],
       quizTitle: `Domande mai risposte (${this.selectedPublicContest?.name || 'Generale'})`,
       quizType: 'Domande mai risposte',
-      publicContest: currentContest.id
+      publicContest: currentContest.id,
+      isQuestionSkippable: !this.isFrancesco
     };
 
     // Button disabled if !selectedPublicContest
@@ -477,7 +481,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       quizType: this.quizSettings?.quizType || 'Standard',
       totalQuestionsInQuiz: quizConfig.totalQuestionsInQuiz,
       topics: quizConfig.selectedTopics?.join(','),
-      topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
+      topicDistribution: quizConfig.topicDistribution ? quizConfig.topicDistribution : [],
       fixedQuestionIds: quizConfig.fixedQuestionIds?.join(','),
       enableTimer: quizConfig.enableTimer ?? false,
       timerDurationSeconds: quizConfig.timerDurationSeconds ?? 0,

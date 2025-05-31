@@ -1361,7 +1361,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
       quizTitle: this.quizSetupModalTitle || 'Quiz di Pratica',
       totalQuestionsInQuiz: quizConfig.totalQuestionsInQuiz,
       topics: quizConfig.selectedTopics?.join(','),
-      topicDistribution: quizConfig.topicDistribution ? JSON.stringify(quizConfig.topicDistribution) : undefined,
+      topicDistribution: quizConfig.topicDistribution ? quizConfig.topicDistribution : [],
       // If fixedQuestionIds are provided by the modal (e.g. from a specific selection), use them
       fixedQuestionIds: quizConfig.fixedQuestionIds ? quizConfig.fixedQuestionIds.join(',') : undefined,
       enableTimer: quizConfig.enableTimer || false, // Default to false for practice

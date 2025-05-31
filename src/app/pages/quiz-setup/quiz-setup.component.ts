@@ -15,6 +15,7 @@ import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { Contest } from '../../models/contes.model';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-quiz-setup',
@@ -31,6 +32,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
   private routeSub!: Subscription;
   accordionState = new Map<string, boolean>(); // Map: topicName -> isOpen
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
+  authService = inject(AuthService);
 
   isExportingPDF = false;
 
@@ -84,6 +86,11 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
         this.router.navigate(['/home']);
       })
+    }
+
+    // forzo 100 domande per volta se Francesco
+    if (this.authService.getCurrentUserId()===2){
+      this.numQuestionsOptions = [100];
     }
 
     this.accordionState.clear();
@@ -319,7 +326,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
       // Other filters like topics, keywords are ignored if fixedQuestionIds are present
       queryParams.topics = '';
       queryParams.keywords = '';
-      queryParams.topicDistribution = '';
+      queryParams.topicDistribution = [];
       if (!this.isStudyMode) { // Timer settings only for quiz mode
         queryParams.enableTimer = this.enableTimerInput;
         queryParams.enableCronometer = this.enableCronometerInput;
@@ -367,11 +374,11 @@ export class QuizSetupComponent implements OnInit, DoCheck {
         if (this.useDetailedTopicCounts && this.topicCounts.length > 0) {
           queryParams.totalQuestionsInQuiz = this.topicCounts.reduce((sum, tc) => sum + tc.count, 0);
           queryParams.topics = this.selectAllTopics ? '' : this.selectedTopicsForDisplay.join(','); // Still relevant if not all topics selected
-          queryParams.topicDistribution = JSON.stringify(this.topicCounts);
+          queryParams.topicDistribution = this.topicCounts;
         } else {
           queryParams.totalQuestionsInQuiz = this.selectedNumQuestions;
           queryParams.topics = this.selectAllTopics ? '' : this.selectedTopicsForDisplay.join(','); // All selected or specific few
-          queryParams.topicDistribution = '';
+          queryParams.topicDistribution = [];
         }
       }
     }

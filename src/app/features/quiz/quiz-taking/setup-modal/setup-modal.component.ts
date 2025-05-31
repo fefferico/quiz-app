@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { Contest } from '../../../../models/contes.model';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-setup-modal', // Changed selector to avoid confusion
@@ -17,6 +18,7 @@ import { Contest } from '../../../../models/contes.model';
 })
 export class SetupModalComponent implements OnInit {
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   @Input() topics: GenericData[] = []; // Placeholder for topic counts if needed
   clonedTopics: GenericData[] = []; // Placeholder for topic counts if needed
@@ -27,6 +29,8 @@ export class SetupModalComponent implements OnInit {
   @Output() submitFeedback = new EventEmitter<any>();
   @Output() cancelFeedback = new EventEmitter<void>();
   hideCorrectAnswer = false;
+
+  isFrancesco: boolean = false;
 
   // icons
   military: IconDefinition = faPersonMilitaryRifle;
@@ -54,6 +58,8 @@ export class SetupModalComponent implements OnInit {
   ngOnInit(): void {
     this.selectedNumQuestions = this.topics.reduce((sum, tc) => sum + Number(tc.count || 0), 0);
     this.clonedTopics = this.topics.map(tc => ({ ...tc })); // Clone the topics for internal use
+    this.isFrancesco = this.authService.getCurrentUserId()===2;
+    console.log('Quiz setting',this.quizSettings)
   }
 
   onInternalSubmit(): void {
@@ -73,7 +79,8 @@ export class SetupModalComponent implements OnInit {
         publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer,
         quizTitle: this.quizSettings?.quizTitle,
-        quizType: this.quizSettings?.quizType
+        quizType: this.quizSettings?.quizType,
+        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
       };
     } else {
       quizSettings = {
@@ -84,7 +91,8 @@ export class SetupModalComponent implements OnInit {
         publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer,
         quizTitle: this.quizSettings?.quizTitle,
-        quizType: this.quizSettings?.quizType
+        quizType: this.quizSettings?.quizType,
+        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
       };
     }
     quizSettings.keywords = []; // Add keywords to both modes
@@ -103,7 +111,7 @@ export class SetupModalComponent implements OnInit {
         topics: quizSettings.selectedTopics?.join(','),
         keywords: quizSettings.keywords.join(','),
         // For quiz mode, pass other relevant params
-        topicDistribution: quizSettings.topicDistribution ? JSON.stringify(quizSettings.topicDistribution) : '',
+        topicDistribution: quizSettings.topicDistribution ? quizSettings.topicDistribution : [],
         enableTimer: quizSettings.enableTimer,
         timerDurationSeconds: quizSettings.timerDurationSeconds,
         // get specific question id
@@ -111,7 +119,8 @@ export class SetupModalComponent implements OnInit {
         publicContest: this.contestName,
         hideCorrectAnswer: this.hideCorrectAnswer,
         quizTitle: quizSettings.quizTitle,
-        quizType: quizSettings.quizType
+        quizType: quizSettings.quizType,
+        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
       };
 
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);

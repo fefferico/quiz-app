@@ -194,6 +194,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private autoAdvanceTimeout: any;
   highlightedOptionIndex: number | null = null; // For keyboard navigation
 
+  isFrancesco: boolean = false;
+
   // --- HostListeners for Keyboard Navigation ---
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
@@ -208,7 +210,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     // If an answer is already submitted for the current question, only allow navigation
     if (this.isAnswerSubmitted) {
-      if (event.key === 'ArrowRight') this.nextQuestion();
+      if (event.key === 'ArrowRight') {
+        this.nextQuestion();
+      }
       if (event.key === 'ArrowLeft' && this.currentQuestionIndex > 0) this.previousQuestion();
       return; // Other keys are ignored after submission
     }
@@ -300,6 +304,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       return;
     }
 
+    this.isFrancesco = this.authService.getCurrentUserId() === 2;
+
     this.loadAvailableVoices(); // Attempt to load voices initially
 
     this.quizStartTime = new Date();
@@ -311,6 +317,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         // Use the stored navigationState first, then fallback to queryParams
         const actualParams = this.navigationState?.['quizParams'] || queryOnlyParams;
 
+        const isQuestionSkippable = actualParams['isQuestionSkippable'];
         const resumeAttemptId = actualParams['resumeAttemptId'];
         const randomQuestions = actualParams['randomQuestions'];
         this.hideCorrectAnswer = actualParams['hideCorrectAnswer'];
@@ -362,7 +369,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             }
           }
 
-          const topicDistributionParam = actualParams['topicDistribution'] || {};
+          const topicDistributionParam = actualParams['topicDistribution'] || [];
           let selectedTopicDistribution: TopicCount[] | undefined = undefined;
           if (topicDistributionParam) {
             try {
@@ -389,7 +396,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             enableTimer: this.isTimerEnabled,
             enableCronometer: this.isCronometerEnabled,
             timerDurationSeconds: this.timerDurationSeconds,
-            questionIDs: fixedQuestionIds
+            questionIDs: fixedQuestionIds,
+            isQuestionSkippable: isQuestionSkippable
           };
           if (fixedQuestionIds && fixedQuestionIds.length > 0) {
             this.startSpecificSetOfQuestions(fixedQuestionIds) // Ensure questions are loaded before potential initial speak
@@ -817,6 +825,11 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   nextQuestion(): void {
+    if (!this.isAnswerSubmitted && !this.quizSettings.isQuestionSkippable) {
+      this.alertService.showAlert("Attenzione", "Non è possibile passare alla prossima domanda senza aver provato a rispondere");
+      return;
+    }
+
     this.clearAutoAdvanceTimeout();
     if (this.quizIsOverByTime) return; // Don't advance if time is up
 

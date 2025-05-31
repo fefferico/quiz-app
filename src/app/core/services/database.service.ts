@@ -657,6 +657,7 @@ export class DatabaseService implements OnDestroy {
   // --- QuizAttempt Table Methods (Supabase-first from original) ---
   async saveQuizAttempt(quizAttempt: QuizAttempt): Promise<QuizAttempt> {
     const supabaseAttemptData = this.mapQuizAttemptToSupabase(quizAttempt);
+    console.log("supabaseAttemptData.topic_distribution_setting",supabaseAttemptData.topic_distribution_setting)
     const { data, error } = await this.supabase
       .from('quiz_attempts')
       .upsert(supabaseAttemptData)
