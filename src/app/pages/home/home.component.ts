@@ -372,7 +372,9 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       topicDistribution = []
     }
 
+    this.spinnerService.show("Recupero domande mai risposte in corso...");
     let neverEncounteredQuestion = await this.dbService.getNeverAnsweredQuestions(this.selectedPublicContest!.id, this.authService.getCurrentUserId(), topicDistribution);
+    this.spinnerService.hide();
 
     const missingTopics = availableTopics.filter(td => {
       const topicNames = Array.isArray(td.topic) ? td.topic : [td.topic];
@@ -427,6 +429,12 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
 
   }
+
+  sleepTimeout(interval: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, interval);
+  });
+};
 
   startSimulationContestQuizNow(): void {
     const currentContest = this.contestSelectionService.checkForContest();

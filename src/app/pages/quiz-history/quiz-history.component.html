@@ -61,6 +61,14 @@
           [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()" placeholder="0-100"
           class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
+      <div *ngIf="isAdmin">
+        <label for="filterUser" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Utente:</label>
+        <select id="filterUser" name="filterUser" [(ngModel)]="filterUser" (ngModelChange)="applyFilters()"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          <option value="">Tutti gli utenti</option>
+          <option *ngFor="let user of availableUsers" [value]="user.id">{{ user.username }}</option>
+        </select>
+      </div>
     </div>
     <!-- Reset Button -->
     <div class="flex justify-center mt-2">

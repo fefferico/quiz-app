@@ -17,6 +17,7 @@ import { Contest } from '../../models/contes.model';
 import { AuthService } from '../../core/services/auth.service';
 import { SpinnerService } from '../../core/services/spinner.service';
 import { QuestionService } from '../../core/services/question-service.service';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-quiz-history',
@@ -61,8 +62,10 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   filterMaxPercentage: number | null = null;
   filterSelectedTopic: string = ''; // Selected topic for filtering
   filterSelectedType: string = '';
+  filterUser: number = -1;
   availableTopics: string[] = [];   // To populate topic dropdown
   availableTypes: string[] = [];
+  availableUsers: User[] = [];
   // --- End Filter Properties ---
 
   // Getter to easily access the contest from the template
@@ -73,9 +76,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   isStatsViewer: boolean = false; // Flag to check if the user is a stats viewer
   isAdmin: boolean = false;
 
+  async getUsers(): Promise<void> {
+    this.availableUsers = await this.dbService.getAllUsers();
+  }
   ngOnInit(): void {
     this.isStatsViewer = this.authService.isStatsViewer();
     this.isAdmin = this.authService.isAdmin();
+    this.getUsers();
 
     if (!this.selectedPublicContest) {
       this.alertService.showAlert("Info", "Non è stata selezionata alcuna Banca Dati: si verrà ora rediretti alla pagina principale").then(() => {
@@ -169,7 +176,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  applyFilters(): void {
+  async applyFilters(): Promise<void> {
     let filtered = [...this.allQuizAttempts]; // allQuizAttempts is now pre-filtered by contest if one is active
 
     // 1. Filter by Date Range
@@ -218,6 +225,20 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(attempt =>
         attempt.settings.quizType?.includes(this.filterSelectedType) || attempt.quizType?.includes(this.filterSelectedType)
       );
+    }
+
+        // 6. Filter by User
+    if (this.filterUser && this.filterUser !== undefined && this.filterUser >= 0) {
+      const currentContest = this.contestSelectionService.checkForContest();
+      if (currentContest === null) {
+        this.router.navigate(['/home']);
+        return;
+      }
+
+      this.spinnerService.show("Recupero quiz per l'utente "+ this.availableUsers.find(user=>user.id == this.filterUser)?.displayName);
+      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.filterUser);
+      this.spinnerService.hide();
+      filtered = [...this.allQuizAttempts];
     }
 
     this.quizAttempts = filtered.sort((a, b) =>
