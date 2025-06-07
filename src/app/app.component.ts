@@ -7,7 +7,7 @@ import {
   faSun, faMoon, faAdjust, faHome, IconDefinition,
   faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faLandmark,
   faSignOut,
-  faBars, faTimes // Import hamburger and close icons
+  faBars, faTimes, faBrain // Import hamburger and close icons, and faBrain
 } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from './services/theme.service';
 import {AuthService} from './core/services/auth.service';
@@ -39,6 +39,7 @@ export class AppComponent {
   faMagnifyingGlass: IconDefinition = faMagnifyingGlass;
   faStar: IconDefinition = faStar;
   faSignOut: IconDefinition = faSignOut;
+  // faBrain icon is not directly used in app.component.html but added to library
 
   public isMenuOpen: boolean = false; // State for hamburger menu
 
@@ -67,7 +68,7 @@ export class AppComponent {
   });
 
   constructor(library: FaIconLibrary) {
-    library.addIcons(faSun, faMoon, faAdjust, faHome, faAdd, faHistory, faBarChart, faBars, faTimes); // Add new icons
+    library.addIcons(faSun, faMoon, faAdjust, faHome, faAdd, faHistory, faBarChart, faBars, faTimes, faBrain); // Add new icons
   }
 
   listenForModeToggleClick(): void {

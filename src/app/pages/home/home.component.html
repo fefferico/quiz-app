@@ -136,9 +136,9 @@
 
     <!-- Buttons for contest-specific data -->
     <button (click)="startNeverEncounteredQuiz()"
-      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
-      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData"
+      [class.disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData || neverEncounteredQuestionCount === 0"
+      [attr.aria-disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData || neverEncounteredQuestionCount === 0"
+      [disabled]="!selectedPublicContest || isLoadingPageData || isLoadingContestSpecificData || isLoadingModalData || neverEncounteredQuestionCount === 0"
       class="flex items-center justify-center w-full bg-cyan-500 hover:bg-cyan-600 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'never_encountered')" class="mr-2"
         [icon]="faQuestion"></fa-icon>
@@ -159,6 +159,14 @@
       <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'today_problematic')" class="mr-2"
         [icon]="faUndoAlt"></fa-icon>
       Rivedi Errori di OGGI {{ selectedPublicContest ? '(' + todayProblematicQuestionIds.length + ')' : '' }}
+    </button>
+
+    <button (click)="startOverallProblematicQuiz()"
+            [disabled]="!selectedPublicContest || overallProblematicQuestionIds.length === 0 || isLoadingContestSpecificData || (isLoadingModalData && loadingButtonKey === 'overall_problematic')"
+            class="flex items-center justify-center w-full bg-pink-500 hover:bg-pink-600 text-white dark:bg-pink-700 dark:hover:bg-pink-600 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 disabled:opacity-50">
+      <fa-icon *ngIf="!(isLoadingModalData && loadingButtonKey === 'overall_problematic')" class="mr-2"
+               [icon]="faBrain"></fa-icon>
+      Errori Complessivi BD {{ selectedPublicContest ? '(' + overallProblematicQuestionIds.length + ')' : '' }}
     </button>
 
     <div
@@ -228,6 +236,12 @@
         <fa-icon class="status-indicator-icon text-red-900" [icon]="faExclamationCircle"></fa-icon>
         <span class="status-indicator-label bg-white dark:bg-gray-600 dark:text-red-200 text-red-900">Errori di OGGI {{ selectedPublicContest ? '(' +
           todayProblematicQuestionIds.length + ')' : '' }}</span>
+      </div>
+       <div class="status-indicator bg-pink-200 text-pink-900">
+        <fa-icon class="status-indicator-icon" [icon]="faBrain"></fa-icon>
+        <span class="status-indicator-label bg-white dark:bg-gray-600 dark:text-pink-200">
+          Errori Complessivi BD {{ selectedPublicContest ? '(' + overallProblematicQuestionIds.length + ')' : '' }}
+        </span>
       </div>
     </div>
   </div>

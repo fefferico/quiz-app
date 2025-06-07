@@ -44,7 +44,7 @@ export interface TopicDistribution {
   count: number
 }
 
-export type QuizType = 'Standard' | 'Esame' | 'Revisione errori' | 'Domande mai risposte' | 'Contest' | 'Timed'; // <-- NEW: For different quiz types
+export type QuizType = 'Standard' | 'Esame' | 'Revisione errori' | 'Domande mai risposte' | 'Contest' | 'Timed' | 'Revisione errori globale' // <-- NEW: For different quiz types
 
 
 // Represents a completed quiz session and its results

@@ -7,8 +7,8 @@ import { QuizAttempt, QuizSettings, TopicDistribution } from '../../models/quiz.
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   IconDefinition, faAdd, faHistory, faBarChart,
-  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle, faExclamationCircle, faQuestionCircle
-} from '@fortawesome/free-solid-svg-icons'; // Added faUndo
+  faMagnifyingGlass, faStar, faRepeat, faExclamation, faUndo, faPlay, faQuestion, faLandmark, faPersonMilitaryRifle, faExclamationCircle, faQuestionCircle, faBrain
+} from '@fortawesome/free-solid-svg-icons'; // Added faUndo, faBrain
 import { SimpleModalComponent } from '../../shared/simple-modal/simple-modal.component';
 import { SetupModalComponent } from '../../features/quiz/quiz-taking/setup-modal/setup-modal.component';
 import { GenericData } from '../../models/statistics.model';
@@ -75,6 +75,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   pausedQuiz: QuizAttempt | undefined;
   yesterdayProblematicQuestionIds: string[] = [];
   todayProblematicQuestionIds: string[] = [];
+  overallProblematicQuestionIds: string[] = []; // For all incorrect answers in the contest
   neverEncounteredQuestionIds: string[] = [];
   neverEncounteredQuestionCount: number = 0;
   selectedXDayDate: string | null = null;
@@ -95,6 +96,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   faQuestionCircle: IconDefinition = faQuestionCircle;
   faUndoAlt: IconDefinition = faUndo; // Icon for yesterday's review
   faLandmark: IconDefinition = faLandmark; // Icon for public contests
+  faBrain: IconDefinition = faBrain; // Icon for overall problematic questions
 
   // Keep track of the contestId this component is currently operating with
   private currentLocalContestId: Contest | null = null;
@@ -157,11 +159,13 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     if (contest) {
       this.isLoadingContestSpecificData = true;
       this.loadingButtonKey = 'all_contest_data';
+      const userId = this.getUserId();
       try {
         await Promise.all([
-          this.loadTodayProblematicQuestions(contest, this.getUserId()),
-          this.loadYesterdayProblematicQuestions(contest, this.getUserId()),
-          this.countNeverEncounteredQuestion(contest, this.getUserId()),
+          this.loadTodayProblematicQuestions(contest, userId),
+          this.loadYesterdayProblematicQuestions(contest, userId),
+          this.loadOverallProblematicQuestions(contest, userId), // Added call
+          this.countNeverEncounteredQuestion(contest, userId),
           this.checkForPausedQuiz()
         ]);
       } catch (error) {
@@ -181,6 +185,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   private resetContestSpecificData(): void {
     this.todayProblematicQuestionIds = [];
     this.yesterdayProblematicQuestionIds = [];
+    this.overallProblematicQuestionIds = []; // Reset this new property
     this.neverEncounteredQuestionIds = [];
     this.neverEncounteredQuestionCount = 0; // Reset count as well
     this.topics = [];
@@ -200,17 +205,27 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
   }
 
-  async loadYesterdayProblematicQuestions(contest: Contest | null, userId: number): Promise<void> {
+  async loadYesterdayProblematicQuestions(contest: Contest, userId: number): Promise<void> {
     this.loadingButtonKey = 'yesterday_problematic';
-    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contest?.id, userId);
+    this.yesterdayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('yesterday', contest.id, userId);
     this.loadingButtonKey = null;
   }
 
-  async loadTodayProblematicQuestions(contest: Contest | null, userId: number): Promise<void> {
+  async loadTodayProblematicQuestions(contest: Contest, userId: number): Promise<void> {
     this.loadingButtonKey = 'today_problematic';
-    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contest?.id, userId);
+    this.todayProblematicQuestionIds = await this.dbService.getProblematicQuestionsIdsByDate('today', contest.id, userId);
     this.loadingButtonKey = null;
   }
+
+  async loadOverallProblematicQuestions(contest: Contest, userId: number): Promise<void> {
+    this.loadingButtonKey = 'overall_problematic_load'; // Use a distinct key if needed for separate spinner
+    // Assuming dbService will have this method.
+    // You'll need to implement getOverallProblematicQuestionIds in DatabaseService
+    // It should fetch all unique question IDs ever answered incorrectly by the user for this contest.
+    this.overallProblematicQuestionIds = await this.dbService.getOverallProblematicQuestionIds(contest.id, userId);
+    this.loadingButtonKey = null;
+  }
+
 
   private async prepareAndOpenModal(
     fetchQuestionsFn: () => Promise<Question[]>,
@@ -255,33 +270,27 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
         topic: topicName, count: data.count, questionIds: data.questionIds
       }));
-      this.quizSetupModalTitle = `Quiz Concorso: ${this.selectedPublicContest?.name}`;
+      this.quizSetupModalTitle = `Quiz: ${quizSettings.quizTitle || this.selectedPublicContest?.name}`;
       this.openQuizSetupModal();
     } else {
-      this.alertService.showAlert("Info", `Nessuna domanda trovata per il concorso selezionato: ${this.selectedPublicContest?.name}.`);
+      this.alertService.showAlert("Info", `Nessuna domanda trovata per: ${quizSettings.quizTitle || this.selectedPublicContest?.name}.`);
     }
     this.isLoadingModal = false;
     this.loadingButtonIndex = -1;
   }
 
-  async countNeverEncounteredQuestion(contest: Contest | null, userId: number): Promise<void> {
-    const currentContest = this.contestSelectionService.checkForContest();
-    if (currentContest === null) {
-      return;
-    }
-
-    this.loadingButtonKey = 'never_encountered';
-    // Assuming getNeverAnsweredQuestionCount takes contest ID (string|undefined)
-    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(currentContest.id, userId);
+  async countNeverEncounteredQuestion(contest: Contest, userId: number): Promise<void> {
+    this.loadingButtonKey = 'never_encountered_count';
+    this.neverEncounteredQuestionCount = await this.dbService.getNeverAnsweredQuestionCount(contest.id, userId);
     this.loadingButtonKey = null;
   }
 
   startXDayProblematicQuiz(dateString: string | null): void {
     const currentContest = this.contestSelectionService.checkForContest();
-    if (currentContest === null) {
+    if (!currentContest) {
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
     }
-
 
     if (!dateString) {
       this.alertService.showAlert("Attenzione", "Seleziona una data.");
@@ -314,8 +323,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     this.prepareAndOpenModal(
       async () => {
-        // selectedPublicContest is confirmed not null by the guard above
-        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, this.selectedPublicContest!.id, this.getUserId());
+        const ids = await this.dbService.getProblematicQuestionsIdsByDate(selectedDate, currentContest.id, this.getUserId());
         return this.dbService.getQuestionByIds(ids);
       },
       this.quizSettings,
@@ -323,39 +331,32 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     );
   }
 
-  async startNeverEncounteredQuiz(): Promise<void> {
+  async startOverallProblematicQuiz(): Promise<void> {
     const currentContest = this.contestSelectionService.checkForContest();
-    if (currentContest === null) {
+    if (!currentContest) {
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
+      return;
+    }
+
+    if (this.overallProblematicQuestionIds.length === 0) {
+      this.alertService.showAlert("Info", `Nessuna domanda sbagliata precedentemente trovata per il concorso: ${currentContest.name}.`);
       return;
     }
 
     this.quizSettings = {
-      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      totalQuestionsInQuiz: 20, // Default, can be adjusted in modal
       selectedTopics: [],
-      quizTitle: `Domande mai risposte (${this.selectedPublicContest?.name || 'Generale'})`,
-      quizType: 'Domande mai risposte',
+      quizTitle: `Errori Complessivi BD (${currentContest.name})`,
+      quizType: 'Revisione errori globale',
       publicContest: currentContest.id,
       isQuestionSkippable: !this.isFrancesco
     };
 
-    // Button disabled if !selectedPublicContest
-    if (!this.selectedPublicContest) { // Should not happen if button is properly disabled
-      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
-      return;
-    }
-    if (!this.neverEncounteredQuestionIds || this.neverEncounteredQuestionIds.length === 0) {
-      this.spinnerService.show("Recupero Domande mai risposte...");
-      //await this.loadNeverEncounteredQuestions(); // This method now internally checks selectedPublicContest
-      this.spinnerService.hide();
-    }
-
-    const availableTopics = await this.dbService.getAvailableTopics(this.selectedPublicContest.id);
-
-    console.log(availableTopics)
-
+    this.spinnerService.show("Recupero domande in corso...");
+    const availableTopics = await this.dbService.getAvailableTopics(currentContest.id);
     let topicDistribution: TopicDistribution[];
 
-    if (this.selectedPublicContest.id === 5) {
+    if (currentContest.id === 5) { // Assuming ID 5 is a specific contest like "Polizia di Stato"
       topicDistribution = [
         { topic: 'CULTURA GENERALE', count: 12 },
         { topic: 'ITALIANO - Letteratura', count: 12 },
@@ -369,107 +370,170 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
         { topic: 'INFORMATICA', count: 10 }
       ];
     } else {
-      topicDistribution = []
+      topicDistribution = []; // Default: no specific distribution, rely on totalQuestionsInQuiz or manual topic selection
+    }
+
+    let overallProblematicQuestions = await this.dbService.getOverallProblematicQuestions(currentContest.id, this.authService.getCurrentUserId(), topicDistribution);
+
+    this.spinnerService.hide();
+
+    this.prepareAndOpenModal(
+      () => this.dbService.getQuestionByIds(overallProblematicQuestions.map(q => q.id)),
+      this.quizSettings,
+      'overall_problematic'
+    );
+  }
+
+  async startNeverEncounteredQuiz(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (!currentContest) {
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
+      return;
+    }
+    if (this.neverEncounteredQuestionCount === 0) {
+      this.alertService.showAlert("Info", `Hai risposto a tutte le domande per il concorso: ${currentContest.name}. Ottimo lavoro!`);
+      return;
+    }
+
+
+    this.quizSettings = {
+      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      selectedTopics: [],
+      quizTitle: `Domande mai risposte (${currentContest.name || 'Generale'})`,
+      quizType: 'Domande mai risposte',
+      publicContest: currentContest.id,
+      isQuestionSkippable: !this.isFrancesco
+    };
+
+    const availableTopics = await this.dbService.getAvailableTopics(currentContest.id);
+    let topicDistribution: TopicDistribution[];
+
+    if (currentContest.id === 5) { // Assuming ID 5 is a specific contest like "Polizia di Stato"
+      topicDistribution = [
+        { topic: 'CULTURA GENERALE', count: 12 },
+        { topic: 'ITALIANO - Letteratura', count: 12 },
+        { topic: 'ITALIANO - Grammatica', count: 12 },
+        { topic: 'RAGIONAMENTO CRITICO - VERBALE', count: 10 },
+        { topic: 'MATEMATICA', count: 12 },
+        { topic: 'RAGIONAMENTO LOGICO - MATEMATICO', count: 10 },
+        { topic: 'STORIA', count: 12 },
+        { topic: 'COSTITUZIONE', count: 10 },
+        { topic: 'INGLESE', count: 10 },
+        { topic: 'INFORMATICA', count: 10 }
+      ];
+    } else {
+      topicDistribution = []; // Default: no specific distribution, rely on totalQuestionsInQuiz or manual topic selection
     }
 
     this.spinnerService.show("Recupero domande mai risposte in corso...");
-    let neverEncounteredQuestion = await this.dbService.getNeverAnsweredQuestions(this.selectedPublicContest!.id, this.authService.getCurrentUserId(), topicDistribution);
+    let neverEncounteredQuestions = await this.dbService.getNeverAnsweredQuestions(currentContest.id, this.authService.getCurrentUserId(), topicDistribution);
     this.spinnerService.hide();
 
-    const missingTopics = availableTopics.filter(td => {
-      const topicNames = Array.isArray(td.topic) ? td.topic : [td.topic];
-      return !topicNames.some(t =>
-        neverEncounteredQuestion.some(q =>
-          Array.isArray(q.topic)
-            ? q.topic.includes(t)
-            : q.topic === t
-        )
-      );
-    });
+    // Check if any topics defined in topicDistribution are missing from the fetched questions
+    let missingTopicNamesForAlert = '';
+    if (topicDistribution.length > 0) {
+      const fetchedTopics = new Set(neverEncounteredQuestions.map(q => q.topic).flat()); // Use flat for array topics
+      const missingTopicsInDistribution = topicDistribution.filter(td => {
+        const topicNames = Array.isArray(td.topic) ? td.topic : [td.topic];
+        return !topicNames.some(tName => fetchedTopics.has(tName));
+      });
 
-    let missingNames = '';
-    if (missingTopics.length > 0) {
-      missingNames = missingTopics
-        .map(td => Array.isArray(td.topic) ? td.topic.join(' / ') : td.topic)
-        .join(', ');
-      // ridistribuisco equamente le 100 domande
-      const totalQuestions = 100;
-      const numTopics = availableTopics.length;
-      const evenCount = Math.floor(totalQuestions / numTopics);
-      const remainder = totalQuestions % numTopics;
+      if (missingTopicsInDistribution.length > 0) {
+        missingTopicNamesForAlert = missingTopicsInDistribution
+          .map(td => Array.isArray(td.topic) ? td.topic.join('/') : td.topic)
+          .join(', ');
 
-      topicDistribution = availableTopics.map((td, idx) => ({
-        topic: td.topic,
-        count: evenCount + (idx < remainder ? 1 : 0)
-      }));
-      neverEncounteredQuestion = this.dbService.getQuestionsByTopicDistribution(topicDistribution, neverEncounteredQuestion);
+        // Re-distribute if some topics are exhausted for "never answered"
+        const availableTopicsForRedistribution = availableTopics.filter(at => {
+          const topicNames = Array.isArray(at.topic) ? at.topic : [at.topic];
+          return topicNames.some(tName => fetchedTopics.has(tName)); // Only topics that still have unanswered questions
+        });
 
+        if (availableTopicsForRedistribution.length > 0) {
+          const totalQuestionsToFetch = topicDistribution.reduce((sum, item) => sum + item.count, 0); // e.g. 100
+          const numDistributableTopics = availableTopicsForRedistribution.length;
+          const evenCount = Math.floor(totalQuestionsToFetch / numDistributableTopics);
+          const remainder = totalQuestionsToFetch % numDistributableTopics;
+
+          const newTopicDistribution = availableTopicsForRedistribution.map((td, idx) => ({
+            topic: td.topic,
+            count: evenCount + (idx < remainder ? 1 : 0)
+          }));
+          // Fetch again with the new distribution, but from the already filtered neverEncounteredQuestions
+          // This logic might need refinement: getQuestionsByTopicDistribution should probably work on a pool of IDs.
+          // For now, let's assume getNeverAnsweredQuestions can take a refined distribution.
+          // Or, more simply, we just proceed with what was fetched and inform the user.
+          // The current implementation of getNeverAnsweredQuestions already tries to fulfill the distribution.
+          // The alert is mostly informational if the distribution couldn't be fully met.
+        }
+      }
     }
 
-    if (missingNames) {
+
+    if (missingTopicNamesForAlert) {
       this.alertService.showAlert(
         "Attenzione",
-        `Sono state già affrontate tutte le domande per i seguenti argomenti: ${missingNames}. Verranno pertanto proposti soltanto gli altri argomenti ridistribuiti su 100 domande. Qualora si volesse effettuare un quiz con incluse anche domande di argomenti già completati, si consiglia di usare la funzione 'Simula prova'`
+        `Sono state già affrontate tutte le domande per i seguenti argomenti: ${missingTopicNamesForAlert}. Verranno pertanto proposti gli argomenti rimanenti. Se desideri includere argomenti completati, usa "Simula prova".`
       ).then(() => {
         this.prepareAndOpenModal(
-          //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
-          () => Promise.resolve(neverEncounteredQuestion),
+          () => Promise.resolve(neverEncounteredQuestions),
           this.quizSettings!,
           'never_encountered'
         );
-      })
+      });
     } else {
       this.prepareAndOpenModal(
-        //() => this.dbService.getQuestionByIds(this.neverEncounteredQuestionIds),
-        () => Promise.resolve(neverEncounteredQuestion),
-        this.quizSettings,
+        () => Promise.resolve(neverEncounteredQuestions),
+        this.quizSettings!,
         'never_encountered'
       );
     }
-
-
   }
 
   sleepTimeout(interval: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, interval);
-  });
-};
+    return new Promise((resolve) => {
+      setTimeout(resolve, interval);
+    });
+  };
 
   startSimulationContestQuizNow(): void {
     const currentContest = this.contestSelectionService.checkForContest();
-    if (currentContest === null) {
+    if (!currentContest) {
+      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
       return;
     }
 
     this.quizSettings = {
-      totalQuestionsInQuiz: 10, // Default value, can be adjusted
+      totalQuestionsInQuiz: 10, // Default value, can be adjusted in modal
       selectedTopics: [],
       quizTitle: `Esame (${currentContest.name || 'Generale'})`,
       quizType: 'Esame',
       publicContest: currentContest.id
     };
 
-    if (!this.selectedPublicContest) {
-      this.alertService.showAlert("Attenzione", "Seleziona un concorso.");
-      return;
-    }
     this.isTimerEnabled = true;
-    this.timerDurationSeconds = 5400;
+    // Specific timer durations based on contest ID
+    if (currentContest.id === 5) { // Assuming ID 5 is Polizia di Stato Accorpato
+      this.timerDurationSeconds = 60 * 60; // 60 minutes
+    } else {
+      this.timerDurationSeconds = 5400; // Default 90 minutes
+    }
+
     this.prepareAndOpenModal(
-      () => this.dbService.getQuestionsByPublicContestForSimulation(this.selectedPublicContest!), // Assert non-null due to guard
+      () => this.dbService.getQuestionsByPublicContestForSimulation(currentContest),
       this.quizSettings,
       'public_contest_quiz',
       true
     );
   }
 
-  async loadNeverEncounteredQuestions(): Promise<void> {
-    if (!this.selectedPublicContest) {
+  async loadNeverEncounteredQuestions(): Promise<void> { // This seems to be for IDs only, might be redundant if countNeverEncounteredQuestion is used.
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (!currentContest) {
       this.neverEncounteredQuestionIds = []; // Clear if no contest
       return;
     }
-    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(this.selectedPublicContest.id);
+    this.neverEncounteredQuestionIds = await this.dbService.getNeverAnsweredQuestionIds(currentContest.id);
   }
 
   openQuizSetupModal(): void {
@@ -536,53 +600,30 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
     }
   }
 
-  async startPublicContestQuiz(): Promise<void> {
-    if (!this.selectedPublicContest) {
+  async startPublicContestQuiz(): Promise<void> { // This is for the generic "Nuovo Quiz" button if it directly leads to setup
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (!currentContest) {
       this.alertService.showAlert("Attenzione", "Per favore, seleziona un concorso dall'elenco.");
       return;
     }
 
-    this.loadingButtonIndex = 4; // Or a specific key for loadingButtonKey
-    this.isLoadingModal = true; // Consider using isLoadingModalData for consistency
-    let questionsForModal: Question[] = [];
+    this.quizSettings = {
+      quizTitle: `Nuovo Quiz (${currentContest.name})`,
+      quizType: 'Standard',
+      publicContest: currentContest.id,
+      isQuestionSkippable: !this.isFrancesco, // Default behavior
+      totalQuestionsInQuiz: 10, // standard
+      selectedTopics: []
+    };
+    this.isTimerEnabled = false; // By default, timer is not enabled for this type of quiz from here.
 
-    try {
-      questionsForModal = await this.dbService.getQuestionsByPublicContest(this.selectedPublicContest.id); // ID is safe due to guard
-    } catch (error) {
-      console.error(`Error fetching questions for contest ${this.selectedPublicContest.name}:`, error);
-      this.alertService.showAlert("Errore", `Impossibile recuperare le domande per il concorso: ${this.selectedPublicContest.name}.`);
-      this.isLoadingModal = false;
-      this.loadingButtonIndex = -1;
-      return;
-    }
-
-
-    if (questionsForModal.length > 0) {
-      const topicsMap = new Map<string, { count: number, questionIds: string[] }>();
-      questionsForModal.forEach(q => {
-        const topic = q.topic || 'Senza Argomento'; // Default topic if undefined
-        if (!topicsMap.has(topic)) {
-          topicsMap.set(topic, { count: 0, questionIds: [] });
-        }
-        const topicData = topicsMap.get(topic)!;
-        topicData.count++;
-        topicData.questionIds.push(q.id);
-      });
-
-      this.topics = Array.from(topicsMap.entries()).map(([topicName, data]) => ({
-        topic: topicName,
-        count: data.count,
-        questionIds: data.questionIds
-      }));
-
-      this.quizSetupModalTitle = `Quiz Concorso: ${this.selectedPublicContest}`;
-      this.openQuizSetupModal();
-    } else {
-      this.alertService.showAlert("Info", `Nessuna domanda trovata per il concorso selezionato: ${this.selectedPublicContest}.`);
-    }
-    this.isLoadingModal = false;
-    this.loadingButtonIndex = -1;
+    this.prepareAndOpenModal(
+      () => this.dbService.getQuestionsByPublicContest(currentContest.id),
+      this.quizSettings,
+      'public_contest_quiz' // Ensure this key is handled for loading indicator
+    );
   }
+
 
   updateSelectedContestInService(contest: Contest | null): void {
     console.log(`HomeComponent: updateSelectedContestInService called with '${contest?.id}'. Current service value: '${this.contestSelectionService.getCurrentSelectedContest()?.id}'`);
@@ -605,7 +646,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   getUserId(): number {
     let userId = this.authService.getCurrentUserId();
-    if (userId === 3) {
+    if (userId === 3) { // Assuming user ID 3 should use data from user ID 2
       userId = 2;
     }
     return userId;

@@ -657,7 +657,7 @@ export class DatabaseService implements OnDestroy {
   // --- QuizAttempt Table Methods (Supabase-first from original) ---
   async saveQuizAttempt(quizAttempt: QuizAttempt): Promise<QuizAttempt> {
     const supabaseAttemptData = this.mapQuizAttemptToSupabase(quizAttempt);
-    console.log("supabaseAttemptData.topic_distribution_setting",supabaseAttemptData.topic_distribution_setting)
+    console.log("supabaseAttemptData.topic_distribution_setting", supabaseAttemptData.topic_distribution_setting)
     const { data, error } = await this.supabase
       .from('quiz_attempts')
       .upsert(supabaseAttemptData)
@@ -906,7 +906,7 @@ export class DatabaseService implements OnDestroy {
     }
 
     // Filter questions that have never been answered
-    return this.getQuestionsByTopicDistribution(topicDistribution,allQuestions.filter(q => !answeredIds.has(q.id)));
+    return this.getQuestionsByTopicDistribution(topicDistribution, allQuestions.filter(q => !answeredIds.has(q.id)));
   }
 
   async getNeverAnsweredQuestionIds(contestId: number, userId?: string): Promise<string[]> {
@@ -1337,7 +1337,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   async fetchAllRows(contestId: number, tableName: string = "questions", userId?: number): Promise<Question[]> {
-    if (this.allDbQuestions && this.allDbQuestions[contestId] && this.allDbQuestions[contestId].questions && this.allDbQuestions[contestId].questions.length > 0){
+    if (this.allDbQuestions && this.allDbQuestions[contestId] && this.allDbQuestions[contestId].questions && this.allDbQuestions[contestId].questions.length > 0) {
       return Promise.resolve(this.allDbQuestions[contestId].questions);
     }
     const chunkSize = 1000; // Supabase limit
@@ -1452,7 +1452,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   public async getAvailableTopics(contestId: number): Promise<{ topic: string; count: number }[]> {
-    if (this.allTopics && this.allTopics.length > 0){
+    if (this.allTopics && this.allTopics.length > 0) {
       return this.allTopics;
     }
     const allQuestions = await this.fetchAllRows(contestId); // fetch all questions across contests
@@ -1466,4 +1466,67 @@ export class DatabaseService implements OnDestroy {
     this.allTopics = Object.entries(topicMap).map(([topic, count]) => ({ topic, count }));
     return this.allTopics;
   }
+
+  async getOverallProblematicQuestionIds(contestId: number, userId: number): Promise<string[]> {
+    try {
+      let attemptsQuery = this.supabase.from('quiz_attempts')
+        .select('answered_questions, unanswered_questions, all_questions, settings, timestamp_end'); // Include all_questions for your logic
+
+      if (contestId) {
+        attemptsQuery = attemptsQuery.eq('fk_contest_id', contestId).eq('fk_user_id', userId);
+      }
+
+      const { data: attemptsData, error: attemptsError } = await attemptsQuery;
+
+      const problematicIds = new Set<string>();
+
+      if (attemptsData !== null) {
+        for (const attempt of attemptsData) {
+
+          // Assuming answered_questions is an array of objects like:
+          // { questionId: string, isCorrect: boolean, ... }
+          const answeredQuestions = attempt.answered_questions as Array<{ questionId: string; isCorrect: boolean }>;
+          if (Array.isArray(answeredQuestions)) {
+            answeredQuestions.forEach(aq => {
+              if (!aq.isCorrect) {
+                problematicIds.add(aq.questionId);
+              }
+            });
+          }
+        }
+      }
+
+      return Array.from(problematicIds);
+    } catch (err) {
+      console.error('Exception in getOverallProblematicQuestionIds:', err);
+      return []; // Return empty array on error to prevent breaking the UI
+    }
+  }
+
+
+  /**
+ * Retrieves all full Question objects that the user has answered incorrectly
+ * at least once for a given contest.
+ * @param contestId The ID of the contest.
+ * @param userId The ID of the user.
+ * @returns A promise that resolves to an array of Question objects.
+ */
+  async getOverallProblematicQuestions(contestId: number, userId: number, topicDistribution: TopicDistribution[]): Promise<Question[]> {
+    try {
+      const problematicQuestionIds = await this.getOverallProblematicQuestionIds(contestId, userId);
+
+      if (problematicQuestionIds.length === 0) {
+        console.log(`No overall problematic question IDs found for contest ${contestId}, user ${userId}. Returning empty questions array.`);
+        return [];
+      }
+
+      const questions = await this.getQuestionByIds(problematicQuestionIds);
+      const selectedQuestions: Question[] = this.getQuestionsByTopicDistribution(topicDistribution, questions);
+      return selectedQuestions.slice(0, 100);
+    } catch (error) {
+      console.error(`Error in getOverallProblematicQuestions for contest ${contestId}, user ${userId}:`, error);
+      return []; // Return empty array on error to prevent breaking the UI
+    }
+  }
+
 }
