@@ -1520,13 +1520,65 @@ export class DatabaseService implements OnDestroy {
         return [];
       }
 
-      const questions = await this.getQuestionByIds(problematicQuestionIds);
+      const questions = await this.fetchAllRowsById(problematicQuestionIds);
       const selectedQuestions: Question[] = this.getQuestionsByTopicDistribution(topicDistribution, questions);
       return selectedQuestions.slice(0, 100);
     } catch (error) {
       console.error(`Error in getOverallProblematicQuestions for contest ${contestId}, user ${userId}:`, error);
       return []; // Return empty array on error to prevent breaking the UI
     }
+  }
+
+  /**
+   * Fetches all question rows from the 'questions' table by a list of IDs,
+   * handling Supabase's row limit by fetching in chunks.
+   * @param ids An array of question IDs to fetch.
+   * @returns A promise that resolves to an array of Question objects.
+   */
+  async fetchAllRowsById(ids: string[]): Promise<Question[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    // Filter out any null, undefined, or empty string IDs to prevent Supabase errors
+    const validIds = ids.filter(id => id && String(id).trim() !== '');
+    if (validIds.length === 0) {
+      console.warn('[DBService] fetchAllRowsById called with only invalid/empty IDs.');
+      return [];
+    }
+    
+    const chunkSize = 900; // Max items for an 'IN' clause, conservative. Adjust if needed.
+    let allFetchedQuestions: Question[] = [];
+    
+    console.log(`[DBService] fetchAllRowsById: Fetching ${validIds.length} questions in chunks of ${chunkSize}.`);
+
+    for (let i = 0; i < validIds.length; i += chunkSize) {
+      const chunkOfIds = validIds.slice(i, i + chunkSize);
+      
+      try {
+        const { data, error } = await this.supabase
+          .from('questions')
+          .select('*')
+          .in('id', chunkOfIds);
+
+        if (error) {
+          console.error(`[DBService] Supabase error fetching chunk of questions by ID (IDs: ${chunkOfIds.slice(0,5).join(',')}...):`, error);
+          // Decide on error handling: throw, or continue and try to get partial data?
+          // For now, re-throwing to indicate failure.
+          throw error;
+        }
+
+        if (data) {
+          const mappedChunk = data.map(this.mapQuestionFromSupabase).filter(q => q !== undefined) as Question[];
+          allFetchedQuestions = allFetchedQuestions.concat(mappedChunk);
+        }
+      } catch (err) {
+        console.error(`[DBService] Exception during fetchAllRowsById chunk (IDs: ${chunkOfIds.slice(0,5).join(',')}...):`, err);
+        throw err; // Re-throw to make the caller aware
+      }
+    }
+    console.log(`[DBService] fetchAllRowsById: Successfully fetched ${allFetchedQuestions.length} questions.`);
+    return allFetchedQuestions;
   }
 
 }

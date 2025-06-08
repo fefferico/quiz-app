@@ -354,7 +354,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
     this.spinnerService.show("Recupero domande in corso...");
     const availableTopics = await this.dbService.getAvailableTopics(currentContest.id);
-    let topicDistribution: TopicDistribution[];
+    let topicDistribution: TopicDistribution[] = [];
 
     if (currentContest.id === 5) { // Assuming ID 5 is a specific contest like "Polizia di Stato"
       topicDistribution = [
