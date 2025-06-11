@@ -1655,5 +1655,10 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       this.setCurrentQuestion();
     }
   }
+
+  protected optionIndexToLetter(index: number): string {
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+    return letters[index] || String.fromCharCode(65 + index); // Fallback to ASCII if out of range
+  }
 }
 

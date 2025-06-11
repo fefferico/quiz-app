@@ -209,7 +209,7 @@
           '!border-indigo-500 !ring-2 !ring-indigo-500 dark:!border-indigo-400 dark:!ring-indigo-400': highlightedOptionIndex === i && !isAnswerSubmitted && !hideCorrectAnswer,
           'border-indigo-500 bg-indigo-200 !ring-2 ring-indigo-600 dark:!border-indigo-400 dark:!ring-indigo-400': selectedAnswerIndex === i && isAnswerSubmitted && hideCorrectAnswer
         }">
-        <span class="font-medium">{{ i + 1 }}. {{ option }}</span>
+        <span class="font-medium">{{ optionIndexToLetter(i) + ')'}} {{ option }}</span>
       </button>
     </div>
 
