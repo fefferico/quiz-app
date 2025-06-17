@@ -12,7 +12,7 @@ import {
 } from '@angular/core'; // Added NgZone
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, timer, Observable, Subject } from 'rxjs';
+import { Subscription, timer, Observable, Subject, interval } from 'rxjs';
 import { map, takeWhile, finalize, takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { CanComponentDeactivate } from '../../../core/guards/unsaved-changes.guard';
@@ -45,6 +45,7 @@ import { Spinner } from '@angular-devkit/build-angular/src/utils/spinner';
 import { SpinnerService } from '../../../core/services/spinner.service';
 import { Contest } from '../../../models/contes.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../services/toast.service';
 
 // Enum for answer states for styling
 enum AnswerState {
@@ -72,6 +73,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   private router = inject(Router);
   private dbService = inject(DatabaseService);
   private alertService = inject(AlertService);
+  private toastService = inject(ToastService);
   private renderer = inject(Renderer2);
   private el = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
@@ -160,6 +162,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   timeLeft$: Observable<number> | undefined;
   timeElapsed$: Observable<number> | undefined;
   private timerSubscription: Subscription | undefined;
+  private autoSaveSub: Subscription | undefined;
+  private readonly AUTO_SAVE_INTERVAL_MS = 60000;
   private cronometerSubscription: Subscription | undefined;
   protected _timeLeftSeconds = 0;
   protected _timeElapsedSeconds = 0;
@@ -458,11 +462,102 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         this.startCronometer();
       }
       this.setCurrentQuestion();
+
+      this.startAutoSave();
     } catch (error) {
       console.error('Error loading questions:', error);
       this.errorLoading = "Errore nel caricamento delle domande.";
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  private startAutoSave(): void {
+    if (this.autoSaveSub) {
+      this.autoSaveSub.unsubscribe(); // Unsubscribe from previous if any
+    }
+
+    this.autoSaveSub = interval(this.AUTO_SAVE_INTERVAL_MS).subscribe(() => {
+      // Auto-save quiz attempt at regular intervals
+      this.saveQuizOnInterval();
+    });
+  }
+
+    private stopAutoSave(): void {
+    if (this.autoSaveSub) {
+      this.autoSaveSub.unsubscribe();
+      this.autoSaveSub = undefined;
+    }
+  }
+
+  async saveQuizOnInterval(): Promise<void> {
+    if (!this.currentQuizAttemptId || this.quizCompleted) return;
+
+    const isCurrentQuestionAnswered = this.userAnswers.some(ans => ans.questionId === this.currentQuestion?.id);
+    if (!isCurrentQuestionAnswered && this.currentQuestion) {
+      this.unansweredQuestions.push({
+        questionId: this.questions[this.currentQuestionIndex].id,
+        userAnswerIndex: -1,
+        isCorrect: false,
+        questionSnapshot: {
+          text: this.questions[this.currentQuestionIndex].text,
+          topic: this.questions[this.currentQuestionIndex].topic,
+          scoreIsCorrect: this.questions[this.currentQuestionIndex].scoreIsCorrect,
+          scoreIsWrong: this.questions[this.currentQuestionIndex].scoreIsWrong,
+          scoreIsSkip: this.questions[this.currentQuestionIndex].scoreIsSkip,
+          options: [...this.questions[this.currentQuestionIndex].options],
+          correctAnswerIndex: this.questions[this.currentQuestionIndex].correctAnswerIndex,
+          explanation: this.questions[this.currentQuestionIndex].explanation,
+          isFavorite: this.questions[this.currentQuestionIndex].isFavorite || 0,
+        },
+        contestId: this.currentQuestion.contestId
+      });
+    }
+
+    const attemptToSave: QuizAttempt = {
+      id: this.currentQuizAttemptId,
+      contestId: this.selectedPublicContest ? this.selectedPublicContest.id : -1,
+      userId: this.authService.getCurrentUserId(),
+      timestampStart: this.quizStartTime,
+      settings: this.quizSettings,
+      totalQuestionsInQuiz: this.questions.length,
+      answeredQuestions: [...this.userAnswers],
+      unansweredQuestions: [...this.unansweredQuestions.filter(uq => uq !== undefined) as AnsweredQuestion[]],
+      allQuestions: this.questions.map(q => {
+        const userAnswer = this.userAnswers.find(ua => ua.questionId === q.id);
+        const originalQuestionData = this.questions.find(origQ => origQ.id === q.id) || q;
+        return {
+          questionId: q.id,
+          userAnswerIndex: userAnswer ? userAnswer.userAnswerIndex : -1,
+          isCorrect: userAnswer ? userAnswer.isCorrect : false,
+          questionSnapshot: {
+            text: originalQuestionData.text,
+            topic: originalQuestionData.topic,
+            scoreIsCorrect: originalQuestionData.scoreIsCorrect,
+            scoreIsWrong: originalQuestionData.scoreIsWrong,
+            scoreIsSkip: originalQuestionData.scoreIsSkip,
+            options: [...originalQuestionData.options],
+            correctAnswerIndex: originalQuestionData.correctAnswerIndex,
+            explanation: originalQuestionData.explanation,
+            isFavorite: originalQuestionData.isFavorite || 0
+          },
+          contestId: originalQuestionData.contestId
+        };
+      }),
+      status: 'in-progress',
+      currentQuestionIndex: this.currentQuestionIndex,
+      timeLeftOnPauseSeconds: this.isTimerEnabled ? this._timeLeftSeconds : undefined,
+      timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
+    };
+
+    try {
+      await this.dbService.saveQuizAttempt(attemptToSave);
+      this.toastService.success("Salvataggio automatico avvenuto con successo!");
+      // No UI feedback, silent background save
+    } catch (error) {
+      // Optionally log error, but do not interrupt user flow
+      console.error("Errore nel salvataggio automatico del quiz:", error);
+      this.alertService.showAlert("Attenzione", "E' stato riscontrato un errore durante il tentativo di salvataggio automatico del test: si consiglia di metterlo in pausa tramite l'apposito pulsante, per non rischiare di perdere i progressi fatti fino a ora");
     }
   }
 
@@ -550,10 +645,12 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       };
 
       try {
+        this.stopAutoSave();
         this.dbService.saveQuizAttempt(attemptToSave).then(res => {
           this.router.navigate(['/home']);
         });
       } catch (error) {
+        this.startAutoSave();
         console.error("Errore nel mettere in pausa il quiz:", error);
         this.alertService.showAlert("Attenzione", "Non sono riuscito a mettere in pausa il quiz. Riprova più tardi.");
       }
@@ -999,6 +1096,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
     try {
       this.spinnerService.show("Salvataggio in corso...");
+      this.stopAutoSave();
       await this.dbService.saveQuizAttempt(quizAttempt);
       await this.dbService.updateQuestionsStatsBulk(this.userAnswers);
       // for (const answeredQ of this.userAnswers) {
@@ -1008,6 +1106,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       this.router.navigate(['/quiz/results', quizAttempt.id]);
       this.isSavingAttempt = false;
     } catch (error) {
+      this.startAutoSave();
       this.isSavingAttempt = false;
       console.error('Error ending quiz:', error);
       this.router.navigate(['/home']);
@@ -1026,6 +1125,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   ngOnDestroy(): void {
     this.clearAutoAdvanceTimeout();
     this.stopSpeaking(); // Stop any TTS on component destroy
+    this.stopAutoSave();
     this.destroy$.next();
     this.destroy$.complete();
     document.documentElement.style.removeProperty('--quiz-font-scale');
@@ -1128,7 +1228,6 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
         pausedAttempt.status = 'in-progress'; // Mark as in-progress now
         await this.dbService.saveQuizAttempt(pausedAttempt);
-
         // Call loadQuestions with isResumeLoad = true, which will then call setCurrentQuestion
         // and start timers if applicable and not already over.
         await this.loadQuestions(true);
@@ -1625,6 +1724,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }
       this.isLoading = false;
       this.setCurrentQuestion();
+      this.startAutoSave();
     } else {
       this.isLoading = false;
       this.alertService.showAlert("Info", "Congratulazioni! Hai risposto a tutte le domande disponibili almeno una volta: prova a esercitarti su alcuni argomenti specifici usando dei filtri particolari o ripassando le domande più difficili");

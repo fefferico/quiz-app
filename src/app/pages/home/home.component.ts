@@ -73,6 +73,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
 
   // --- Quiz Types Data (scoped by selectedPublicContest) ---
   pausedQuiz: QuizAttempt | undefined;
+  inProgressQuiz: QuizAttempt | undefined;
   yesterdayProblematicQuestionIds: string[] = [];
   todayProblematicQuestionIds: string[] = [];
   overallProblematicQuestionIds: string[] = []; // For all incorrect answers in the contest
@@ -166,7 +167,8 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
           this.loadYesterdayProblematicQuestions(contest, userId),
           this.loadOverallProblematicQuestions(contest, userId), // Added call
           this.countNeverEncounteredQuestion(contest, userId),
-          this.checkForPausedQuiz()
+          this.checkForPausedQuiz(),
+          this.checkForInProgressQuiz()
         ]);
       } catch (error) {
         console.error(`Error loading data for contest ${contest.id}:`, error);
@@ -202,6 +204,20 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
   resumePausedQuiz(): void {
     if (this.pausedQuiz) {
       this.router.navigate(['/quiz/take'], { state: { quizParams: { resumeAttemptId: this.pausedQuiz.id } } });
+    }
+  }
+
+  async checkForInProgressQuiz(): Promise<void> {
+    const currentContest = this.contestSelectionService.checkForContest();
+    if (currentContest === null) {
+      return;
+    }
+    this.inProgressQuiz = await this.dbService.getInProgressQuiz(currentContest.id, this.authService.getCurrentUserId());
+  }
+
+  resumeInProgressQuiz(): void {
+    if (this.inProgressQuiz) {
+      this.router.navigate(['/quiz/take'], { state: { quizParams: { resumeAttemptId: this.inProgressQuiz.id } } });
     }
   }
 

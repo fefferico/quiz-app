@@ -1256,6 +1256,28 @@ export class DatabaseService implements OnDestroy {
     ).then(results => Array.isArray(results) ? results[0] : results) as Promise<QuizAttempt | undefined>;
   }
 
+  async getInProgressQuiz(contestId: number, userId: number): Promise<QuizAttempt | undefined> {
+    const operationName = `getInProgressQuiz` + (userId ? ` for user ${userId}` : '');
+    let query = this.supabase.from('quiz_attempts')
+      .select('*')
+      .eq('status', 'in-progress')
+      .eq('fk_contest_id', contestId)
+      .eq('fk_user_id', userId)
+      .order('timestamp_start', { ascending: false });
+    // if (userId) { query = query.eq('user_id', userId); } // For multi-user
+
+    return this.handleSupabaseFetch<QuizAttempt>(
+      query,
+      this.mapQuizAttemptFromSupabase,
+      async () => { },
+      async () => undefined,
+      operationName,
+      true
+    ).then(results => Array.isArray(results) ? results[0] : results) as Promise<QuizAttempt | undefined>;
+  }
+
+
+
 
   async clearAllQuestions(contestId: number, userId: number): Promise<void> {
     // This RESETS stats, doesn't delete questions.
@@ -1546,15 +1568,15 @@ export class DatabaseService implements OnDestroy {
       console.warn('[DBService] fetchAllRowsById called with only invalid/empty IDs.');
       return [];
     }
-    
+
     const chunkSize = 900; // Max items for an 'IN' clause, conservative. Adjust if needed.
     let allFetchedQuestions: Question[] = [];
-    
+
     console.log(`[DBService] fetchAllRowsById: Fetching ${validIds.length} questions in chunks of ${chunkSize}.`);
 
     for (let i = 0; i < validIds.length; i += chunkSize) {
       const chunkOfIds = validIds.slice(i, i + chunkSize);
-      
+
       try {
         const { data, error } = await this.supabase
           .from('questions')
@@ -1562,7 +1584,7 @@ export class DatabaseService implements OnDestroy {
           .in('id', chunkOfIds);
 
         if (error) {
-          console.error(`[DBService] Supabase error fetching chunk of questions by ID (IDs: ${chunkOfIds.slice(0,5).join(',')}...):`, error);
+          console.error(`[DBService] Supabase error fetching chunk of questions by ID (IDs: ${chunkOfIds.slice(0, 5).join(',')}...):`, error);
           // Decide on error handling: throw, or continue and try to get partial data?
           // For now, re-throwing to indicate failure.
           throw error;
@@ -1573,7 +1595,7 @@ export class DatabaseService implements OnDestroy {
           allFetchedQuestions = allFetchedQuestions.concat(mappedChunk);
         }
       } catch (err) {
-        console.error(`[DBService] Exception during fetchAllRowsById chunk (IDs: ${chunkOfIds.slice(0,5).join(',')}...):`, err);
+        console.error(`[DBService] Exception during fetchAllRowsById chunk (IDs: ${chunkOfIds.slice(0, 5).join(',')}...):`, err);
         throw err; // Re-throw to make the caller aware
       }
     }

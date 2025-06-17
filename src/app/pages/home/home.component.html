@@ -66,7 +66,15 @@
     <button (click)="resumePausedQuiz()"
       class="w-full sm:w-auto inline-block bg-teal-500 hover:bg-teal-600 text-white dark:bg-teal-600 dark:hover:bg-teal-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
       <fa-icon class="mr-2" [icon]="faPlay"></fa-icon>
-      Riprendi il quiz precedente
+      Riprendi il quiz precedente (da pausa)
+    </button>
+  </div>
+
+  <div *ngIf="inProgressQuiz && !isStatsViewer && selectedPublicContest" class="mb-6">
+    <button (click)="resumeInProgressQuiz()"
+      class="w-full sm:w-auto inline-block bg-violet-500 hover:bg-violet-600 text-white dark:bg-violet-600 dark:hover:bg-violet-500 font-bold py-3 px-6 rounded-lg text-lg sm:text-xl shadow-md hover:shadow-lg transition duration-150 animate-pulse">
+      <fa-icon class="mr-2" [icon]="faPlay"></fa-icon>
+      Riprendi il quiz precedente (da auto-salvataggio)
     </button>
   </div>
 

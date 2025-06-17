@@ -12,6 +12,7 @@ import {
 import { ThemeService } from './services/theme.service';
 import {AuthService} from './core/services/auth.service';
 import {SpinnerComponent} from './shared/spinner/spinner.component';
+import { ToastContainerComponent } from './shared/toast/toast.component';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ import {SpinnerComponent} from './shared/spinner/spinner.component';
     RouterLink,
     FontAwesomeModule,
     SpinnerComponent,
-    RouterLinkActive
+    RouterLinkActive,
+    ToastContainerComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

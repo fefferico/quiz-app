@@ -8,7 +8,7 @@ import { routes } from './app.routes';
 import { FeedbackService } from './core/services/template-page-title-strategy.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideServiceWorker, ServiceWorkerModule } from '@angular/service-worker';
-
+import { provideAnimations } from '@angular/platform-browser/animations'; // Or provideAnimationsAsync
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,7 +20,8 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(), // Enable for production
       registrationStrategy: 'registerWhenStable:30000'
-    }))
+    })),
+    provideAnimations()
     // provideHttpClient(), // Example if you were to use HttpClient
     //{ provide: TitleStrategy, useClass: FeedbackService } // For dynamic page titles
     // DatabaseService is already providedIn: 'root'
