@@ -50,7 +50,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     userContestPermissions: { [key: number]: boolean } = {};
 
     // For question management
-    selectedContestForQuestions: number | null = null;
+    selectedContestForQuestions: number | '' = ''; // Can be '' for "All Contests"
     parsedQuestions: Partial<Question>[] = [];
     isUploading = false;
 
@@ -82,6 +82,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
 
         this.questionForm = this.fb.group({
+            contestId: [null, Validators.required], // ADDED
             text: ['', Validators.required],
             topic: ['', Validators.required],
             explanation: [''],
@@ -92,7 +93,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             options: this.fb.array([], Validators.minLength(2))
         });
 
-        // NEW: Initialize the filter form
         this.questionFilterForm = this.fb.group({
             text: [''],
             topic: [''],
@@ -100,10 +100,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
-    // NEW: Listen for changes in the filter form and apply filters
     setupFilterListener(): void {
         this.filterSubscription = this.questionFilterForm.valueChanges.pipe(
-            debounceTime(300), // Wait for 300ms of inactivity before applying filters
+            debounceTime(300),
             distinctUntilChanged()
         ).subscribe(filters => {
             this.applyQuestionFilters(filters);
@@ -121,11 +120,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
                 (q.explanation || '').toLowerCase().includes(textFilter) ||
                 q.options.some(opt => opt.toLowerCase().includes(textFilter))
             ) : true;
-
             const topicMatch = topicFilter ? q.topic.toLowerCase().includes(topicFilter) : true;
-
             const idMatch = idFilter ? q.id.toString().includes(idFilter) : true;
-
             return textMatch && topicMatch && idMatch;
         });
     }
@@ -150,6 +146,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     changeView(view: 'dashboard' | 'users' | 'contests' | 'questions'): void {
         this.activeView = view;
+        if (view === 'questions' && this.selectedContestForQuestions === null) {
+            this.selectedContestForQuestions = ''; // Default to "All Contests"
+            this.loadQuestionsForContest('');
+        }
     }
 
     // --- CONTEST MANAGEMENT ---
@@ -178,7 +178,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     async onDeleteContest(id: number, name: string): Promise<void> {
         const confirmation = await this.alertService.showConfirm('Delete Contest', `Are you sure you want to delete "${name}"? This will delete all associated questions and quiz attempts. This action is IRREVERSIBLE.`);
-        if (confirmation) {
+        if (confirmation?.role === 'confirm') {
             try {
                 await this.dbService.deleteContest(id);
                 this.alertService.showAlert('Success', 'Contest deleted.');
@@ -232,7 +232,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     async onDeleteUser(id: number, username: string): Promise<void> {
-        if (await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`)) {
+        if ((await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`))?.role === 'confirm') {
             try {
                 await this.dbService.deleteUser(id);
                 this.alertService.showAlert('Success', 'User deleted.'); this.loadInitialData();
@@ -258,32 +258,29 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     async loadQuestionsForContest(contestIdStr: string): Promise<void> {
         this.resetQuestionForm();
-        this.questionFilterForm.reset({ text: '', topic: '', id: '' });
-
-        if (!contestIdStr) {
-            this.selectedContestForQuestions = null;
-            try {
-                // Load all questions across all contests
-                this.questions = await this.dbService.getAllQuestions();
-                this.filteredQuestions = [...this.questions];
-            } catch (error) {
-                this.alertService.showAlert('Error', 'Failed to load questions.');
-                this.questions = []; this.filteredQuestions = [];
-            }
+        if (contestIdStr === '') {
+            this.questions = [];
+            this.filteredQuestions = [];
             return;
         }
-
+        this.questionFilterForm.reset({ text: '', topic: '', id: '' }, { emitEvent: false }); // Prevent re-triggering
         this.selectedContestForQuestions = Number(contestIdStr);
+        const contestId = contestIdStr ? Number(contestIdStr) : 0;
+
         try {
-            this.questions = await this.dbService.getAllQuestions(this.selectedContestForQuestions);
+            this.questions = await this.dbService.getAllQuestions(contestId);
             this.filteredQuestions = [...this.questions];
         } catch (error) {
             this.alertService.showAlert('Error', 'Failed to load questions for this contest.');
-            this.questions = []; this.filteredQuestions = [];
+            this.questions = [];
+            this.filteredQuestions = [];
         }
     }
 
-    getContestName(contestId: number): string { return this.contests.find(c => c.id === contestId)?.name || 'Unknown'; }
+    getContestName(contestId: number | ''): string {
+        if (contestId === '') return 'All Contests';
+        return this.contests.find(c => c.id === contestId)?.name || 'Unknown';
+    }
 
     onSelectQuestionForEdit(question: Question): void {
         this.resetQuestionForm(); this.editingQuestionId = question.id;
@@ -293,55 +290,60 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     resetQuestionForm(): void {
         this.editingQuestionId = null;
-        this.questionForm.reset({ scoreIsCorrect: 1, scoreIsWrong: 0, scoreIsSkip: 0, correctAnswerIndex: null });
+        this.questionForm.reset({
+            contestId: this.selectedContestForQuestions || null, // Default to current contest
+            scoreIsCorrect: 1,
+            scoreIsWrong: 0,
+            scoreIsSkip: 0,
+            correctAnswerIndex: null
+        });
         this.options.clear();
     }
 
     async onQuestionFormSubmit(): Promise<void> {
-
         if (this.questionForm.invalid) {
             this.alertService.showAlert('Warning', 'Please fill all required question fields.');
             return;
         }
-        const questionData: Partial<Question> = { ...this.questionForm.value, contestId: this.selectedContestForQuestions };
 
-        this.spinnerService.show("Caricamento nuova domanda in corso...");
+        // This line is now correct as contestId is part of the form.
+        const questionData: Partial<Question> = { ...this.questionForm.value };
+
+        this.spinnerService.show("Saving question...");
+
         if (!this.editingQuestionId) {
             try {
                 const maxId = await this.dbService.getHighestQuestionId();
                 questionData.id = ((Number(maxId) ?? 0) + 1).toString();
             } catch (err) {
-                this.alertService.showAlert('Error', 'Failed to determine next question ID.');
-                this.spinnerService.hide();
-                return;
+                this.alertService.showConfirm('Errore', 'Failed to determine next question ID.');
+                this.spinnerService.hide(); return;
             }
         }
-
-        console.log("new question data: ", questionData)
 
         const promise = this.editingQuestionId
             ? this.dbService.updateQuestion(this.editingQuestionId, questionData)
             : this.dbService.addQuestion(questionData as Question);
 
         promise.then(() => {
-            this.spinnerService.hide();
-            this.alertService.showAlert('Success', `Question ${this.editingQuestionId ? 'updated' : 'created'}.`);
+            this.alertService.showConfirm('Info', `Question ${this.editingQuestionId ? 'updated' : 'created'}.`);
             this.resetQuestionForm();
-            this.loadQuestionsForContest(this.selectedContestForQuestions!.toString());
+            this.loadQuestionsForContest(this.selectedContestForQuestions.toString());
         }).catch(err => {
+            this.alertService.showConfirm('Errore', `Failed to save question`);
+        }).finally(() => {
             this.spinnerService.hide();
-            this.alertService.showAlert('Error', `Failed to save question: ${err.message}`);
         });
     }
 
     async onDeleteQuestion(id: string): Promise<void> {
-        if (await this.alertService.showConfirm('Delete Question', `Are you sure you want to delete this question? This action is irreversible.`)) {
+        if ((await this.alertService.showConfirm('Delete Question', `Are you sure you want to delete this question? This action is irreversible.`))?.role === 'confirm') {
             try {
                 await this.dbService.deleteQuestion(id);
-                this.alertService.showAlert('Success', 'Question deleted.');
+                this.alertService.showConfirm('Info', 'Question deleted.');
                 this.loadQuestionsForContest(this.selectedContestForQuestions!.toString());
             } catch (err) {
-                this.alertService.showAlert('Error', `Failed to delete question`);
+                this.alertService.showConfirm('Errore', `Failed to delete question`);
             }
         }
     }
@@ -357,7 +359,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         const lines = csvText.split('\n').filter(line => line.trim() !== '');
         const headers = lines.shift()?.trim().split(',').map(h => h.trim()) || [];
         this.parsedQuestions = lines.map(line => {
-            const values = line.split(','); const question: Partial<Question> = { contestId: this.selectedContestForQuestions! };
+            const values = line.split(',');
+            const question: Partial<Question> = { contestId: Number(this.selectedContestForQuestions) };
             headers.forEach((header, index) => {
                 const key = header.trim(); const value = values[index]?.trim();
                 if (key === 'options' && value) (question as any)[key] = value.split('|');
@@ -370,24 +373,29 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     async handleBulkUpload(): Promise<void> {
-        if (this.parsedQuestions.length === 0 || !this.selectedContestForQuestions) return;
+        if (this.parsedQuestions.length === 0 || this.selectedContestForQuestions === '' || this.selectedContestForQuestions === null) {
+            this.alertService.showConfirm('info', 'Please select a contest before bulk uploading.');
+            return;
+        };
         this.isUploading = true;
+        this.spinnerService.show('Uploading questions...');
         try {
             await this.dbService.addQuestionsBulk(this.parsedQuestions);
-            this.alertService.showAlert('Success', 'Bulk upload successful!');
+            this.alertService.showConfirm('info', 'Bulk upload successful!');
             this.parsedQuestions = [];
             this.loadQuestionsForContest(this.selectedContestForQuestions.toString());
         } catch (err) {
-            this.alertService.showAlert('Error', `Could not upload questions`);
+            this.alertService.showConfirm('Errore', `Could not upload questions`);
         } finally {
             this.isUploading = false;
+            this.spinnerService.hide();
         }
     }
 
     // --- DASHBOARD ---
     async handleResetContest(contestIdStr: string) {
         const contestId = Number(contestIdStr); const contest = this.contests.find(c => c.id === contestId); if (!contest) return;
-        if (await this.alertService.showConfirm('Confirm Contest Reset', `This will permanently delete all quiz history and reset all question statistics for the contest "${contest.name}". Are you sure?`)) {
+        if ((await this.alertService.showConfirm('Confirm Contest Reset', `This will permanently delete all quiz history and reset all question statistics for the contest "${contest.name}". Are you sure?`))?.role === 'confirm') {
             try {
                 const currentUserId = this.authService.getCurrentUserId(); if (!currentUserId) throw new Error("No logged in user found.");
                 await this.dbService.resetContest(contest.id, currentUserId);

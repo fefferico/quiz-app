@@ -115,32 +115,39 @@
                 <select id="contest-select-q" #contestSelectForQuestions
                     (change)="loadQuestionsForContest(contestSelectForQuestions.value)"
                     class="w-full max-w-md px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">-- Select Contest --</option>
+                    <option value="">-- All Contests --</option>
                     <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}</option>
                 </select>
             </div>
 
-            <div *ngIf="selectedContestForQuestions !== null && selectedContestForQuestions !== undefined" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div *ngIf="selectedContestForQuestions !== null && selectedContestForQuestions !== undefined"
+                class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Questions for {{
-                        getContestName(selectedContestForQuestions) }} ({{filteredQuestions.length}} / {{questions.length}})</h4>
-                    
-                    <!-- NEW: Filters Section -->
-                    <div [formGroup]="questionFilterForm" class="p-4 mb-4 bg-white rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        getContestName(selectedContestForQuestions) }} ({{filteredQuestions.length}} /
+                        {{questions.length}})</h4>
+
+                    <div [formGroup]="questionFilterForm"
+                        class="p-4 mb-4 bg-white rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                            <label for="filterText" class="block text-xs font-medium text-gray-600">Filter by Text</label>
-                            <input id="filterText" type="text" formControlName="text" class="w-full mt-1 input-style" placeholder="Question, option, or explanation text...">
+                            <label for="filterText" class="block text-xs font-medium text-gray-600">Filter by
+                                Text</label>
+                            <input id="filterText" type="text" formControlName="text" class="w-full mt-1 input-style"
+                                placeholder="Question, option, or explanation text...">
                         </div>
                         <div>
-                            <label for="filterTopic" class="block text-xs font-medium text-gray-600">Filter by Topic</label>
-                            <input id="filterTopic" type="text" formControlName="topic" class="w-full mt-1 input-style" placeholder="Topic name...">
+                            <label for="filterTopic" class="block text-xs font-medium text-gray-600">Filter by
+                                Topic</label>
+                            <input id="filterTopic" type="text" formControlName="topic" class="w-full mt-1 input-style"
+                                placeholder="Topic name...">
                         </div>
                         <div>
                             <label for="filterId" class="block text-xs font-medium text-gray-600">Filter by ID</label>
-                            <input id="filterId" type="text" formControlName="id" class="w-full mt-1 input-style" placeholder="Question ID...">
+                            <input id="filterId" type="text" formControlName="id" class="w-full mt-1 input-style"
+                                placeholder="Question ID...">
                         </div>
                     </div>
-                    
+
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-sm text-left text-gray-600">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
@@ -157,19 +164,30 @@
                                     <td class="px-4 py-3 truncate" [title]="q.text">{{q.text | slice:0:50}}...</td>
                                     <td class="px-4 py-3">{{q.topic}}</td>
                                     <td class="px-4 py-3 flex gap-2">
-                                        <button (click)="onSelectQuestionForEdit(q)" class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600">Edit</button>
-                                        <button (click)="onDeleteQuestion(q.id)" class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600">Delete</button>
+                                        <button (click)="onSelectQuestionForEdit(q)"
+                                            class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600">Edit</button>
+                                        <button (click)="onDeleteQuestion(q.id)"
+                                            class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600">Delete</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-                         <p *ngIf="filteredQuestions.length === 0" class="text-center py-4 text-gray-500">No questions match the current filters.</p>
+                        <p *ngIf="filteredQuestions.length === 0" class="text-center py-4 text-gray-500">No questions
+                            match the current filters.</p>
                     </div>
                 </div>
                 <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingQuestionId ? 'Edit
                         Question' : 'Add New Question' }}</h4>
                     <form [formGroup]="questionForm" (ngSubmit)="onQuestionFormSubmit()">
+                        <!-- NEW: CONTEST SELECTOR -->
+                        <div class="mb-2">
+                            <label class="block mb-1 text-sm font-medium">Contest</label>
+                            <select formControlName="contestId" class="w-full input-style">
+                                <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}
+                                </option>
+                            </select>
+                        </div>
                         <div class="mb-2"><label class="block mb-1 text-sm font-medium">Question Text</label><textarea
                                 formControlName="text" rows="3" class="w-full input-style"></textarea></div>
                         <div class="mb-2"><label class="block mb-1 text-sm font-medium">Topic</label><input type="text"
