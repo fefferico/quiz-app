@@ -8,7 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome, faLandmark } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { AlertService } from '../../services/alert.service';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 
 @Component({
   selector: 'app-favorite-questions',

@@ -346,102 +346,83 @@
             </div>
         </div>
 
-        <!-- ATTEMPTS VIEW -->
+<!-- ATTEMPTS VIEW -->
         <div *ngIf="activeView === 'attempts'">
             <h3 class="text-xl font-semibold text-gray-700 mb-4">Manage Quiz Attempts</h3>
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
-                    <div class="flex gap-4 mb-4">
-                        <div class="flex-1">
-                            <label for="user-select-a" class="block mb-1 text-sm font-medium text-gray-700">Select
-                                User</label>
-                            <select id="user-select-a" #userSelectForAttempts
-                                (change)="loadAttemptsForUser(userSelectForAttempts.value)" class="w-full input-style">
+                    <!-- UPDATED FILTER FORM -->
+                    <form [formGroup]="attemptFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="user-select-a" class="block mb-1 text-sm font-medium text-gray-700">Select User</label>
+                            <select id="user-select-a" formControlName="userId" class="w-full input-style">
                                 <option value="">-- Select a User --</option>
-                                <option *ngFor="let user of users" [value]="user.id">{{ user.displayName ||
-                                    user.username }}</option>
+                                <option *ngFor="let user of users" [value]="user.id">{{ user.displayName || user.username }}</option>
                             </select>
                         </div>
-                        <div class="flex-1">
-                            <label for="contest-select-a" class="block mb-1 text-sm font-medium text-gray-700">Filter by
-                                Contest</label>
-                            <select id="contest-select-a" #contestSelectForAttempts
-                                (change)="loadAttemptsForUser(userSelectForAttempts.value, contestSelectForAttempts.value)"
-                                class="w-full input-style">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="contest-select-a" class="block mb-1 text-sm font-medium text-gray-700">Filter by Contest</label>
+                            <select id="contest-select-a" formControlName="contestId" class="w-full input-style">
                                 <option value="">-- All Contests --</option>
-                                <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}
-                                </option>
+                                <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}</option>
                             </select>
                         </div>
-                        <div class="flex-1">
-                            <label for="attempt-id-filter" class="block mb-1 text-sm font-medium text-gray-700">Filter by Attempt ID</label>
-                            <input id="attempt-id-filter" type="text" [(ngModel)]="filterByAttemptID" (ngModelChange)="filterAttempts()"
-                                class="w-full input-style" placeholder="Attempt ID...">
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="attempt-type-filter" class="block mb-1 text-sm font-medium text-gray-700">Filter by Type</label>
+                            <select id="attempt-type-filter" formControlName="attemptType" class="w-full input-style">
+                                <option value="">-- All Types --</option>
+                                <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+                            </select>
                         </div>
-                    </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="attempt-id-filter" class="block mb-1 text-sm font-medium text-gray-700">Filter by Attempt ID</label>
+                            <input id="attempt-id-filter" type="text" formControlName="attemptId" class="w-full input-style" placeholder="Attempt ID...">
+                        </div>
+                    </form>
 
-                    <div *ngIf="selectedUserForAttempts" class="overflow-x-auto">
-                        <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Quiz Attempts for {{
-                            getUsername(selectedUserForAttempts) }}</h4>
+                    <div *ngIf="attemptFilterForm.get('userId')?.value" class="overflow-x-auto">
+                        <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Quiz Attempts for {{ getUsername(attemptFilterForm.get('userId')?.value) }}</h4>
                         <table class="w-full text-sm text-left text-gray-600">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
-                                <tr>
-                                    <th class="px-4 py-3">ID</th>
-                                    <th class="px-4 py-3">Date start</th>
-                                    <th class="px-4 py-3">Date end</th>
-                                    <th class="px-4 py-3">Duration</th>
-                                    <th class="px-4 py-3">Type</th>
-                                    <th class="px-4 py-3">Score</th>
-                                    <th class="px-4 py-3">Status</th>
-                                    <th class="px-4 py-3">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let attempt of userAttempts" class="bg-white border-b hover:bg-gray-50">
-                                    <td class="px-4 py-3">{{ attempt.id }}</td>
-                                    <td class="px-4 py-3">{{ attempt.timestampStart | date:'H:mm d/MM/yyyy':'it-IT' }}</td>
-                                    <td class="px-4 py-3">{{ attempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}</td>
-                                    <td class="px-4 py-3">{{ (attempt.timeElapsed || calcDurataQuiz(attempt)) }}</td>
-                                    <td class="px-4 py-3">{{ attempt.quizType }}</td>
-                                    <td class="px-4 py-3">{{ attempt.score?.toFixed(2) }}</td>
-                                    <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full font-semibold"
-                                            [ngClass]="getStatusClass(attempt.status)">{{ attempt.status }}</span></td>
-                                    <td class="px-4 py-3"><button (click)="onSelectAttemptForEdit(attempt)"
-                                            class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600">Edit</button>
-                                    </td>
-                                </tr>
-                            </tbody>
+                             <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                 <tr><th class="px-4 py-3">ID</th><th class="px-4 py-3">Date start</th><th class="px-4 py-3">Date end</th><th class="px-4 py-3">Duration</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Score</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Actions</th></tr>
+                             </thead>
+                             <tbody>
+                                 <tr *ngFor="let attempt of userAttempts" class="bg-white border-b hover:bg-gray-50">
+                                     <td class="px-4 py-3 font-mono text-xs" [title]="attempt.id">{{ attempt.id }}</td>
+                                     <td class="px-4 py-3">{{ attempt.timestampStart | date:'H:mm d/MM/yyyy':'it-IT' }}</td>
+                                     <td class="px-4 py-3">{{ attempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}</td>
+                                     <td class="px-4 py-3">{{ calcDurataQuiz(attempt) }}</td>
+                                     <td class="px-4 py-3">{{ attempt.quizType }}</td>
+                                     <td class="px-4 py-3">{{ attempt.score?.toFixed(2) }}</td>
+                                     <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full font-semibold" [ngClass]="getStatusClass(attempt.status)">{{ attempt.status }}</span></td>
+                                     <td class="px-4 py-3"><button (click)="onSelectAttemptForEdit(attempt)" class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600">Edit</button></td>
+                                 </tr>
+                             </tbody>
                         </table>
-                        <p *ngIf="userAttempts.length === 0" class="text-center py-4 text-gray-500">No attempts found
-                            for this user/contest combination.</p>
+                        <p *ngIf="userAttempts.length === 0" class="text-center py-4 text-gray-500">No attempts found for this user/filter combination.</p>
                     </div>
+                    <p *ngIf="!attemptFilterForm.get('userId')?.value" class="text-center py-4 text-gray-500">Please select a user to view their quiz attempts.</p>
                 </div>
+                <!-- ... Edit Attempt Form (no changes needed) ... -->
                 <div *ngIf="attemptForm.get('id')?.value" class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Edit Quiz Attempt</h4>
                     <form [formGroup]="attemptForm" (ngSubmit)="onAttemptFormSubmit()">
-                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Attempt ID</label><input
-                                [value]="attemptForm.get('id')?.value" class="w-full input-style bg-gray-200" readonly>
-                        </div>
-                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Quiz Title</label><input
-                                type="text" formControlName="quizTitle" class="w-full input-style"></div>
-                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Score</label><input
-                                type="number" formControlName="score" class="w-full input-style"></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Attempt ID</label><input [value]="attemptForm.get('id')?.value" class="w-full input-style bg-gray-200" readonly></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Quiz Title</label><input type="text" formControlName="quizTitle" class="w-full input-style"></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Score</label><input type="number" formControlName="score" class="w-full input-style"></div>
                         <div class="mb-2"><label class="block mb-1 text-sm font-medium">Status</label>
                             <select formControlName="status" class="w-full input-style">
-                                <option>in-progress</option>
-                                <option>paused</option>
-                                <option>completed</option>
-                                <option>timed-out</option>
-                                <option>cancelled</option>
-                                <option>error</option>
+                                <option>in-progress</option><option>paused</option><option>completed</option>
+                                <option>timed-out</option><option>cancelled</option><option>error</option>
                             </select>
                         </div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Start Time</label><input type="datetime-local" formControlName="timestampStart" class="w-full input-style"></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">End Time</label><input type="datetime-local" formControlName="timestampEnd" class="w-full input-style"></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Time Elapsed (HH:MM:SS)</label><input type="text" formControlName="timeElapsed" class="w-full input-style" placeholder="e.g., 00:25:30"></div>
+                        
                         <div class="flex gap-x-4 mt-6">
-                            <button type="submit" [disabled]="attemptForm.invalid"
-                                class="px-4 py-2 rounded-md font-semibold text-white shadow-sm disabled:opacity-50 bg-indigo-600 hover:bg-indigo-700">Update
-                                Attempt</button>
-                            <button type="button" (click)="resetAttemptForm()"
-                                class="px-4 py-2 rounded-md font-semibold text-white shadow-sm bg-gray-600 hover:bg-gray-700">Cancel</button>
+                            <button type="submit" [disabled]="attemptForm.invalid" class="px-4 py-2 rounded-md font-semibold text-white shadow-sm disabled:opacity-50 bg-indigo-600 hover:bg-indigo-700">Update Attempt</button>
+                            <button type="button" (click)="resetAttemptForm()" class="px-4 py-2 rounded-md font-semibold text-white shadow-sm bg-gray-600 hover:bg-gray-700">Cancel</button>
                         </div>
                     </form>
                 </div>

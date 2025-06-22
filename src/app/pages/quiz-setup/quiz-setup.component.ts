@@ -14,7 +14,7 @@ import { IconDefinition, faHome, faPersonMilitaryRifle, faChevronDown, faChevron
 import { AlertService } from '../../services/alert.service';
 import { Subscription } from 'rxjs';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({

@@ -25,7 +25,7 @@ import {
   faList
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from '../../../services/alert.service'; // Added faChevronDown, faChevronUp
-import { Contest } from '../../../models/contes.model';
+import { Contest } from '../../../models/contest.model';
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { QuestionService } from '../../../core/services/question-service.service';

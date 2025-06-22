@@ -1,7 +1,7 @@
 // src/app/core/services/contest-selection.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 import { AlertService } from '../../services/alert.service';
 
 @Injectable({

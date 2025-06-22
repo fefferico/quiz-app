@@ -6,7 +6,7 @@ import { GenericData } from '../../../../models/statistics.model';
 import { Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faPersonMilitaryRifle, faCancel, faTrashCan, faEraser } from '@fortawesome/free-solid-svg-icons';
-import { Contest } from '../../../../models/contes.model';
+import { Contest } from '../../../../models/contest.model';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({

@@ -12,7 +12,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faHome, faArrowRight, faArrowLeft, faGears } from '@fortawesome/free-solid-svg-icons'; // Added faAdjust
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 import { SpinnerService } from '../../../core/services/spinner.service';
-import { Contest } from '../../../models/contes.model';
+import { Contest } from '../../../models/contest.model';
 import { AlertComponent } from '../../../shared/alert/alert.component';
 import { AlertService } from '../../../services/alert.service';
 

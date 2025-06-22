@@ -43,7 +43,7 @@ import { GenericData } from '../../../models/statistics.model';
 import { ContestSelectionService } from '../../../core/services/contest-selection.service';
 import { Spinner } from '@angular-devkit/build-angular/src/utils/spinner';
 import { SpinnerService } from '../../../core/services/spinner.service';
-import { Contest } from '../../../models/contes.model';
+import { Contest } from '../../../models/contest.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 

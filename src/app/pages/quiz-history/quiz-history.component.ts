@@ -13,7 +13,7 @@ import { IconDefinition, faHome, faTrashCan, faLandmark, faRepeat, faExclamation
 import { AlertService } from '../../services/alert.service';
 import { AlertButton } from '../../models/alert.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service'; // Import ContestSelectionService
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 import { AuthService } from '../../core/services/auth.service';
 import { SpinnerService } from '../../core/services/spinner.service';
 import { QuestionService } from '../../core/services/question-service.service';

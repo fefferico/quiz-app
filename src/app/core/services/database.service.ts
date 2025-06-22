@@ -6,7 +6,7 @@ import { SupabaseService } from './supabase-service.service'; // Your Supabase c
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { Subscription } from 'rxjs'; // Added import
 import { User } from '../../models/user.model';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 import { TopicCoverageData } from '../../models/statistics.model';
 
 // Define a more specific interface for the expected Supabase response structure
@@ -736,19 +736,35 @@ export class DatabaseService implements OnDestroy {
     return data ? this.mapQuizAttemptFromSupabase(data) : undefined;
   }
 
-  async getAllQuizAttempts(contestId?: number | null, userId?: string): Promise<QuizAttempt[]> {
-    const operationName = `getAllQuizAttempts` + (contestId ? ` for contest ${contestId}` : '') + (userId ? ` for user ${userId}` : '');
+  /**
+   * Fetches all quiz attempts, allowing filtering by multiple parameters.
+   * Accepts a filter object where keys are column names and values are the filter values.
+   * If a value is an array, it uses the `.in()` filter, otherwise `.eq()`.
+   * Example usage:
+   *   getAllQuizAttempts({ userId: 1, contestId: [2, 3], status: 'paused' })
+   */
+  async getAllQuizAttempts(filters: { [key: string]: any } = {}): Promise<QuizAttempt[]> {
+    const operationName = `getAllQuizAttempts with filters: ${JSON.stringify(filters)}`;
     let query = this.supabase.from('quiz_attempts').select('*');
 
-    if (contestId) {
-      query = query.eq('fk_contest_id', contestId); // Standardized to use this column
+    // Map camelCase keys to DB column names if needed
+    const columnMap: { [key: string]: string } = {
+      userId: 'fk_user_id',
+      contestId: 'fk_contest_id',
+      typeId: 'quiz_type',
+      attemptId: 'id',
+      // Add more mappings if needed
+    };
+
+    for (const [key, value] of Object.entries(filters)) {
+      const column = columnMap[key] || key;
+      if (Array.isArray(value)) {
+        query = query.in(column, value);
+      } else if (value !== undefined && value !== null) {
+        query = query.eq(column, value);
+      }
     }
-    if (userId) {
-      // Assuming 'user_id' is a column on quiz_attempts table for multi-user scenarios.
-      // If user_id is part of settings JSONB: query = query.eq('settings->>userId', userId);
-      // For this example, let's assume a direct user_id column if provided.
-      // query = query.eq('user_id', userId); // Uncomment and adjust if you have a user_id column
-    }
+
     query = query.order('timestamp_start', { ascending: false });
 
     const { data, error } = await query;

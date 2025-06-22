@@ -1,6 +1,6 @@
 // src/app/models/quiz.model.ts
 
-import { Contest } from './contes.model';
+import { Contest } from './contest.model';
 import { Question } from './question.model';
 
 // Settings chosen by the user for a particular quiz session

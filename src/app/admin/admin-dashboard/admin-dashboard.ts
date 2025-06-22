@@ -5,20 +5,19 @@ import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFo
 import { DatabaseService } from '../../core/services/database.service';
 import { AlertService } from '../../services/alert.service';
 import { User } from '../../models/user.model';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 import { Question } from '../../models/question.model';
 import { AuthService } from '../../core/services/auth.service';
 import { Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 import { SpinnerService } from '../../core/services/spinner.service';
-import { QuizAttempt, QuizStatus } from '../../models/quiz.model';
+import { QuizAttempt, QuizStatus, QuizType } from '../../models/quiz.model';
 
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
     imports: [CommonModule, FormsModule, ReactiveFormsModule, SlicePipe, DatePipe],
     templateUrl: './admin-dashboard.html',
-    // No styleUrl needed as Tailwind is used
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
     private dbService = inject(DatabaseService);
@@ -29,14 +28,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     activeView: 'dashboard' | 'users' | 'contests' | 'questions' | 'attempts' = 'dashboard';
 
-    filterByAttemptID: string = '';
-
     // Data stores
     users: User[] = [];
     contests: Contest[] = [];
+    types: QuizType[] = ['Standard', 'Esame', 'Revisione errori', 'Domande mai risposte', 'Contest', 'Timed', 'Revisione errori globale'];
     questions: Question[] = [];
     filteredQuestions: Question[] = [];
     userAttempts: QuizAttempt[] = [];
+    allUserAttempts: QuizAttempt[] = []; // Store the full list before filtering
 
     // Forms
     userForm!: FormGroup;
@@ -44,6 +43,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     questionForm!: FormGroup;
     questionFilterForm!: FormGroup;
     attemptForm!: FormGroup;
+    attemptFilterForm!: FormGroup; // Central form for attempt filters
 
     // State for editing
     editingUserId: number | null = null;
@@ -65,7 +65,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     itemsPerPage = 15;
     totalQuestions = 0;
 
-    private filterSubscription!: Subscription;
+    private subscriptions = new Subscription();
 
     get totalPages(): number {
         return Math.ceil(this.totalQuestions / this.itemsPerPage);
@@ -75,13 +75,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.initializeForms();
         this.loadInitialData();
-        this.setupFilterListener();
+        this.setupFilterListeners();
     }
 
     ngOnDestroy(): void {
-        if (this.filterSubscription) {
-            this.filterSubscription.unsubscribe();
-        }
+        this.subscriptions.unsubscribe();
     }
 
     initializeForms(): void {
@@ -119,17 +117,42 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             id: [{ value: '', disabled: true }],
             quizTitle: ['', Validators.required],
             score: [0, Validators.required],
-            status: ['completed', Validators.required]
+            status: ['completed', Validators.required],
+            timestampStart: ['', Validators.required],
+            timestampEnd: [''],
+            timeElapsed: ['']
+        });
+
+        // Centralized form for attempt filters
+        this.attemptFilterForm = this.fb.group({
+            userId: [''],
+            contestId: [''],
+            attemptId: [''],
+            attemptType: ['']
         });
     }
 
-    setupFilterListener(): void {
-        this.filterSubscription = this.questionFilterForm.valueChanges.pipe(
+    setupFilterListeners(): void {
+        const questionFilter$ = this.questionFilterForm.valueChanges.pipe(
             debounceTime(300),
             distinctUntilChanged()
+        ).subscribe(filters => this.applyQuestionFilters(filters));
+        this.subscriptions.add(questionFilter$);
+
+        // This subscription now handles ALL filtering changes for attempts
+        const attemptFilter$ = this.attemptFilterForm.valueChanges.pipe(
+            debounceTime(300)
         ).subscribe(filters => {
-            this.applyQuestionFilters(filters);
+            // Re-fetch data only if the user changes
+            // The rest are client-side filters
+            const currentUserId = this.attemptFilterForm.get('userId')?.value;
+            if (this.selectedUserForAttempts !== currentUserId) {
+                this.loadAttemptsForUser(currentUserId);
+            } else {
+                this.applyAttemptFilters(filters);
+            }
         });
+        this.subscriptions.add(attemptFilter$);
     }
 
     applyQuestionFilters(filters: { text: string, topic: string, id: string }): void {
@@ -163,12 +186,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     changeView(view: 'dashboard' | 'users' | 'contests' | 'questions' | 'attempts'): void {
         this.activeView = view;
         if (view === 'questions' && this.selectedContestForQuestions === null) {
-            this.selectedContestForQuestions = ''; // Default to "All Contests"
+            this.selectedContestForQuestions = '';
             this.loadQuestionsForContest('');
         }
     }
 
-    // --- CONTEST MANAGEMENT ---
+    // --- CONTEST MANAGEMENT --- (No changes here)
     onContestFormSubmit(): void {
         if (this.contestForm.invalid) return;
         const contestData: Contest = { id: this.editingContestId!, ...this.contestForm.value };
@@ -181,17 +204,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.alertService.showToast({ message: `Failed to save contest: ${err.message}`, type: 'error' });
         });
     }
-
     onSelectContestForEdit(contest: Contest): void {
         this.editingContestId = contest.id;
         this.contestForm.patchValue(contest);
     }
-
     resetContestForm(): void {
         this.editingContestId = null;
         this.contestForm.reset({ name: '', isActive: true });
     }
-
     async onDeleteContest(id: number, name: string): Promise<void> {
         const confirmation = await this.alertService.showConfirm('Delete Contest', `Are you sure you want to delete "${name}"? This will delete all associated questions and quiz attempts. This action is IRREVERSIBLE.`);
         if (confirmation?.role === 'confirm') {
@@ -205,7 +225,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    // --- USER MANAGEMENT ---
+    // --- USER MANAGEMENT --- (No changes here)
     async onUserFormSubmit(): Promise<void> {
         if (this.userForm.invalid) return;
         if (!this.editingUserId) this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
@@ -216,7 +236,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const userData: User = { id: this.editingUserId!, ...this.userForm.value };
+        let userId = this.editingUserId;
+        if (!userId) {
+            try {
+                const maxId = await this.dbService.getHighestUserId();
+                userId = (Number(maxId) ?? 0) + 1;
+            } catch (err) {
+                this.alertService.showToast({ message: 'Failed to determine next user ID.', type: 'error' });
+                return;
+            }
+        }
+
+        const userData: User = { id: userId, ...this.userForm.value };
         delete userData.hashedPassword;
         if (this.userForm.value.password) userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
 
@@ -231,14 +262,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.alertService.showToast({ message: `Failed to save user: ${err.message}`, type: 'error' });
         });
     }
-
     private async hashPasswordSHA256(password: string): Promise<string> {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
         const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
         return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
-
     async onSelectUserForEdit(user: User): Promise<void> {
         this.resetUserForm(); this.editingUserId = user.id!;
         this.userForm.patchValue(user); this.userForm.controls['username'].disable();
@@ -249,12 +278,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.alertService.showToast({ message: 'Could not load user permissions.', type: 'error' });
         }
     }
-
     resetUserForm(): void {
         this.editingUserId = null; this.userForm.reset({ username: '', displayName: '', password: '', isActive: true });
         this.userForm.controls['username'].enable(); this.userContestPermissions = {};
     }
-
     async onDeleteUser(id: number, username: string): Promise<void> {
         if ((await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`))?.role === 'confirm') {
             try {
@@ -265,38 +292,30 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             }
         }
     }
-
     toggleContestPermission(contestId: number): void {
         this.userContestPermissions[contestId] = !this.userContestPermissions[contestId];
     }
 
-    // --- QUESTION MANAGEMENT ---
+    // --- QUESTION MANAGEMENT --- (No changes here)
     get options(): FormArray { return this.questionForm.get('options') as FormArray; }
     get correctAnswerIndexControl(): FormControl { return this.questionForm.get('correctAnswerIndex') as FormControl; }
-
     addOption(text: string = ''): void { this.options.push(new FormControl(text, Validators.required)); }
     removeOption(index: number): void {
         this.options.removeAt(index);
         if (this.questionForm.value.correctAnswerIndex === index) this.questionForm.patchValue({ correctAnswerIndex: null });
     }
-
     async loadQuestionsForContest(contestIdStr: string, page: number = 1): Promise<void> {
         this.resetQuestionForm();
         this.questionFilterForm.reset({ text: '', topic: '', id: '' }, { emitEvent: false });
         this.selectedContestForQuestions = Number(contestIdStr);
 
         if (contestIdStr === '') {
-            this.questions = [];
-            this.filteredQuestions = [];
-            this.totalQuestions = 0;
-            this.currentPage = 1;
+            this.questions = []; this.filteredQuestions = []; this.totalQuestions = 0; this.currentPage = 1;
             return;
         }
-
         const contestId = contestIdStr ? Number(contestIdStr) : null;
         this.currentPage = page;
         const offset = (this.currentPage - 1) * this.itemsPerPage;
-
         try {
             this.spinnerService.show('Loading questions...');
             if (page === 1 || this.totalQuestions === 0) {
@@ -306,13 +325,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.filteredQuestions = [...this.questions];
         } catch (error) {
             this.alertService.showToast({ message: 'Failed to load questions for this contest.', type: 'error' });
-            this.questions = []; this.filteredQuestions = [];
-            this.totalQuestions = 0;
+            this.questions = []; this.filteredQuestions = []; this.totalQuestions = 0;
         } finally {
             this.spinnerService.hide();
         }
     }
-
     goToPage(page: number): void {
         if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
             this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), page);
@@ -322,18 +339,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     previousPage(): void { this.goToPage(this.currentPage - 1); }
     nextPage(): void { this.goToPage(this.currentPage + 1); }
     lastPage(): void { this.goToPage(this.totalPages); }
-
     getContestName(contestId: number | ''): string {
         if (contestId === '') return 'All Contests';
         return this.contests.find(c => c.id === contestId)?.name || 'Unknown';
     }
-
     onSelectQuestionForEdit(question: Question): void {
         this.resetQuestionForm(); this.editingQuestionId = question.id;
         this.questionForm.patchValue(question);
         question.options.forEach(optionText => this.addOption(optionText));
     }
-
     resetQuestionForm(): void {
         this.editingQuestionId = null;
         this.questionForm.reset({
@@ -342,7 +356,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
         this.options.clear();
     }
-
     async onQuestionFormSubmit(): Promise<void> {
         if (this.questionForm.invalid) {
             this.alertService.showToast({ message: 'Please fill all required question fields.', type: 'warning' });
@@ -375,7 +388,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.spinnerService.hide();
         });
     }
-
     async onDeleteQuestion(id: string): Promise<void> {
         if ((await this.alertService.showConfirm('Delete Question', `Are you sure you want to delete this question? This action is irreversible.`))?.role === 'confirm') {
             try {
@@ -391,14 +403,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             }
         }
     }
-
     onFileSelected(event: any): void {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => this.parseCsv(e.target?.result as string);
         reader.readAsText(file);
     }
-
     parseCsv(csvText: string): void {
         const lines = csvText.split('\n').filter(line => line.trim() !== '');
         const headers = lines.shift()?.trim().split(',').map(h => h.trim()) || [];
@@ -415,7 +425,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
         this.alertService.showToast({ message: `${this.parsedQuestions.length} questions parsed from file.`, type: 'info' });
     }
-
     async handleBulkUpload(): Promise<void> {
         if (this.parsedQuestions.length === 0 || this.selectedContestForQuestions === '' || this.selectedContestForQuestions === null) {
             this.alertService.showToast({ message: 'Please select a contest before bulk uploading.', type: 'warning' });
@@ -435,7 +444,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             this.spinnerService.hide();
         }
     }
-
     async handleResetContest(contestIdStr: string) {
         const contestId = Number(contestIdStr); const contest = this.contests.find(c => c.id === contestId); if (!contest) return;
         if ((await this.alertService.showConfirm('Confirm Contest Reset', `This will permanently delete all quiz history and reset all question statistics for the contest "${contest.name}". Are you sure?`))?.role === 'confirm') {
@@ -450,82 +458,66 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     // --- QUIZ ATTEMPT MANAGEMENT ---
-    async loadAttemptsForUser(userIdStr: string, contestIdStr?: string): Promise<void> {
+    async loadAttemptsForUser(userIdStr: string): Promise<void> {
         this.resetAttemptForm();
-        if (!userIdStr) {
-            this.selectedUserForAttempts = null;
+        this.selectedUserForAttempts = userIdStr ? Number(userIdStr) : null;
+
+        if (!this.selectedUserForAttempts) {
+            this.allUserAttempts = [];
             this.userAttempts = [];
             return;
         }
 
-        this.selectedUserForAttempts = Number(userIdStr);
-        const contestId = contestIdStr ? Number(contestIdStr) : null;
-
         try {
             this.spinnerService.show('Loading attempts...');
-            this.userAttempts = await this.dbService.getAllQuizAttempts(contestId, userIdStr);
+            // Fetch all attempts for the selected user, without contest filter
+            this.allUserAttempts = await this.dbService.getAllQuizAttempts({contestId: null, userId: userIdStr});
+            this.applyAttemptFilters(this.attemptFilterForm.value);
         } catch (error) {
             this.alertService.showToast({ message: 'Failed to load quiz attempts.', type: 'error' });
+            this.allUserAttempts = [];
             this.userAttempts = [];
         } finally {
             this.spinnerService.hide();
         }
     }
 
-    /**
-     * Filters userAttempts by multiple criteria.
-     * @param filters Object with optional properties: method, type, userId, contestId, status, minScore, maxScore
-     */
-    filterAttempts(
-        //     filters: {
-        //     method?: string;
-        //     type?: string;
-        //     userId?: number;
-        //     contestId?: number;
-        //     status?: QuizStatus;
-        //     minScore?: number;
-        //     maxScore?: number;
-        // }
-    ): void {
-        // Always start from the full list (assume you have a backup or reload from DB if needed)
-        let attempts = [...this.userAttempts];
+    applyAttemptFilters(filters: { userId: string, contestId: string, attemptId: string, attemptType: string }): void {
+        const contestIdFilter = filters.contestId;
+        const attemptIdFilter = filters.attemptId.toLowerCase().trim();
+        const typeFilter = filters.attemptType;
 
-        // if (filters.method) {
-        //     attempts = attempts.filter(a => a.method === filters.method);
-        // }
-        // if (filters.type) {
-        //     attempts = attempts.filter(a => a.quizType === filters.type);
-        // }
-        // if (filters.userId !== undefined) {
-        //     attempts = attempts.filter(a => a.userId === filters.userId);
-        // }
-        // if (filters.contestId !== undefined) {
-        //     attempts = attempts.filter(a => a.contestId === filters.contestId);
-        // }
-        // if (filters.status) {
-        //     attempts = attempts.filter(a => a.status === filters.status);
-        // }
-        // if (filters.minScore !== undefined) {
-        //     attempts = attempts.filter(a => a.score >= filters.minScore!);
-        // }
-        // if (filters.maxScore !== undefined) {
-        //     attempts = attempts.filter(a => a.score <= filters.maxScore!);
-        // }
+        let filtered = [...this.allUserAttempts];
 
-        if (this.filterByAttemptID) {
-            attempts = attempts.filter(a => a.id.toLowerCase().includes(this.filterByAttemptID.toLowerCase().trim()));
+        if (contestIdFilter) {
+            filtered = filtered.filter(a => a.contestId === Number(contestIdFilter));
+        }
+        if (attemptIdFilter) {
+            filtered = filtered.filter(a => a.id.toLowerCase().includes(attemptIdFilter));
+        }
+        if (typeFilter) {
+            filtered = filtered.filter(a => a.quizType === typeFilter);
         }
 
-        this.userAttempts = attempts;
+        this.userAttempts = filtered;
     }
 
     onSelectAttemptForEdit(attempt: QuizAttempt): void {
         this.attemptForm.reset();
+        const formatForInput = (date: Date | undefined) => {
+            if (!date) return null;
+            const pad = (n: number) => n.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        };
+
         this.attemptForm.patchValue({
             id: attempt.id,
             quizTitle: attempt.quizTitle,
             score: attempt.score,
-            status: attempt.status
+            status: attempt.status,
+            timestampStart: formatForInput(attempt.timestampStart),
+            timestampEnd: formatForInput(attempt.timestampEnd),
+            timeElapsed: attempt.timeElapsed
         });
     }
 
@@ -536,21 +528,30 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         }
 
         const formValue = this.attemptForm.getRawValue();
+        const originalAttempt = this.allUserAttempts.find(a => a.id === formValue.id);
+        if (!originalAttempt) {
+            this.alertService.showToast({ message: 'Original attempt not found.', type: 'error' });
+            return;
+        }
+
         const updatedAttempt: Partial<QuizAttempt> = {
+            ...originalAttempt,
             id: formValue.id,
             quizTitle: formValue.quizTitle,
             score: Number(formValue.score),
-            status: formValue.status
+            status: formValue.status,
+            timestampStart: new Date(formValue.timestampStart),
+            timestampEnd: formValue.timestampEnd ? new Date(formValue.timestampEnd) : undefined,
+            timeElapsed: formValue.timeElapsed
         };
 
         this.spinnerService.show('Saving attempt...');
         this.dbService.saveQuizAttempt(updatedAttempt as QuizAttempt).then(() => {
             this.alertService.showToast({ message: 'Attempt updated successfully.', type: 'success' });
-            this.resetAttemptForm();
-            // Reload attempts for the currently selected user
             if (this.selectedUserForAttempts) {
                 this.loadAttemptsForUser(this.selectedUserForAttempts.toString());
             }
+            this.resetAttemptForm();
         }).catch(err => {
             this.alertService.showToast({ message: `Failed to update attempt: ${err.message}`, type: 'error' });
         }).finally(() => {
@@ -579,40 +580,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     calcDurataQuiz(quizAttempt: QuizAttempt): string {
-        if (
-            quizAttempt &&
-            quizAttempt.timestampEnd &&
-            quizAttempt.timestampStart
-        ) {
-            // Get timestamps as milliseconds
-            const endTime =
-                typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
-                    ? new Date(quizAttempt.timestampEnd).getTime()
-                    : quizAttempt.timestampEnd.getTime();
-            const startTime =
-                typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
-                    ? new Date(quizAttempt.timestampStart).getTime()
-                    : quizAttempt.timestampStart.getTime();
-
-            if (!isNaN(endTime) && !isNaN(startTime)) {
-                // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
-                const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
-                const totalMs = endTime - startTime;
-                let elapsedMs: number = totalMs;
-                if (pausedSeconds * 1000 !== totalMs) {
-                    if (pausedSeconds * 1000 < totalMs) {
-                        return this.msToTime(elapsedMs);
-                    }
-                    elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
-                }
-                return this.msToTime(elapsedMs);
-            }
+        if (quizAttempt.timeElapsed)
+            return this.msToTime(quizAttempt.timeElapsed * 1000);
+        if (quizAttempt?.timestampEnd && quizAttempt?.timestampStart) {
+            const durationMs = new Date(quizAttempt.timestampEnd).getTime() - new Date(quizAttempt.timestampStart).getTime();
+            return this.msToTime(durationMs);
         }
         return "N/D";
     }
-
-
-
 
     private msToTime(ms: number): string {
         if (ms < 0) ms = 0;

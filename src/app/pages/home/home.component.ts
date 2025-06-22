@@ -20,7 +20,7 @@ import { ContestSelectionService } from '../../core/services/contest-selection.s
 import { Subscription } from 'rxjs';
 import { AppUser, AuthService } from '../../core/services/auth.service';
 import { SpinnerService } from '../../core/services/spinner.service';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 
 @Component({
   selector: 'app-home',

@@ -9,7 +9,7 @@ import { IconDefinition, faHome, faBarChart, faLandmark } from '@fortawesome/fre
 import { QuizSettings } from '../../models/quiz.model';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { AlertService } from '../../services/alert.service';
-import { Contest } from '../../models/contes.model';
+import { Contest } from '../../models/contest.model';
 
 interface CategorizedQuestion extends Question {
   failureRate: number;
