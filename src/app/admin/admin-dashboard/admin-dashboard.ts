@@ -32,6 +32,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     users: User[] = [];
     contests: Contest[] = [];
     questions: Question[] = [];
+    totQuestions: number = 0;
     filteredQuestions: Question[] = []; // For displaying filtered results
 
     // Forms
@@ -53,6 +54,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     selectedContestForQuestions: number | '' = ''; // Can be '' for "All Contests"
     parsedQuestions: Partial<Question>[] = [];
     isUploading = false;
+
+    // --- PAGINATION STATE ---
+    currentPage = 1;
+    itemsPerPage = 15; // How many questions to show per page
+    totalQuestions = 0;
+    get totalPages(): number {
+        return Math.ceil(this.totalQuestions / this.itemsPerPage);
+    }
 
     private filterSubscription!: Subscription;
 
@@ -190,18 +199,37 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     // --- USER MANAGEMENT ---
-    onUserFormSubmit(): void {
+    async onUserFormSubmit(): Promise<void> {
         if (this.userForm.invalid) return;
-        if (!this.editingUserId) this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
-        else this.userForm.controls['password'].clearValidators();
+        if (!this.editingUserId) {
+            this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
+        } else {
+            this.userForm.controls['password'].clearValidators();
+        }
         this.userForm.controls['password'].updateValueAndValidity();
         if (this.userForm.invalid) {
             this.alertService.showAlert('Warning', 'Please fill all required fields.');
             return;
         }
-        const userData: User = { id: this.editingUserId!, ...this.userForm.value };
+
+        let userId = this.editingUserId;
+        if (!userId) {
+            try {
+                const maxId = await this.dbService.getHighestUserId();
+                userId = (Number(maxId) ?? 0) + 1;
+            } catch (err) {
+                this.alertService.showAlert('Error', 'Failed to determine next user ID.');
+                return;
+            }
+        }
+
+        const userData: User = { id: userId, ...this.userForm.value };
         delete userData.hashedPassword;
-        if (this.userForm.value.password) userData.hashedPassword = this.userForm.value.password;
+
+        // Hash password with SHA-256 if provided
+        if (this.userForm.value.password) {
+            userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
+        }
 
         this.dbService.upsertUser(userData).then(async savedUser => {
             if (this.editingUserId) {
@@ -213,6 +241,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         }).catch(err => {
             this.alertService.showAlert('Error', `Failed to save user: ${err.message}`);
         });
+    }
+
+    // Utility function to hash password with SHA-256
+    private async hashPasswordSHA256(password: string): Promise<string> {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        // Convert ArrayBuffer to hex string
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
     async onSelectUserForEdit(user: User): Promise<void> {
@@ -256,27 +293,64 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (this.questionForm.value.correctAnswerIndex === index) this.questionForm.patchValue({ correctAnswerIndex: null });
     }
 
-    async loadQuestionsForContest(contestIdStr: string): Promise<void> {
+    // UPDATED METHOD
+    async loadQuestionsForContest(contestIdStr: string, page: number = 1): Promise<void> {
         this.resetQuestionForm();
+        this.questionFilterForm.reset({ text: '', topic: '', id: '' }, { emitEvent: false });
+        this.selectedContestForQuestions = Number(contestIdStr);
+
         if (contestIdStr === '') {
             this.questions = [];
             this.filteredQuestions = [];
+            this.totalQuestions = 0;
+            this.currentPage = 1;
             return;
         }
-        this.questionFilterForm.reset({ text: '', topic: '', id: '' }, { emitEvent: false }); // Prevent re-triggering
-        this.selectedContestForQuestions = Number(contestIdStr);
-        const contestId = contestIdStr ? Number(contestIdStr) : 0;
+
+        const contestId = contestIdStr ? Number(contestIdStr) : null;
+        this.currentPage = page;
+        const offset = (this.currentPage - 1) * this.itemsPerPage;
 
         try {
-            this.questions = await this.dbService.getAllQuestions(contestId);
+            this.spinnerService.show('Loading questions...');
+            // Fetch total count only if it's the first page
+            if (page === 1) {
+                this.totalQuestions = await this.dbService.countAllRows(contestId!);
+            }
+            this.questions = await this.dbService.getAllQuestionsPaginated(contestId, this.itemsPerPage, offset);
             this.filteredQuestions = [...this.questions];
         } catch (error) {
             this.alertService.showAlert('Error', 'Failed to load questions for this contest.');
             this.questions = [];
             this.filteredQuestions = [];
+            this.totalQuestions = 0;
+        } finally {
+            this.spinnerService.hide();
         }
     }
 
+    // NEW PAGINATION METHODS
+    goToPage(page: number): void {
+        if (page >= 1 && page <= this.totalPages) {
+            this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), page);
+        }
+    }
+
+    firstPage(): void {
+        this.goToPage(1);
+    }
+
+    previousPage(): void {
+        this.goToPage(this.currentPage - 1);
+    }
+
+    nextPage(): void {
+        this.goToPage(this.currentPage + 1);
+    }
+
+    lastPage(): void {
+        this.goToPage(this.totalPages);
+    }
     getContestName(contestId: number | ''): string {
         if (contestId === '') return 'All Contests';
         return this.contests.find(c => c.id === contestId)?.name || 'Unknown';

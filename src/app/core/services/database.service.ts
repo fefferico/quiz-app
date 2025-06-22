@@ -587,7 +587,7 @@ export class DatabaseService implements OnDestroy {
   }
 
   // --- Question Table Methods (Supabase-first from original) ---
-  async getAllQuestions(contestId?: number | null): Promise<Question[]> {
+  async getAllQuestions(contestId: number): Promise<Question[]> {
     const operationName = `getAllQuestions` + (contestId ? ` for contest ${contestId}` : '');
     let supabaseQuery = this.supabase.from('questions').select('*');
     if (contestId !== undefined && contestId !== null && contestId >= 0) {
@@ -602,6 +602,32 @@ export class DatabaseService implements OnDestroy {
 
     if (error) {
       console.error('Supabase error in getAllQuestions:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuestionFromSupabase);
+  }
+
+
+  /**
+   * Fetches a paginated list of questions for a given contest.
+   * @param contestId The ID of the contest. Can be null to fetch from all contests.
+   * @param limit The number of items to return per page.
+   * @param offset The starting index of the items to return.
+   * @returns A promise that resolves to an array of Question objects.
+   */
+  async getAllQuestionsPaginated(contestId: number | null, limit: number, offset: number): Promise<Question[]> {
+    let query = this.supabase.from('questions').select('*');
+
+    if (contestId !== null) {
+      query = query.eq('fk_contest_id', contestId);
+    }
+    
+    // Apply pagination and a consistent order
+    query = query.range(offset, offset + limit - 1).order('id', { ascending: true });
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Supabase error in getAllQuestionsPaginated:', error);
       throw error;
     }
     return (data ?? []).map(this.mapQuestionFromSupabase);
@@ -1749,6 +1775,22 @@ export class DatabaseService implements OnDestroy {
     if (error) {
       console.error('Supabase error deleting user:', error);
       throw error;
+    }
+  }
+
+  async getHighestUserId(): Promise<number | null> {
+    try {
+      const allIds = await this.fetchAllRowIds('users');
+      if (!allIds || allIds.length === 0) return null;
+      // IDs may be numeric or string, so parse as numbers
+      const numericIds = allIds
+        .map(id => parseInt(id, 10))
+        .filter(num => !isNaN(num));
+      if (numericIds.length === 0) return null;
+      return Math.max(...numericIds);
+    } catch (err) {
+      console.error('Error in getHighestUserId:', err);
+      return null;
     }
   }
 

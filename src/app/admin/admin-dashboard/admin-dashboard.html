@@ -120,12 +120,11 @@
                 </select>
             </div>
 
-            <div *ngIf="selectedContestForQuestions !== null && selectedContestForQuestions !== undefined"
-                class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div *ngIf="selectedContestForQuestions !== null" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Questions for {{
                         getContestName(selectedContestForQuestions) }} ({{filteredQuestions.length}} /
-                        {{questions.length}})</h4>
+                        {{totalQuestions}})</h4>
 
                     <div [formGroup]="questionFilterForm"
                         class="p-4 mb-4 bg-white rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -172,15 +171,44 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <p *ngIf="filteredQuestions.length === 0" class="text-center py-4 text-gray-500">No questions
-                            match the current filters.</p>
+                        <p *ngIf="filteredQuestions.length === 0 && totalQuestions > 0"
+                            class="text-center py-4 text-gray-500">No questions match the current filters.</p>
+                        <p *ngIf="totalQuestions === 0" class="text-center py-4 text-gray-500">No questions found for
+                            this contest.</p>
+                    </div>
+
+                    <!-- UPDATED PAGINATION CONTROLS -->
+                    <div *ngIf="totalPages > 1"
+                        class="flex justify-between items-center mt-4 p-2 bg-white rounded-md border">
+                        <div class="flex items-center gap-2">
+                            <button (click)="firstPage()" [disabled]="currentPage === 1"
+                                class="px-3 py-1 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                « First
+                            </button>
+                            <button (click)="previousPage()" [disabled]="currentPage === 1"
+                                class="px-3 py-1 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                ‹ Previous
+                            </button>
+                        </div>
+                        <span class="text-sm text-gray-700">
+                            Page {{ currentPage }} of {{ totalPages }}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                                class="px-3 py-1 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next ›
+                            </button>
+                            <button (click)="lastPage()" [disabled]="currentPage === totalPages"
+                                class="px-3 py-1 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Last »
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingQuestionId ? 'Edit
                         Question' : 'Add New Question' }}</h4>
                     <form [formGroup]="questionForm" (ngSubmit)="onQuestionFormSubmit()">
-                        <!-- NEW: CONTEST SELECTOR -->
                         <div class="mb-2">
                             <label class="block mb-1 text-sm font-medium">Contest</label>
                             <select formControlName="contestId" class="w-full input-style">
