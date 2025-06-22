@@ -1,17 +1,17 @@
 // src/app/app.component.ts
 import { Component, computed, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {RouterOutlet, RouterLink, Router, RouterLinkActive} from '@angular/router';
+import { RouterOutlet, RouterLink, Router, RouterLinkActive } from '@angular/router';
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import {
   faSun, faMoon, faAdjust, faHome, IconDefinition,
   faAdd, faHistory, faBarChart, faMagnifyingGlass, faStar, faLandmark,
-  faSignOut,
+  faSignOut, faGears,
   faBars, faTimes, faBrain // Import hamburger and close icons, and faBrain
 } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from './services/theme.service';
-import {AuthService} from './core/services/auth.service';
-import {SpinnerComponent} from './shared/spinner/spinner.component';
+import { AuthService } from './core/services/auth.service';
+import { SpinnerComponent } from './shared/spinner/spinner.component';
 import { ToastContainerComponent } from './shared/toast/toast.component';
 
 @Component({
@@ -41,6 +41,7 @@ export class AppComponent {
   faMagnifyingGlass: IconDefinition = faMagnifyingGlass;
   faStar: IconDefinition = faStar;
   faSignOut: IconDefinition = faSignOut;
+  faGears: IconDefinition = faGears;
   // faBrain icon is not directly used in app.component.html but added to library
 
   public isMenuOpen: boolean = false; // State for hamburger menu
@@ -77,6 +78,10 @@ export class AppComponent {
     this.themeService.toggleTheme();
   }
 
+  goToAdminDashboard(): void {
+    this.router.navigate(['/admin']);
+  }
+
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
   }
@@ -96,5 +101,9 @@ export class AppComponent {
     }).catch((error) => {
       console.error("Error logging off:", error);
     });
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 }
