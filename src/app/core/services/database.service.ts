@@ -115,7 +115,8 @@ export class DatabaseService implements OnDestroy {
       contestId: supabaseAttempt.fk_contest_id,
       userId: supabaseAttempt.fk_user_id,
       quizTitle: supabaseAttempt.quiz_title,
-      quizType: supabaseAttempt.quiz_type
+      quizType: supabaseAttempt.quiz_type,
+      timeElapsed: supabaseAttempt.time_elapsed
     };
   }
 
@@ -151,6 +152,7 @@ export class DatabaseService implements OnDestroy {
     if (appAttempt.userId !== undefined) supabaseAttempt.fk_user_id = appAttempt.userId;
     if (appAttempt.quizTitle !== undefined) supabaseAttempt.quiz_title = appAttempt.quizTitle;
     if (appAttempt.quizType !== undefined) supabaseAttempt.quiz_type = appAttempt.quizType;
+    if (appAttempt.timeElapsed !== undefined) supabaseAttempt.time_elapsed = appAttempt.timeElapsed;
     return supabaseAttempt;
   }
 

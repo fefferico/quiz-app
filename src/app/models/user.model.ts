@@ -6,4 +6,13 @@ export interface User {
   hashedPassword?: string;
   displayName?: string;
   isActive?: boolean;
+  roles?: Role[]
+}
+
+
+export interface Role {
+  id?: number;
+  name?: string;
+  createdAt?: Date;
+  isActive?: boolean;
 }

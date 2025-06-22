@@ -1084,7 +1084,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
       }),
       status: isTimeUp ? 'timed-out' : 'completed',
       currentQuestionIndex: this.currentQuestionIndex,
-      timeElapsedOnPauseSeconds: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
+      timeElapsed: this.isCronometerEnabled ? this._timeElapsedSeconds : undefined,
       quizTitle: this.quizTitle,
       quizType: this.quizType,
       // timeLeftOnPauseSeconds is not relevant here as quiz is ending

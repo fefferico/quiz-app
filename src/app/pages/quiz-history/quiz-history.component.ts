@@ -57,6 +57,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
   // --- Filter Properties ---
   filterDateStart: string = ''; // ISO date string e.g., "2023-01-01"
+  filterID: string = ''; 
   filterDateEnd: string = '';   // ISO date string
   filterMinPercentage: number | null = null;
   filterMaxPercentage: number | null = null;
@@ -239,6 +240,13 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.filterUser);
       this.spinnerService.hide();
       filtered = [...this.allQuizAttempts];
+    }
+
+    // 7. Filter by ID
+    if (this.filterID && this.filterID !== '') {
+      filtered = filtered.filter(attempt =>
+        attempt.id.toLowerCase().includes(this.filterID.toLowerCase().trim())
+      );
     }
 
     this.quizAttempts = filtered.sort((a, b) =>

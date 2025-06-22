@@ -63,6 +63,7 @@ export interface QuizAttempt {
   currentQuestionIndex?: number; // <-- NEW: For resuming
   timeLeftOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
   timeElapsedOnPauseSeconds?: number; // <-- NEW: For resuming timed quiz
+  timeElapsed?: number;
   contestId: number;
   userId: number;
   quizType?: QuizType;

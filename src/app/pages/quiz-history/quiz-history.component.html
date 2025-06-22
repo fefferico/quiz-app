@@ -61,7 +61,9 @@
           [(ngModel)]="filterMaxPercentage" (ngModelChange)="applyFilters()" placeholder="0-100"
           class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
       </div>
-      <div *ngIf="isAdmin">
+    </div>
+    <div *ngIf="isAdmin" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+      <div>
         <label for="filterUser" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Utente:</label>
         <select id="filterUser" name="filterUser" [(ngModel)]="filterUser" (ngModelChange)="applyFilters()"
           class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
@@ -69,6 +71,15 @@
           <option *ngFor="let user of availableUsers" [value]="user.id">{{ user.username }}</option>
         </select>
       </div>
+
+      <!-- ID Start -->
+      <div>
+        <label for="filterID" class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID:</label>
+        <input type="text" id="filterID" name="filterID" [(ngModel)]="filterID" (ngModelChange)="applyFilters()"
+          placeholder="abc-123-fgh"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+      </div>
+      <!-- ID End -->
     </div>
     <!-- Reset Button -->
     <div class="flex justify-center mt-2">
@@ -117,7 +128,7 @@
                 Stato: {{ getStatusLabelText(attempt) }}
               </p>
             </div>
-            
+
             <p class="text-lg font-bold text-gray-800 dark:text-gray-100 mt-1">
               Punteggio: {{ attempt.score }} / {{ getMaxResultForAttempt(attempt) }}
               <span class="text-gray-600 dark:text-gray-400 font-normal">
@@ -171,8 +182,8 @@
                 aria-label="Ripeti domande sbagliate/saltate"></fa-icon>
               <fa-icon class="fa-lg pr-1" [icon]="faRepeat" aria-label="Ripeti domande sbagliate/saltate"></fa-icon>
             </button>
-            <button *ngIf="isAdmin" (click)="deleteAttempt(attempt.id, $event)" aria-label="Elimina questo tentativo quiz"
-              title="Elimina questo tentativo quiz"
+            <button *ngIf="isAdmin" (click)="deleteAttempt(attempt.id, $event)"
+              aria-label="Elimina questo tentativo quiz" title="Elimina questo tentativo quiz"
               class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-200 dark:hover:bg-opacity-30 transition-colors">
               <fa-icon class="px-2 fa-lg" [icon]="faDelete" aria-label="Elimina questo tentativo quiz"></fa-icon>
             </button>
