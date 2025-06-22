@@ -74,6 +74,9 @@
       </div>
       <div class="w-full max-w-2xl mx-auto mb-2">
         <p class="text-sm text-indigo-200 dark:text-indigo-300">
+          <strong>Ora di inizio:</strong> {{ quizAttempt.timestampStart | date:'H:mm d/MM/yyyy':'it-IT' }}
+        </p>
+        <p class="text-sm text-indigo-200 dark:text-indigo-300">
           <strong>Ora di fine:</strong> {{ quizAttempt.timestampEnd | date:'H:mm d/MM/yyyy':'it-IT' }}
         </p>
         <p class="text-sm text-indigo-200 dark:text-indigo-300">

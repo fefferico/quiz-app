@@ -372,8 +372,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
   }
 
-
-  calcDurataQuiz(quizAttempt: QuizAttempt): string {
+    calcDurataQuizOLD(quizAttempt: QuizAttempt): string {
     if (quizAttempt && quizAttempt.timestampEnd && quizAttempt.timestampStart) {
       // Check if timestamps are Date objects or strings/numbers
       const endTime = typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
@@ -389,6 +388,34 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     }
     return "N/D";
   }
+
+  calcDurataQuiz(quizAttempt: QuizAttempt): string {
+    if (
+      quizAttempt &&
+      quizAttempt.timestampEnd &&
+      quizAttempt.timestampStart
+    ) {
+      // Get timestamps as milliseconds
+      const endTime =
+        typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
+          ? new Date(quizAttempt.timestampEnd).getTime()
+          : quizAttempt.timestampEnd.getTime();
+      const startTime =
+        typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
+          ? new Date(quizAttempt.timestampStart).getTime()
+          : quizAttempt.timestampStart.getTime();
+
+      if (!isNaN(endTime) && !isNaN(startTime)) {
+        // Subtract paused time if present
+        const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
+        const elapsedMs = Math.max(0, endTime - startTime - pausedSeconds * 1000);
+        return this.msToTime(elapsedMs);
+      }
+    }
+    return "N/D";
+  }
+
+  
 
 
   private msToTime(ms: number): string {

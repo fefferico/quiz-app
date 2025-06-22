@@ -227,7 +227,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       );
     }
 
-        // 6. Filter by User
+    // 6. Filter by User
     if (this.filterUser && this.filterUser !== undefined && this.filterUser >= 0) {
       const currentContest = this.contestSelectionService.checkForContest();
       if (currentContest === null) {
@@ -235,7 +235,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.spinnerService.show("Recupero quiz per l'utente "+ this.availableUsers.find(user=>user.id == this.filterUser)?.displayName);
+      this.spinnerService.show("Recupero quiz per l'utente " + this.availableUsers.find(user => user.id == this.filterUser)?.displayName);
       this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.filterUser);
       this.spinnerService.hide();
       filtered = [...this.allQuizAttempts];
@@ -471,5 +471,41 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
   async repeatWrongQuiz(quizAttemptId: string): Promise<void> { // Make async
     await this.questionService.repeatWrongQuiz(quizAttemptId);
+  }
+
+  calcDurataQuiz(quizAttempt: QuizAttempt): string {
+    if (
+      quizAttempt &&
+      quizAttempt.timestampEnd &&
+      quizAttempt.timestampStart
+    ) {
+      // Get timestamps as milliseconds
+      const endTime =
+        typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
+          ? new Date(quizAttempt.timestampEnd).getTime()
+          : quizAttempt.timestampEnd.getTime();
+      const startTime =
+        typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
+          ? new Date(quizAttempt.timestampStart).getTime()
+          : quizAttempt.timestampStart.getTime();
+
+      if (!isNaN(endTime) && !isNaN(startTime)) {
+        // Subtract paused time if present
+        const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
+        const elapsedMs = Math.max(0, endTime - startTime - pausedSeconds * 1000);
+        return this.msToTime(elapsedMs);
+      }
+    }
+    return "N/D";
+  }
+
+  private msToTime(ms: number): string {
+    if (ms < 0) ms = 0;
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   }
 }

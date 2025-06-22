@@ -63,7 +63,10 @@ export class SetupModalComponent implements OnInit {
   }
 
   onInternalSubmit(): void {
-    let quizSettings: Partial<QuizSettings> = {}; // Use Partial as some fields are mode-dependent
+    let quizSettings: Partial<QuizSettings> = {...this.quizSettings}; // Use Partial as some fields are mode-dependent
+
+    let standardQuestionsSkippable = (quizSettings?.enableSkipQuestion !== null && quizSettings?.enableSkipQuestion !== undefined ) ? quizSettings?.enableSkipQuestion : true;
+    standardQuestionsSkippable = this.isFrancesco ? false : standardQuestionsSkippable;
 
     let navigateToPath = '/quiz/take'; // Default path
     if (this.useDetailedTopicCounts && this.clonedTopics.length > 0) {
@@ -78,9 +81,9 @@ export class SetupModalComponent implements OnInit {
         timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer,
-        quizTitle: this.quizSettings?.quizTitle,
-        quizType: this.quizSettings?.quizType,
-        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
+        quizTitle: quizSettings?.quizTitle,
+        quizType: quizSettings?.quizType,
+        enableSkipQuestion: standardQuestionsSkippable
       };
     } else {
       quizSettings = {
@@ -90,9 +93,9 @@ export class SetupModalComponent implements OnInit {
         timerDurationSeconds: this.timerDurationSeconds,
         publicContest: this.contestName?.id,
         hideCorrectAnswer: this.hideCorrectAnswer,
-        quizTitle: this.quizSettings?.quizTitle,
-        quizType: this.quizSettings?.quizType,
-        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
+        quizTitle: quizSettings?.quizTitle,
+        quizType: quizSettings?.quizType,
+        enableSkipQuestion: standardQuestionsSkippable
       };
     }
     quizSettings.keywords = []; // Add keywords to both modes
@@ -120,7 +123,7 @@ export class SetupModalComponent implements OnInit {
         hideCorrectAnswer: this.hideCorrectAnswer,
         quizTitle: quizSettings.quizTitle,
         quizType: quizSettings.quizType,
-        isQuestionSkippable: this.quizSettings?.isQuestionSkippable
+        enableSkipQuestion: quizSettings?.enableSkipQuestion
       };
 
     console.log(`Navigating to ${navigateToPath} with queryParams:`, queryParams);

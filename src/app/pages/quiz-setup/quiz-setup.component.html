@@ -210,6 +210,16 @@
 
         <!-- Timer Settings -->
         <div *ngIf="!isStudyMode" class="mb-8 border-t dark:border-gray-700 pt-6 mt-6">
+          <h3 *ngIf="!isFrancesco" class="block text-lg font-medium text-gray-700 dark:text-gray-400 mb-2">Blocca possibilità di saltare le domande? (facoltativo)</h3>
+          <div *ngIf="!isFrancesco" class="flex items-center mb-4">
+            <input id="disableSkipQuestion" name="disableSkipQuestion" type="checkbox" [(ngModel)]="disableSkipQuestion"
+              [disabled]="isStudyMode"
+              class="h-5 w-5 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-gray-100 dark:bg-gray-700">
+            <label for="disableSkipQuestion" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-500">
+              Blocca
+            </label>
+          </div>
+
           <h3 class="block text-lg font-medium text-gray-700 dark:text-gray-400 mb-2">Cronometro (facoltativo)</h3>
           <div class="flex items-center mb-4">
             <input id="enableCronometer" name="enableCronometer" type="checkbox" [(ngModel)]="enableCronometerInput"

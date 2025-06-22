@@ -112,6 +112,7 @@
                 {{ (attempt.timestampEnd || attempt.timestampStart) | date:'d/MM/yyyy':'it-IT' }} alle {{
                 (attempt.timestampEnd || attempt.timestampStart) | date:'H:mm' }}
               </p>
+
               <p class="text-xs dark:text-white w-fit" [ngClass]="getStatusLabelColor(attempt)">
                 Stato: {{ getStatusLabelText(attempt) }}
               </p>
@@ -148,6 +149,9 @@
               </p>
               <p class="text-l font-bold dark:text-white" style="word-break:break-word;">
                 Tipologia: {{ getQuizType(attempt) }}
+              </p>
+              <p class="text-sm text-indigo-200 dark:text-indigo-300">
+                <strong>Durata quiz:</strong> {{ calcDurataQuiz(attempt) }}
               </p>
               <p class="text-xs dark:text-white mb-2">
                 ID: {{ attempt.id }}

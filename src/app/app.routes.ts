@@ -13,6 +13,7 @@ import {QuizStudyComponent} from './features/quiz/quiz-study/quiz-study.componen
 import {AuthGuard} from './guards/auth.guard';
 import {LoginComponent} from './components/login/login.component';
 import {UserRole} from './core/services/auth.service';
+import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard';
 
 export const routes: Routes = [
   {path: '', redirectTo: 'login', pathMatch: 'full'},
@@ -53,6 +54,14 @@ export const routes: Routes = [
   {
     path: 'quiz/study', component: QuizStudyComponent, title: 'Modalità studio', canActivate: [AuthGuard],
     data: {allowedRoles: [UserRole.Admin, UserRole.QuizTaker]}
+  },
+  // --- NEW ADMIN ROUTE ---
+  {
+    path: 'admin',
+    component: AdminDashboardComponent,
+    title: 'Admin Dashboard',
+    canActivate: [AuthGuard],
+    data: { allowedRoles: [UserRole.Admin] }
   },
   {
     path: '**', redirectTo: 'home', pathMatch: 'full' // Redirect to home for any unknown routes

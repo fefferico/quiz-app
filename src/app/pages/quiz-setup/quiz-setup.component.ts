@@ -46,9 +46,12 @@ export class QuizSetupComponent implements OnInit, DoCheck {
 
   enableTimerInput = false;
   enableCronometerInput = false;
+  disableSkipQuestion = false;
   timerHoursInput = 0;
   timerMinutesInput = 10;
   timerSecondsInput = 0;
+  isFrancesco: boolean = false;
+
 
   enableStreakSoundsInput = false; // Default to true, user can disable
 
@@ -89,9 +92,11 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     }
 
     // forzo 100 domande per volta se Francesco
-    if (this.authService.getCurrentUserId()===2){
+    if (this.authService.getCurrentUserId() === 2) {
       this.numQuestionsOptions = [100];
     }
+
+    this.isFrancesco = this.authService.getCurrentUserId() === 2;
 
     this.accordionState.clear();
     this.accordionState.set("main", false); // Open the first group by default
@@ -308,6 +313,7 @@ export class QuizSetupComponent implements OnInit, DoCheck {
     const keywords = this.keywordsInput.split(/[\s,]+/).map(kw => kw.trim()).filter(kw => kw.length > 0);
     let quizSettings: Partial<QuizSettings> = {};
     let queryParams: any = {};
+    queryParams.enableSkipQuestion = this.isFrancesco ? false : !this.disableSkipQuestion;
 
     const navigateToPath = this.isStudyMode ? '/quiz/study' : '/quiz/take';
 

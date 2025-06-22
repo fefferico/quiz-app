@@ -84,7 +84,7 @@ export interface QuizSettings {
   hideCorrectAnswer?: boolean;
   quizType?: QuizType;
   quizTitle?: string;
-  isQuestionSkippable?: boolean;
+  enableSkipQuestion?: boolean;
 }
 
 export type QuizStatus = 'in-progress' | 'paused' | 'completed' | 'timed-out' | 'cancelled' | 'error' | 'in svolgimento' | 'in pausa' | 'completato' | 'tempo scaduto' | 'cancellato' | 'errore' // <-- NEW: For better state management

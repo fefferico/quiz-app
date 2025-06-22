@@ -157,7 +157,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
   // Timer related properties
   isTimerEnabled = false;
-  isCronometerEnabled = false;
+  isCronometerVisible = false;
+  isCronometerEnabled = true;
   timerDurationSeconds = 0;
   timeLeft$: Observable<number> | undefined;
   timeElapsed$: Observable<number> | undefined;
@@ -321,7 +322,9 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         // Use the stored navigationState first, then fallback to queryParams
         const actualParams = this.navigationState?.['quizParams'] || queryOnlyParams;
 
-        const isQuestionSkippable = actualParams['isQuestionSkippable'];
+        console.log('QUIZ PARAMS',actualParams)
+
+        const enableSkipQuestion = actualParams['enableSkipQuestion'] !== undefined && actualParams['enableSkipQuestion'] !== null ? actualParams['enableSkipQuestion'] : true;
         const resumeAttemptId = actualParams['resumeAttemptId'];
         const randomQuestions = actualParams['randomQuestions'];
         this.hideCorrectAnswer = actualParams['hideCorrectAnswer'];
@@ -384,7 +387,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           }
 
           this.isTimerEnabled = actualParams['enableTimer'] == true || actualParams['enableTimer'] === 'true';
-          this.isCronometerEnabled = actualParams['enableCronometer'] === 'true';
+          this.isCronometerVisible = actualParams['enableCronometer'] === 'true';
           this.timerDurationSeconds = actualParams['timerDurationSeconds'] ? +actualParams['timerDurationSeconds'] : 0;
           this._timeLeftSeconds = this.timerDurationSeconds;
 
@@ -401,7 +404,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
             enableCronometer: this.isCronometerEnabled,
             timerDurationSeconds: this.timerDurationSeconds,
             questionIDs: fixedQuestionIds,
-            isQuestionSkippable: isQuestionSkippable
+            enableSkipQuestion: enableSkipQuestion
           };
           if (fixedQuestionIds && fixedQuestionIds.length > 0) {
             this.startSpecificSetOfQuestions(fixedQuestionIds) // Ensure questions are loaded before potential initial speak
@@ -458,7 +461,8 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
         // Only start new timer if not resuming OR if resuming and there's time left
         this.startTimer();
       }
-      if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
+      // if (this.questions.length > 0 && this.isCronometerEnabled && !this.cronometerSubscription) {
+      if (this.questions.length > 0 && !this.cronometerSubscription) {
         this.startCronometer();
       }
       this.setCurrentQuestion();
@@ -922,7 +926,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   }
 
   nextQuestion(): void {
-    if (!this.isAnswerSubmitted && !this.quizSettings.isQuestionSkippable) {
+    if (!this.isAnswerSubmitted && !this.quizSettings.enableSkipQuestion) {
       this.alertService.showAlert("Attenzione", "Non è possibile passare alla prossima domanda senza aver provato a rispondere");
       return;
     }

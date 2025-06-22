@@ -1,0 +1,301 @@
+<!-- src/app/pages/admin-dashboard/admin-dashboard.component.html -->
+<div class="max-w-full mx-auto bg-white rounded-lg shadow-md overflow-hidden min-h-screen">
+    <nav class="flex bg-gray-800 text-white">
+        <button (click)="changeView('dashboard')"
+            class="px-6 py-4 font-medium transition-colors duration-200 focus:outline-none"
+            [ngClass]="{'bg-gray-700 border-b-4 border-indigo-400': activeView === 'dashboard', 'hover:bg-gray-700': activeView !== 'dashboard'}">Dashboard</button>
+        <button (click)="changeView('contests')"
+            class="px-6 py-4 font-medium transition-colors duration-200 focus:outline-none"
+            [ngClass]="{'bg-gray-700 border-b-4 border-indigo-400': activeView === 'contests', 'hover:bg-gray-700': activeView !== 'contests'}">Manage
+            Contests</button>
+        <button (click)="changeView('questions')"
+            class="px-6 py-4 font-medium transition-colors duration-200 focus:outline-none"
+            [ngClass]="{'bg-gray-700 border-b-4 border-indigo-400': activeView === 'questions', 'hover:bg-gray-700': activeView !== 'questions'}">Manage
+            Questions</button>
+        <button (click)="changeView('users')"
+            class="px-6 py-4 font-medium transition-colors duration-200 focus:outline-none"
+            [ngClass]="{'bg-gray-700 border-b-4 border-indigo-400': activeView === 'users', 'hover:bg-gray-700': activeView !== 'users'}">Manage
+            Users</button>
+    </nav>
+
+    <div class="p-4 sm:p-6 lg:p-8">
+
+        <!-- DASHBOARD VIEW -->
+        <div *ngIf="activeView === 'dashboard'">
+            <h2 class="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+            <p class="mt-2 text-gray-600">Welcome to the administration panel. Use the navigation above to manage the
+                application.</p>
+
+            <div class="mt-6 p-4 border rounded-lg bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-700">At a Glance</h3>
+                <ul class="list-disc list-inside mt-2 text-gray-600">
+                    <li>Total Contests: <span class="font-bold">{{ contests.length }}</span></li>
+                    <li>Total Users: <span class="font-bold">{{ users.length }}</span></li>
+                </ul>
+            </div>
+
+            <div class="mt-8 p-4 border border-red-300 rounded-lg bg-red-50">
+                <h3 class="text-lg font-semibold text-red-800">Danger Zone</h3>
+                <p class="mt-1 text-red-700">These actions are irreversible. Please proceed with caution.</p>
+                <div class="mt-4 flex items-center gap-4">
+                    <select #resetContestSelect
+                        class="w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}</option>
+                    </select>
+                    <button
+                        class="px-4 py-2 rounded-md font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                        (click)="handleResetContest(resetContestSelect.value)">Reset Selected Contest</button>
+                </div>
+                <p class="mt-2 text-sm text-red-600">This will reset all question statistics and delete all quiz
+                    attempts for the selected contest for all users.</p>
+            </div>
+        </div>
+
+        <!-- CONTESTS VIEW -->
+        <div *ngIf="activeView === 'contests'" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">All Contests</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3">ID</th>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">Active</th>
+                                <th class="px-4 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let contest of contests" class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">{{ contest.id }}</td>
+                                <td class="px-4 py-3">{{ contest.name }}</td>
+                                <td class="px-4 py-3">{{ contest.isActive ? 'Yes' : 'No' }}</td>
+                                <td class="px-4 py-3 flex gap-2">
+                                    <button
+                                        class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600"
+                                        (click)="onSelectContestForEdit(contest)">Edit</button>
+                                    <button
+                                        class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600"
+                                        (click)="onDeleteContest(contest.id, contest.name!)">Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingContestId ? 'Edit Contest'
+                    : 'Create New Contest' }}</h3>
+                <form [formGroup]="contestForm" (ngSubmit)="onContestFormSubmit()">
+                    <div class="mb-4"><label for="contestName"
+                            class="block mb-1 text-sm font-medium text-gray-700">Contest Name</label><input
+                            id="contestName" type="text" formControlName="name"
+                            class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="mb-4"><label class="flex items-center gap-2 text-sm font-medium text-gray-700"><input
+                                type="checkbox" formControlName="isActive"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">Is
+                            Active</label></div>
+                    <div class="flex gap-x-4 mt-6">
+                        <button type="submit" [disabled]="contestForm.invalid"
+                            class="px-4 py-2 rounded-md font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500">
+                            {{ editingContestId ? 'Update' : 'Create' }}</button>
+                        <button type="button" (click)="resetContestForm()"
+                            class="px-4 py-2 rounded-md font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-600 hover:bg-gray-700 focus:ring-gray-500">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- QUESTIONS VIEW -->
+        <div *ngIf="activeView === 'questions'">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Manage Questions</h3>
+            <div class="mb-4"><label for="contest-select-q" class="block mb-1 text-sm font-medium text-gray-700">Select
+                    a Contest to Manage its Questions</label>
+                <select id="contest-select-q" #contestSelectForQuestions
+                    (change)="loadQuestionsForContest(contestSelectForQuestions.value)"
+                    class="w-full max-w-md px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- Select Contest --</option>
+                    <option *ngFor="let contest of contests" [value]="contest.id">{{ contest.name }}</option>
+                </select>
+            </div>
+
+            <div *ngIf="selectedContestForQuestions !== null && selectedContestForQuestions !== undefined" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Questions for {{
+                        getContestName(selectedContestForQuestions) }} ({{filteredQuestions.length}} / {{questions.length}})</h4>
+                    
+                    <!-- NEW: Filters Section -->
+                    <div [formGroup]="questionFilterForm" class="p-4 mb-4 bg-white rounded-lg border border-gray-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label for="filterText" class="block text-xs font-medium text-gray-600">Filter by Text</label>
+                            <input id="filterText" type="text" formControlName="text" class="w-full mt-1 input-style" placeholder="Question, option, or explanation text...">
+                        </div>
+                        <div>
+                            <label for="filterTopic" class="block text-xs font-medium text-gray-600">Filter by Topic</label>
+                            <input id="filterTopic" type="text" formControlName="topic" class="w-full mt-1 input-style" placeholder="Topic name...">
+                        </div>
+                        <div>
+                            <label for="filterId" class="block text-xs font-medium text-gray-600">Filter by ID</label>
+                            <input id="filterId" type="text" formControlName="id" class="w-full mt-1 input-style" placeholder="Question ID...">
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3">ID</th>
+                                    <th class="px-4 py-3">Text</th>
+                                    <th class="px-4 py-3">Topic</th>
+                                    <th class="px-4 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let q of filteredQuestions" class="bg-white border-b hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-mono text-xs">{{q.id}}</td>
+                                    <td class="px-4 py-3 truncate" [title]="q.text">{{q.text | slice:0:50}}...</td>
+                                    <td class="px-4 py-3">{{q.topic}}</td>
+                                    <td class="px-4 py-3 flex gap-2">
+                                        <button (click)="onSelectQuestionForEdit(q)" class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600">Edit</button>
+                                        <button (click)="onDeleteQuestion(q.id)" class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600">Delete</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                         <p *ngIf="filteredQuestions.length === 0" class="text-center py-4 text-gray-500">No questions match the current filters.</p>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingQuestionId ? 'Edit
+                        Question' : 'Add New Question' }}</h4>
+                    <form [formGroup]="questionForm" (ngSubmit)="onQuestionFormSubmit()">
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Question Text</label><textarea
+                                formControlName="text" rows="3" class="w-full input-style"></textarea></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Topic</label><input type="text"
+                                formControlName="topic" class="w-full input-style"></div>
+                        <div class="mb-2"><label class="block mb-1 text-sm font-medium">Explanation</label><textarea
+                                formControlName="explanation" rows="2" class="w-full input-style"></textarea></div>
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <div><label class="block mb-1 text-xs font-medium">Score Correct</label><input type="number"
+                                    formControlName="scoreIsCorrect" class="w-full input-style"></div>
+                            <div><label class="block mb-1 text-xs font-medium">Score Wrong</label><input type="number"
+                                    formControlName="scoreIsWrong" class="w-full input-style"></div>
+                            <div><label class="block mb-1 text-xs font-medium">Score Skip</label><input type="number"
+                                    formControlName="scoreIsSkip" class="w-full input-style"></div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2"><label
+                                    class="text-sm font-medium">Options</label><button type="button"
+                                    (click)="addOption()"
+                                    class="px-2 py-1 text-xs rounded font-semibold text-white bg-green-600 hover:bg-green-700">+</button>
+                            </div>
+                            <div formArrayName="options" class="space-y-2">
+                                <div *ngFor="let option of options.controls; let i=index"
+                                    class="flex items-center gap-2">
+                                    <input type="radio" [value]="i" name="correctAnswerIndex"
+                                        [formControl]="correctAnswerIndexControl"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500">
+                                    <input [formControlName]="i" class="w-full input-style">
+                                    <button type="button" (click)="removeOption(i)"
+                                        class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600">-</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-x-4 mt-6">
+                            <button type="submit" [disabled]="questionForm.invalid"
+                                class="px-4 py-2 rounded-md font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500">{{editingQuestionId
+                                ? 'Update' : 'Create'}}</button>
+                            <button type="button" (click)="resetQuestionForm()"
+                                class="px-4 py-2 rounded-md font-semibold text-white shadow-sm bg-gray-600 hover:bg-gray-700">Cancel</button>
+                        </div>
+                    </form>
+                    <hr class="my-6">
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Bulk Import Questions</h4>
+                    <p class="text-xs text-gray-600 mb-2">Upload a CSV file with headers:
+                        `text,topic,options,correctAnswerIndex,explanation,scoreIsCorrect,scoreIsWrong,scoreIsSkip`.
+                        Options should be a single string, pipe-separated (e.g., "Opt A|Opt B").</p>
+                    <div class="border-2 border-dashed border-gray-300 p-4 text-center rounded-md"><input type="file"
+                            (change)="onFileSelected($event)" accept=".csv" class="text-sm"></div>
+                    <div class="mt-4"><button (click)="handleBulkUpload()"
+                            [disabled]="!parsedQuestions.length || isUploading"
+                            class="w-full px-4 py-2 rounded-md font-semibold text-white shadow-sm disabled:opacity-50 bg-indigo-600 hover:bg-indigo-700">{{
+                            isUploading ? 'Uploading...' : 'Upload ' + parsedQuestions.length + ' Questions' }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- USERS VIEW -->
+        <div *ngIf="activeView === 'users'" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">All Users</h3>
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3">ID</th>
+                            <th class="px-4 py-3">Username</th>
+                            <th class="px-4 py-3">Display Name</th>
+                            <th class="px-4 py-3">Active</th>
+                            <th class="px-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let user of users" class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-4 py-3 font-medium">{{ user.id }}</td>
+                            <td class="px-4 py-3">{{ user.username }}</td>
+                            <td class="px-4 py-3">{{ user.displayName }}</td>
+                            <td>{{ user.isActive ? 'Yes' : 'No' }}</td>
+                            <td class="px-4 py-3 flex gap-2">
+                                <button
+                                    class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600"
+                                    (click)="onSelectUserForEdit(user)">Edit</button>
+                                <button
+                                    class="px-2 py-1 text-xs rounded font-semibold text-white bg-red-500 hover:bg-red-600"
+                                    (click)="onDeleteUser(user.id!, user.username!)">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h3 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingUserId ? 'Edit User' :
+                    'Create New User' }}</h3>
+                <form [formGroup]="userForm" (ngSubmit)="onUserFormSubmit()">
+                    <div class="mb-4"><label for="username"
+                            class="block mb-1 text-sm font-medium text-gray-700">Username</label><input id="username"
+                            type="text" formControlName="username" class="w-full input-style"></div>
+                    <div class="mb-4"><label for="displayName"
+                            class="block mb-1 text-sm font-medium text-gray-700">Display Name</label><input
+                            id="displayName" type="text" formControlName="displayName" class="w-full input-style"></div>
+                    <div class="mb-4" *ngIf="!editingUserId"><label for="password"
+                            class="block mb-1 text-sm font-medium text-gray-700">Password</label><input id="password"
+                            type="password" formControlName="password" class="w-full input-style"></div>
+                    <div class="mb-4"><label class="flex items-center gap-2 text-sm font-medium text-gray-700"><input
+                                type="checkbox" formControlName="isActive"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">Is
+                            Active</label></div>
+                    <div *ngIf="editingUserId" class="mb-4">
+                        <h3 class="text-md font-semibold text-gray-700 mb-2">Contest Permissions</h3>
+                        <ul class="space-y-1">
+                            <li *ngFor="let contest of allContestsForPermissions"><label
+                                    class="flex items-center gap-2 font-normal text-sm"><input type="checkbox"
+                                        [checked]="userContestPermissions[contest.id]"
+                                        (change)="toggleContestPermission(contest.id)"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">{{
+                                    contest.name }}</label></li>
+                        </ul>
+                    </div>
+                    <div class="flex gap-x-4 mt-6">
+                        <button type="submit" [disabled]="userForm.invalid"
+                            class="px-4 py-2 rounded-md font-semibold text-white shadow-sm disabled:opacity-50 bg-indigo-600 hover:bg-indigo-700">{{
+                            editingUserId ? 'Update' : 'Create' }}</button>
+                        <button type="button" (click)="resetUserForm()"
+                            class="px-4 py-2 rounded-md font-semibold text-white shadow-sm bg-gray-600 hover:bg-gray-700">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

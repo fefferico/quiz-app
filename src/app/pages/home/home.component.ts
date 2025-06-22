@@ -365,7 +365,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       quizTitle: `Errori Complessivi BD (${currentContest.name})`,
       quizType: 'Revisione errori globale',
       publicContest: currentContest.id,
-      isQuestionSkippable: !this.isFrancesco
+      enableSkipQuestion: !this.isFrancesco
     };
 
     this.spinnerService.show("Recupero domande in corso...");
@@ -418,7 +418,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       quizTitle: `Domande mai risposte (${currentContest.name || 'Generale'})`,
       quizType: 'Domande mai risposte',
       publicContest: currentContest.id,
-      isQuestionSkippable: !this.isFrancesco
+      enableSkipQuestion: !this.isFrancesco
     };
 
     const availableTopics = await this.dbService.getAvailableTopics(currentContest.id);
@@ -627,7 +627,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
       quizTitle: `Nuovo Quiz (${currentContest.name})`,
       quizType: 'Standard',
       publicContest: currentContest.id,
-      isQuestionSkippable: !this.isFrancesco, // Default behavior
+      enableSkipQuestion: !this.isFrancesco, // Default behavior
       totalQuestionsInQuiz: 10, // standard
       selectedTopics: []
     };

@@ -1756,7 +1756,7 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
             title: {
               display: true,
               text: `Dettaglio Performance Odierna (${this.datePipe.transform(data.date, 'dd/MM/yyyy')})`,
-              color: '#111'
+              // color: '#111'
             },
             datalabels: {
               display: true,
