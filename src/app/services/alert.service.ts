@@ -165,4 +165,49 @@ export class AlertService {
       console.log('Allerta showConfirmationDialog');
     }
   }
+
+  async showToast(options: { message: string; type?: 'success' | 'error' | 'info' | 'warning'; duration?: number } = { message: '', type: 'info', duration: 3000 }): Promise<void> {
+    // Create a toast element
+    const toast = document.createElement('div');
+    toast.textContent = options.message;
+    toast.className = `alert-toast alert-toast-${options.type || 'info'}`;
+    // Basic styles (customize as needed)
+    Object.assign(toast.style, {
+      position: 'fixed',
+      bottom: '32px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: '9999',
+      padding: '12px 24px',
+      borderRadius: '6px',
+      color: '#fff',
+      background: options.type === 'error'
+        ? '#dc2626'
+        : options.type === 'success'
+          ? '#16a34a'
+          : options.type === 'warning'
+            ? '#f59e42'
+            : '#2563eb',
+      fontSize: '1rem',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+      opacity: '0',
+      transition: 'opacity 0.3s'
+    });
+
+    document.body.appendChild(toast);
+    // Animate in
+    setTimeout(() => { toast.style.opacity = '1'; }, 10);
+
+    // Remove after duration
+    const duration = options.duration ?? 3000;
+    await new Promise<void>(resolve => {
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+          resolve();
+        }, 300);
+      }, duration);
+    });
+  }
 }

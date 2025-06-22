@@ -406,9 +406,15 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
           : quizAttempt.timestampStart.getTime();
 
       if (!isNaN(endTime) && !isNaN(startTime)) {
-        // Subtract paused time if present
+        // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
         const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
-        const elapsedMs = Math.max(0, endTime - startTime - pausedSeconds * 1000);
+        const totalMs = endTime - startTime;
+        let elapsedMs: number;
+        if (pausedSeconds * 1000 === totalMs) {
+          elapsedMs = totalMs;
+        } else {
+          elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
+        }
         return this.msToTime(elapsedMs);
       }
     }

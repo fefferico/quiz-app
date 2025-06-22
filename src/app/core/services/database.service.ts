@@ -757,7 +757,7 @@ export class DatabaseService implements OnDestroy {
       console.error('Supabase error in getAllQuizAttempts:', error);
       throw error;
     }
-    return (data ?? []);
+    return (data ?? []).map(this.mapQuizAttemptFromSupabase);
   }
 
   async deleteQuizAttempt(id: string): Promise<void> {

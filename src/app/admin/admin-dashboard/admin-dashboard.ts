@@ -1,6 +1,6 @@
 // src/app/pages/admin-dashboard/admin-dashboard.component.ts
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommonModule, SlicePipe } from '@angular/common';
+import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatabaseService } from '../../core/services/database.service';
 import { AlertService } from '../../services/alert.service';
@@ -11,11 +11,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SpinnerService } from '../../core/services/spinner.service';
+import { QuizAttempt, QuizStatus } from '../../models/quiz.model';
 
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, SlicePipe],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, SlicePipe, DatePipe],
     templateUrl: './admin-dashboard.html',
     // No styleUrl needed as Tailwind is used
 })
@@ -26,44 +27,50 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private authService = inject(AuthService);
     private spinnerService = inject(SpinnerService);
 
-    activeView: 'dashboard' | 'users' | 'contests' | 'questions' = 'dashboard';
+    activeView: 'dashboard' | 'users' | 'contests' | 'questions' | 'attempts' = 'dashboard';
+
+    filterByAttemptID: string = '';
 
     // Data stores
     users: User[] = [];
     contests: Contest[] = [];
     questions: Question[] = [];
-    totQuestions: number = 0;
-    filteredQuestions: Question[] = []; // For displaying filtered results
+    filteredQuestions: Question[] = [];
+    userAttempts: QuizAttempt[] = [];
 
     // Forms
     userForm!: FormGroup;
     contestForm!: FormGroup;
     questionForm!: FormGroup;
-    questionFilterForm!: FormGroup; // NEW: Form for filtering questions
+    questionFilterForm!: FormGroup;
+    attemptForm!: FormGroup;
 
     // State for editing
     editingUserId: number | null = null;
     editingContestId: number | null = null;
     editingQuestionId: string | null = null;
+    selectedUserForAttempts: number | null = null;
 
     // For user permissions
     allContestsForPermissions: Contest[] = [];
     userContestPermissions: { [key: number]: boolean } = {};
 
     // For question management
-    selectedContestForQuestions: number | '' = ''; // Can be '' for "All Contests"
+    selectedContestForQuestions: number | '' = '';
     parsedQuestions: Partial<Question>[] = [];
     isUploading = false;
 
     // --- PAGINATION STATE ---
     currentPage = 1;
-    itemsPerPage = 15; // How many questions to show per page
+    itemsPerPage = 15;
     totalQuestions = 0;
+
+    private filterSubscription!: Subscription;
+
     get totalPages(): number {
         return Math.ceil(this.totalQuestions / this.itemsPerPage);
     }
-
-    private filterSubscription!: Subscription;
+    // --- END PAGINATION STATE ---
 
     ngOnInit(): void {
         this.initializeForms();
@@ -91,7 +98,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
 
         this.questionForm = this.fb.group({
-            contestId: [null, Validators.required], // ADDED
+            contestId: [null, Validators.required],
             text: ['', Validators.required],
             topic: ['', Validators.required],
             explanation: [''],
@@ -106,6 +113,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             text: [''],
             topic: [''],
             id: ['']
+        });
+
+        this.attemptForm = this.fb.group({
+            id: [{ value: '', disabled: true }],
+            quizTitle: ['', Validators.required],
+            score: [0, Validators.required],
+            status: ['completed', Validators.required]
         });
     }
 
@@ -137,23 +151,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     async loadInitialData(): Promise<void> {
         try {
-            // Load all contests, including those that may be null/undefined/empty
             const contests = await this.dbService.getAllContests();
             this.contests = Array.isArray(contests) ? contests : [];
-            // Optionally, include empty/null/undefined contests explicitly
-            this.contests.push({
-                id: 0,
-                name: '(No Contest)',
-                isActive: false
-            } as any);
             this.users = await this.dbService.getAllUsers();
             this.allContestsForPermissions = [...this.contests];
         } catch (error) {
-            this.alertService.showAlert('Errore', 'Failed to load initial admin data.');
+            this.alertService.showToast({ message: 'Failed to load initial admin data.', type: 'error' });
         }
     }
 
-    changeView(view: 'dashboard' | 'users' | 'contests' | 'questions'): void {
+    changeView(view: 'dashboard' | 'users' | 'contests' | 'questions' | 'attempts'): void {
         this.activeView = view;
         if (view === 'questions' && this.selectedContestForQuestions === null) {
             this.selectedContestForQuestions = ''; // Default to "All Contests"
@@ -167,11 +174,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         const contestData: Contest = { id: this.editingContestId!, ...this.contestForm.value };
 
         this.dbService.upsertContest(contestData).then(savedContest => {
-            this.alertService.showAlert('Info', `Contest '${savedContest.name}' saved successfully.`);
+            this.alertService.showToast({ message: `Contest '${savedContest.name}' saved successfully.`, type: 'success' });
             this.resetContestForm();
             this.loadInitialData();
         }).catch(err => {
-            this.alertService.showAlert('Error', `Failed to save contest: ${err.message}`);
+            this.alertService.showToast({ message: `Failed to save contest: ${err.message}`, type: 'error' });
         });
     }
 
@@ -190,10 +197,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (confirmation?.role === 'confirm') {
             try {
                 await this.dbService.deleteContest(id);
-                this.alertService.showAlert('Success', 'Contest deleted.');
+                this.alertService.showToast({ message: 'Contest deleted.', type: 'success' });
                 this.loadInitialData();
             } catch (error) {
-                this.alertService.showAlert('Error', `Failed to delete contest. Ensure it is not in use.`);
+                this.alertService.showToast({ message: `Failed to delete contest. Ensure it is not in use.`, type: 'error' });
             }
         }
     }
@@ -201,54 +208,34 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     // --- USER MANAGEMENT ---
     async onUserFormSubmit(): Promise<void> {
         if (this.userForm.invalid) return;
-        if (!this.editingUserId) {
-            this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
-        } else {
-            this.userForm.controls['password'].clearValidators();
-        }
+        if (!this.editingUserId) this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
+        else this.userForm.controls['password'].clearValidators();
         this.userForm.controls['password'].updateValueAndValidity();
         if (this.userForm.invalid) {
-            this.alertService.showAlert('Warning', 'Please fill all required fields.');
+            this.alertService.showToast({ message: 'Please fill all required fields.', type: 'warning' });
             return;
         }
 
-        let userId = this.editingUserId;
-        if (!userId) {
-            try {
-                const maxId = await this.dbService.getHighestUserId();
-                userId = (Number(maxId) ?? 0) + 1;
-            } catch (err) {
-                this.alertService.showAlert('Error', 'Failed to determine next user ID.');
-                return;
-            }
-        }
-
-        const userData: User = { id: userId, ...this.userForm.value };
+        const userData: User = { id: this.editingUserId!, ...this.userForm.value };
         delete userData.hashedPassword;
-
-        // Hash password with SHA-256 if provided
-        if (this.userForm.value.password) {
-            userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
-        }
+        if (this.userForm.value.password) userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
 
         this.dbService.upsertUser(userData).then(async savedUser => {
             if (this.editingUserId) {
                 const permissionIds = Object.entries(this.userContestPermissions).filter(([, h]) => h).map(([c]) => Number(c));
                 await this.dbService.updateContestsForUser(this.editingUserId, permissionIds);
             }
-            this.alertService.showAlert('Success', `User '${savedUser.username}' saved.`);
+            this.alertService.showToast({ message: `User '${savedUser.username}' saved.`, type: 'success' });
             this.resetUserForm(); this.loadInitialData();
         }).catch(err => {
-            this.alertService.showAlert('Error', `Failed to save user: ${err.message}`);
+            this.alertService.showToast({ message: `Failed to save user: ${err.message}`, type: 'error' });
         });
     }
 
-    // Utility function to hash password with SHA-256
     private async hashPasswordSHA256(password: string): Promise<string> {
         const encoder = new TextEncoder();
         const data = encoder.encode(password);
         const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-        // Convert ArrayBuffer to hex string
         return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
@@ -259,7 +246,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             const permittedIds = await this.dbService.getUserContestIds(user.id!);
             this.userContestPermissions = this.allContestsForPermissions.reduce((acc, c) => ({ ...acc, [c.id]: permittedIds.includes(c.id) }), {});
         } catch {
-            this.alertService.showAlert('Error', 'Could not load user permissions.');
+            this.alertService.showToast({ message: 'Could not load user permissions.', type: 'error' });
         }
     }
 
@@ -272,9 +259,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if ((await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`))?.role === 'confirm') {
             try {
                 await this.dbService.deleteUser(id);
-                this.alertService.showAlert('Success', 'User deleted.'); this.loadInitialData();
+                this.alertService.showToast({ message: 'User deleted.', type: 'success' }); this.loadInitialData();
             } catch (error) {
-                this.alertService.showAlert('Error', 'Failed to delete user.');
+                this.alertService.showToast({ message: 'Failed to delete user.', type: 'error' });
             }
         }
     }
@@ -293,7 +280,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (this.questionForm.value.correctAnswerIndex === index) this.questionForm.patchValue({ correctAnswerIndex: null });
     }
 
-    // UPDATED METHOD
     async loadQuestionsForContest(contestIdStr: string, page: number = 1): Promise<void> {
         this.resetQuestionForm();
         this.questionFilterForm.reset({ text: '', topic: '', id: '' }, { emitEvent: false });
@@ -313,44 +299,30 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
         try {
             this.spinnerService.show('Loading questions...');
-            // Fetch total count only if it's the first page
-            if (page === 1) {
+            if (page === 1 || this.totalQuestions === 0) {
                 this.totalQuestions = await this.dbService.countAllRows(contestId!);
             }
             this.questions = await this.dbService.getAllQuestionsPaginated(contestId, this.itemsPerPage, offset);
             this.filteredQuestions = [...this.questions];
         } catch (error) {
-            this.alertService.showAlert('Error', 'Failed to load questions for this contest.');
-            this.questions = [];
-            this.filteredQuestions = [];
+            this.alertService.showToast({ message: 'Failed to load questions for this contest.', type: 'error' });
+            this.questions = []; this.filteredQuestions = [];
             this.totalQuestions = 0;
         } finally {
             this.spinnerService.hide();
         }
     }
 
-    // NEW PAGINATION METHODS
     goToPage(page: number): void {
-        if (page >= 1 && page <= this.totalPages) {
+        if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
             this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), page);
         }
     }
+    firstPage(): void { this.goToPage(1); }
+    previousPage(): void { this.goToPage(this.currentPage - 1); }
+    nextPage(): void { this.goToPage(this.currentPage + 1); }
+    lastPage(): void { this.goToPage(this.totalPages); }
 
-    firstPage(): void {
-        this.goToPage(1);
-    }
-
-    previousPage(): void {
-        this.goToPage(this.currentPage - 1);
-    }
-
-    nextPage(): void {
-        this.goToPage(this.currentPage + 1);
-    }
-
-    lastPage(): void {
-        this.goToPage(this.totalPages);
-    }
     getContestName(contestId: number | ''): string {
         if (contestId === '') return 'All Contests';
         return this.contests.find(c => c.id === contestId)?.name || 'Unknown';
@@ -365,24 +337,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     resetQuestionForm(): void {
         this.editingQuestionId = null;
         this.questionForm.reset({
-            contestId: this.selectedContestForQuestions || null, // Default to current contest
-            scoreIsCorrect: 1,
-            scoreIsWrong: 0,
-            scoreIsSkip: 0,
-            correctAnswerIndex: null
+            contestId: this.selectedContestForQuestions || null,
+            scoreIsCorrect: 1, scoreIsWrong: 0, scoreIsSkip: 0, correctAnswerIndex: null
         });
         this.options.clear();
     }
 
     async onQuestionFormSubmit(): Promise<void> {
         if (this.questionForm.invalid) {
-            this.alertService.showAlert('Warning', 'Please fill all required question fields.');
+            this.alertService.showToast({ message: 'Please fill all required question fields.', type: 'warning' });
             return;
         }
-
-        // This line is now correct as contestId is part of the form.
         const questionData: Partial<Question> = { ...this.questionForm.value };
-
         this.spinnerService.show("Saving question...");
 
         if (!this.editingQuestionId) {
@@ -390,7 +356,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
                 const maxId = await this.dbService.getHighestQuestionId();
                 questionData.id = ((Number(maxId) ?? 0) + 1).toString();
             } catch (err) {
-                this.alertService.showConfirm('Errore', 'Failed to determine next question ID.');
+                this.alertService.showToast({ message: 'Failed to determine next question ID.', type: 'error' });
                 this.spinnerService.hide(); return;
             }
         }
@@ -400,11 +366,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             : this.dbService.addQuestion(questionData as Question);
 
         promise.then(() => {
-            this.alertService.showConfirm('Info', `Question ${this.editingQuestionId ? 'updated' : 'created'}.`);
+            this.alertService.showToast({ message: `Question ${this.editingQuestionId ? 'updated' : 'created'}.`, type: 'success' });
+            this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), this.currentPage);
             this.resetQuestionForm();
-            this.loadQuestionsForContest(this.selectedContestForQuestions.toString());
         }).catch(err => {
-            this.alertService.showConfirm('Errore', `Failed to save question`);
+            this.alertService.showToast({ message: `Failed to save question: ${err.message}`, type: 'error' });
         }).finally(() => {
             this.spinnerService.hide();
         });
@@ -414,10 +380,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if ((await this.alertService.showConfirm('Delete Question', `Are you sure you want to delete this question? This action is irreversible.`))?.role === 'confirm') {
             try {
                 await this.dbService.deleteQuestion(id);
-                this.alertService.showConfirm('Info', 'Question deleted.');
-                this.loadQuestionsForContest(this.selectedContestForQuestions!.toString());
+                this.alertService.showToast({ message: 'Question deleted.', type: 'success' });
+                if (this.filteredQuestions.length === 1 && this.currentPage > 1) {
+                    this.goToPage(this.currentPage - 1);
+                } else {
+                    this.loadQuestionsForContest(this.selectedContestForQuestions!.toString(), this.currentPage);
+                }
             } catch (err) {
-                this.alertService.showConfirm('Errore', `Failed to delete question`);
+                this.alertService.showToast({ message: `Failed to delete question`, type: 'error' });
             }
         }
     }
@@ -443,40 +413,214 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             });
             return question;
         });
-        this.alertService.showAlert('Info', `${this.parsedQuestions.length} questions parsed from file.`);
+        this.alertService.showToast({ message: `${this.parsedQuestions.length} questions parsed from file.`, type: 'info' });
     }
 
     async handleBulkUpload(): Promise<void> {
         if (this.parsedQuestions.length === 0 || this.selectedContestForQuestions === '' || this.selectedContestForQuestions === null) {
-            this.alertService.showConfirm('info', 'Please select a contest before bulk uploading.');
+            this.alertService.showToast({ message: 'Please select a contest before bulk uploading.', type: 'warning' });
             return;
         };
         this.isUploading = true;
         this.spinnerService.show('Uploading questions...');
         try {
             await this.dbService.addQuestionsBulk(this.parsedQuestions);
-            this.alertService.showConfirm('info', 'Bulk upload successful!');
+            this.alertService.showToast({ message: 'Bulk upload successful!', type: 'success' });
             this.parsedQuestions = [];
             this.loadQuestionsForContest(this.selectedContestForQuestions.toString());
         } catch (err) {
-            this.alertService.showConfirm('Errore', `Could not upload questions`);
+            this.alertService.showToast({ message: `Could not upload questions`, type: 'error' });
         } finally {
             this.isUploading = false;
             this.spinnerService.hide();
         }
     }
 
-    // --- DASHBOARD ---
     async handleResetContest(contestIdStr: string) {
         const contestId = Number(contestIdStr); const contest = this.contests.find(c => c.id === contestId); if (!contest) return;
         if ((await this.alertService.showConfirm('Confirm Contest Reset', `This will permanently delete all quiz history and reset all question statistics for the contest "${contest.name}". Are you sure?`))?.role === 'confirm') {
             try {
                 const currentUserId = this.authService.getCurrentUserId(); if (!currentUserId) throw new Error("No logged in user found.");
                 await this.dbService.resetContest(contest.id, currentUserId);
-                this.alertService.showAlert('Success', `Contest "${contest.name}" has been reset.`);
+                this.alertService.showToast({ message: `Contest "${contest.name}" has been reset.`, type: 'success' });
             } catch (error) {
-                this.alertService.showAlert('Error', `Failed to reset contest.`);
+                this.alertService.showToast({ message: `Failed to reset contest.`, type: 'error' });
             }
         }
+    }
+
+    // --- QUIZ ATTEMPT MANAGEMENT ---
+    async loadAttemptsForUser(userIdStr: string, contestIdStr?: string): Promise<void> {
+        this.resetAttemptForm();
+        if (!userIdStr) {
+            this.selectedUserForAttempts = null;
+            this.userAttempts = [];
+            return;
+        }
+
+        this.selectedUserForAttempts = Number(userIdStr);
+        const contestId = contestIdStr ? Number(contestIdStr) : null;
+
+        try {
+            this.spinnerService.show('Loading attempts...');
+            this.userAttempts = await this.dbService.getAllQuizAttempts(contestId, userIdStr);
+        } catch (error) {
+            this.alertService.showToast({ message: 'Failed to load quiz attempts.', type: 'error' });
+            this.userAttempts = [];
+        } finally {
+            this.spinnerService.hide();
+        }
+    }
+
+    /**
+     * Filters userAttempts by multiple criteria.
+     * @param filters Object with optional properties: method, type, userId, contestId, status, minScore, maxScore
+     */
+    filterAttempts(
+        //     filters: {
+        //     method?: string;
+        //     type?: string;
+        //     userId?: number;
+        //     contestId?: number;
+        //     status?: QuizStatus;
+        //     minScore?: number;
+        //     maxScore?: number;
+        // }
+    ): void {
+        // Always start from the full list (assume you have a backup or reload from DB if needed)
+        let attempts = [...this.userAttempts];
+
+        // if (filters.method) {
+        //     attempts = attempts.filter(a => a.method === filters.method);
+        // }
+        // if (filters.type) {
+        //     attempts = attempts.filter(a => a.quizType === filters.type);
+        // }
+        // if (filters.userId !== undefined) {
+        //     attempts = attempts.filter(a => a.userId === filters.userId);
+        // }
+        // if (filters.contestId !== undefined) {
+        //     attempts = attempts.filter(a => a.contestId === filters.contestId);
+        // }
+        // if (filters.status) {
+        //     attempts = attempts.filter(a => a.status === filters.status);
+        // }
+        // if (filters.minScore !== undefined) {
+        //     attempts = attempts.filter(a => a.score >= filters.minScore!);
+        // }
+        // if (filters.maxScore !== undefined) {
+        //     attempts = attempts.filter(a => a.score <= filters.maxScore!);
+        // }
+
+        if (this.filterByAttemptID) {
+            attempts = attempts.filter(a => a.id.toLowerCase().includes(this.filterByAttemptID.toLowerCase().trim()));
+        }
+
+        this.userAttempts = attempts;
+    }
+
+    onSelectAttemptForEdit(attempt: QuizAttempt): void {
+        this.attemptForm.reset();
+        this.attemptForm.patchValue({
+            id: attempt.id,
+            quizTitle: attempt.quizTitle,
+            score: attempt.score,
+            status: attempt.status
+        });
+    }
+
+    onAttemptFormSubmit(): void {
+        if (this.attemptForm.invalid) {
+            this.alertService.showToast({ message: 'Form is invalid.', type: 'warning' });
+            return;
+        }
+
+        const formValue = this.attemptForm.getRawValue();
+        const updatedAttempt: Partial<QuizAttempt> = {
+            id: formValue.id,
+            quizTitle: formValue.quizTitle,
+            score: Number(formValue.score),
+            status: formValue.status
+        };
+
+        this.spinnerService.show('Saving attempt...');
+        this.dbService.saveQuizAttempt(updatedAttempt as QuizAttempt).then(() => {
+            this.alertService.showToast({ message: 'Attempt updated successfully.', type: 'success' });
+            this.resetAttemptForm();
+            // Reload attempts for the currently selected user
+            if (this.selectedUserForAttempts) {
+                this.loadAttemptsForUser(this.selectedUserForAttempts.toString());
+            }
+        }).catch(err => {
+            this.alertService.showToast({ message: `Failed to update attempt: ${err.message}`, type: 'error' });
+        }).finally(() => {
+            this.spinnerService.hide();
+        });
+    }
+
+    resetAttemptForm(): void {
+        this.attemptForm.reset();
+    }
+
+    getUsername(userId: number): string {
+        return this.users.find(u => u.id === userId)?.displayName || `User ID: ${userId}`;
+    }
+
+    getStatusClass(status: QuizStatus): string {
+        switch (status) {
+            case 'completed': return 'bg-green-100 text-green-800';
+            case 'in-progress':
+            case 'in svolgimento': return 'bg-blue-100 text-blue-800';
+            case 'paused': return 'bg-yellow-100 text-yellow-800';
+            case 'cancelled': return 'bg-gray-100 text-gray-800';
+            case 'error': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    calcDurataQuiz(quizAttempt: QuizAttempt): string {
+        if (
+            quizAttempt &&
+            quizAttempt.timestampEnd &&
+            quizAttempt.timestampStart
+        ) {
+            // Get timestamps as milliseconds
+            const endTime =
+                typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
+                    ? new Date(quizAttempt.timestampEnd).getTime()
+                    : quizAttempt.timestampEnd.getTime();
+            const startTime =
+                typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
+                    ? new Date(quizAttempt.timestampStart).getTime()
+                    : quizAttempt.timestampStart.getTime();
+
+            if (!isNaN(endTime) && !isNaN(startTime)) {
+                // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
+                const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
+                const totalMs = endTime - startTime;
+                let elapsedMs: number = totalMs;
+                if (pausedSeconds * 1000 !== totalMs) {
+                    if (pausedSeconds * 1000 < totalMs) {
+                        return this.msToTime(elapsedMs);
+                    }
+                    elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
+                }
+                return this.msToTime(elapsedMs);
+            }
+        }
+        return "N/D";
+    }
+
+
+
+
+    private msToTime(ms: number): string {
+        if (ms < 0) ms = 0;
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
 }
