@@ -1377,7 +1377,7 @@ export class DatabaseService implements OnDestroy {
 
   // In database.service.ts
 
-async getFavoriteQuestions(contestId?: number | null, userId?: number | null): Promise<Question[]> {
+  async getFavoriteQuestions(contestId?: number | null, userId?: number | null): Promise<Question[]> {
     const operationName = `getFavoriteQuestions` +
       (contestId ? ` for contest ${contestId}` : '') +
       (userId ? ` and user ${userId}` : '');
@@ -1403,20 +1403,20 @@ async getFavoriteQuestions(contestId?: number | null, userId?: number | null): P
       // The syntax is 'foreign_table_name.column_name'
       supabaseQuery = supabaseQuery.eq('questions.fk_contest_id', contestId);
     }
-    
+
     const { data, error } = await supabaseQuery;
 
     if (error) {
       console.error('Supabase error in getFavoriteQuestions:', error);
       throw error;
     }
-    
+
     // 5. The result is nested, so we need to map it correctly.
     //    The data will look like: [ { questions: { id: '...', text: '...' } }, ... ]
     const mappedQuestions = (data ?? []).map(item => this.mapQuestionFromSupabase(item.questions));
-    
+
     return mappedQuestions;
-}
+  }
 
   async getPausedQuiz(contestId: number, userId: number): Promise<QuizAttempt | undefined> {
     const operationName = `getPausedQuiz` + (userId ? ` for user ${userId}` : '');
@@ -2035,5 +2035,26 @@ async getFavoriteQuestions(contestId?: number | null, userId?: number | null): P
   }
 
   // --- END NEW ROLE MANAGEMENT METHODS ---
+
+  calcDurataQuiz(quizAttempt: QuizAttempt): string {
+    if (typeof quizAttempt.timeElapsed === 'number') {
+      return this.msToTime(quizAttempt.timeElapsed * 1000);
+    }
+    if (quizAttempt?.timestampEnd && quizAttempt?.timestampStart) {
+      const durationMs = new Date(quizAttempt.timestampEnd).getTime() - new Date(quizAttempt.timestampStart).getTime();
+      return this.msToTime(durationMs);
+    }
+    return "N/D";
+  }
+
+  private msToTime(ms: number): string {
+    if (ms < 0) ms = 0;
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
 
 }

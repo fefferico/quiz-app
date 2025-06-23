@@ -526,24 +526,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     calcDurataQuiz(quizAttempt: QuizAttempt): string {
-        if (typeof quizAttempt.timeElapsed === 'number') {
-            return this.msToTime(quizAttempt.timeElapsed * 1000);
-        }
-        if (quizAttempt?.timestampEnd && quizAttempt?.timestampStart) {
-            const durationMs = new Date(quizAttempt.timestampEnd).getTime() - new Date(quizAttempt.timestampStart).getTime();
-            return this.msToTime(durationMs);
-        }
-        return "N/D";
-    }
-
-    private msToTime(ms: number): string {
-        if (ms < 0) ms = 0;
-        const totalSeconds = Math.floor(ms / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        return this.dbService.calcDurataQuiz(quizAttempt);
     }
 
 
@@ -568,7 +551,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
                 return;
             }
         }
-        
+
         const userData: User = { id: userId, ...this.userForm.value };
         delete userData.hashedPassword;
         if (this.userForm.value.password) userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
@@ -607,14 +590,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
                 this.dbService.getUserContestIds(user.id!),
                 this.dbService.getRolesForUser(user.id!)
             ]);
-            
+
             this.userContestPermissions = this.allContestsForPermissions.reduce((acc, c) => {
                 if (c.id != null) {
                     return { ...acc, [c.id]: permittedContestIds.includes(c.id) };
                 }
                 return acc;
             }, {});
-            
+
             const permittedRoleIds = permittedRoles
                 .filter(r => r.id != null)
                 .map(r => r.id as number);

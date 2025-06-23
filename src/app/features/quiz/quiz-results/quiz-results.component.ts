@@ -372,71 +372,8 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
   }
 
-  calcDurataQuizOLD(quizAttempt: QuizAttempt): string {
-    if (quizAttempt && quizAttempt.timestampEnd && quizAttempt.timestampStart) {
-      // Check if timestamps are Date objects or strings/numbers
-      const endTime = typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
-        ? new Date(quizAttempt.timestampEnd).getTime()
-        : quizAttempt.timestampEnd.getTime();
-      const startTime = typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
-        ? new Date(quizAttempt.timestampStart).getTime()
-        : quizAttempt.timestampStart.getTime();
-
-      if (!isNaN(endTime) && !isNaN(startTime)) {
-        return this.msToTime(endTime - startTime);
-      }
-    }
-    return "N/D";
-  }
-
   calcDurataQuiz(quizAttempt: QuizAttempt): string {
-    if (
-      quizAttempt &&
-      ((quizAttempt.timestampEnd &&
-        quizAttempt.timestampStart) || quizAttempt.timeElapsed)
-    ) {
-      if (quizAttempt.timeElapsed !== undefined && quizAttempt.timeElapsed !== null && quizAttempt.timeElapsed > 0) {
-        return this.msToTime(quizAttempt.timeElapsed * 1000);
-      } else if (quizAttempt.timestampEnd &&
-        quizAttempt.timestampStart) {
-        // Get timestamps as milliseconds
-        const endTime =
-          typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
-            ? new Date(quizAttempt.timestampEnd).getTime()
-            : quizAttempt.timestampEnd.getTime();
-        const startTime =
-          typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
-            ? new Date(quizAttempt.timestampStart).getTime()
-            : quizAttempt.timestampStart.getTime();
-
-        if (!isNaN(endTime) && !isNaN(startTime)) {
-          // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
-          const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
-          const totalMs = endTime - startTime;
-          let elapsedMs: number;
-          if (pausedSeconds * 1000 === totalMs) {
-            elapsedMs = totalMs;
-          } else {
-            elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
-          }
-          return this.msToTime(elapsedMs);
-        }
-      }
-    }
-    return "N/D";
-  }
-
-
-
-
-  private msToTime(ms: number): string {
-    if (ms < 0) ms = 0;
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    return this.dbService.calcDurataQuiz(quizAttempt);
   }
 
   async repeatQuiz(): Promise<void> { // Make async if dbService calls are async
