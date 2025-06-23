@@ -372,7 +372,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
     doc.save(`risultati-quiz-${this.quizAttempt.id.substring(0, 8)}.pdf`);
   }
 
-    calcDurataQuizOLD(quizAttempt: QuizAttempt): string {
+  calcDurataQuizOLD(quizAttempt: QuizAttempt): string {
     if (quizAttempt && quizAttempt.timestampEnd && quizAttempt.timestampStart) {
       // Check if timestamps are Date objects or strings/numbers
       const endTime = typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
@@ -392,36 +392,41 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
   calcDurataQuiz(quizAttempt: QuizAttempt): string {
     if (
       quizAttempt &&
-      quizAttempt.timestampEnd &&
-      quizAttempt.timestampStart
+      ((quizAttempt.timestampEnd &&
+        quizAttempt.timestampStart) || quizAttempt.timeElapsed)
     ) {
-      // Get timestamps as milliseconds
-      const endTime =
-        typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
-          ? new Date(quizAttempt.timestampEnd).getTime()
-          : quizAttempt.timestampEnd.getTime();
-      const startTime =
-        typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
-          ? new Date(quizAttempt.timestampStart).getTime()
-          : quizAttempt.timestampStart.getTime();
+      if (quizAttempt.timeElapsed !== undefined && quizAttempt.timeElapsed !== null && quizAttempt.timeElapsed > 0) {
+        return this.msToTime(quizAttempt.timeElapsed * 1000);
+      } else if (quizAttempt.timestampEnd &&
+        quizAttempt.timestampStart) {
+        // Get timestamps as milliseconds
+        const endTime =
+          typeof quizAttempt.timestampEnd === 'string' || typeof quizAttempt.timestampEnd === 'number'
+            ? new Date(quizAttempt.timestampEnd).getTime()
+            : quizAttempt.timestampEnd.getTime();
+        const startTime =
+          typeof quizAttempt.timestampStart === 'string' || typeof quizAttempt.timestampStart === 'number'
+            ? new Date(quizAttempt.timestampStart).getTime()
+            : quizAttempt.timestampStart.getTime();
 
-      if (!isNaN(endTime) && !isNaN(startTime)) {
-        // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
-        const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
-        const totalMs = endTime - startTime;
-        let elapsedMs: number;
-        if (pausedSeconds * 1000 === totalMs) {
-          elapsedMs = totalMs;
-        } else {
-          elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
+        if (!isNaN(endTime) && !isNaN(startTime)) {
+          // Subtract paused time if present, unless pausedSeconds equals the total duration (startTime - endTime)
+          const pausedSeconds = quizAttempt.timeElapsedOnPauseSeconds || 0;
+          const totalMs = endTime - startTime;
+          let elapsedMs: number;
+          if (pausedSeconds * 1000 === totalMs) {
+            elapsedMs = totalMs;
+          } else {
+            elapsedMs = Math.max(0, totalMs - pausedSeconds * 1000);
+          }
+          return this.msToTime(elapsedMs);
         }
-        return this.msToTime(elapsedMs);
       }
     }
     return "N/D";
   }
 
-  
+
 
 
   private msToTime(ms: number): string {
@@ -545,16 +550,16 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
       }))
       .filter(topic => topic.questions && topic.questions.length > 0);
 
-      this.groupedQuestions.forEach((groupedQuestion,index)=>{
-        if (filterType !== 'all'){
+    this.groupedQuestions.forEach((groupedQuestion, index) => {
+      if (filterType !== 'all') {
+        this.openAccordion(groupedQuestion.topic);
+      } else {
+        if (index === 0) {
           this.openAccordion(groupedQuestion.topic);
         } else {
-          if (index === 0){
-            this.openAccordion(groupedQuestion.topic);
-          } else {
-            this.closeAccordion(groupedQuestion.topic);
-          }
+          this.closeAccordion(groupedQuestion.topic);
         }
-      })
+      }
+    })
   }
 }

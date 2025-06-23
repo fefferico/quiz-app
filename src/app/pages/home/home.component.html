@@ -1,6 +1,6 @@
 <!-- src/app/pages/home/home.component.html -->
 <div class="text-center p-4 sm:p-6 md:p-10 dark:text-gray-200">
-  <div class="flex justify-center align-middle items-center">
+  <div class="flex justify-center align-middle items-center" *ngIf="[2,3].includes(getUserId())">
     <img (click)="startMusic(0)" src="assets/icons/lazio.png" style="width: 64px; height: 64px;" alt="Logo"
       class="mx-1 mb-4 hover:cursor-pointer" title="Vola!" />
     <img src="assets/icons/versus.png" style="width: 32px; height: 32px;" alt="Logo" class="mx-1 mb-3" />
@@ -9,9 +9,9 @@
   </div>
 
   <h1 *ngIf="!loggedInUser" class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">Benvenuti su
-    DajeFra!</h1>
+    QuizApp!</h1>
   <h2 *ngIf="loggedInUser" class="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-    Ciao {{ loggedInUser.id }}, benvenuto su DajeFra!</h2>
+    Ciao {{ loggedInUser.id }}, benvenuto su QuizApp!</h2>
 
   <!-- Public Contest Selection - MOVED TO THE TOP -->
   <section class="mb-6">

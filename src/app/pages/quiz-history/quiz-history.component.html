@@ -63,6 +63,7 @@
       </div>
     </div>
     <div *ngIf="isAdmin" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+      <!-- USER Start -->
       <div>
         <label for="filterUser" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Utente:</label>
         <select id="filterUser" name="filterUser" [(ngModel)]="filterUser" (ngModelChange)="applyFilters()"
@@ -71,6 +72,18 @@
           <option *ngFor="let user of availableUsers" [value]="user.id">{{ user.username }}</option>
         </select>
       </div>
+      <!-- USER End -->
+
+      <!-- CONTEST Start -->
+      <div>
+        <label for="filterContest" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Concorso:</label>
+        <select id="filterContest" name="filterContest" [(ngModel)]="filterContest" (ngModelChange)="applyFilters()"
+          class="mt-1 block w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          <option value="">Tutti i concorsi</option>
+          <option *ngFor="let contest of availableContests" [value]="contest.id">{{ contest.name }}</option>
+        </select>
+      </div>
+      <!-- CONTEST End -->
 
       <!-- ID Start -->
       <div>
@@ -156,7 +169,7 @@
             </p>
             <div class="mt-1">
               <p class="text-xs dark:text-white" style="word-break:break-word;">
-                Argomenti: {{ getTopicsSummary(attempt.settings.selectedTopics) }}
+                Argomenti: {{ getTopicsSummary(attempt) }}
               </p>
               <p class="text-l font-bold dark:text-white" style="word-break:break-word;">
                 Tipologia: {{ getQuizType(attempt) }}

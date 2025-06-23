@@ -387,7 +387,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
           }
 
           this.isTimerEnabled = actualParams['enableTimer'] == true || actualParams['enableTimer'] === 'true';
-          this.isCronometerVisible = actualParams['enableCronometer'] === 'true';
+          this.isCronometerVisible = actualParams['enableCronometer'] == true || actualParams['enableCronometer'] === 'true';
           this.timerDurationSeconds = actualParams['timerDurationSeconds'] ? +actualParams['timerDurationSeconds'] : 0;
           this._timeLeftSeconds = this.timerDurationSeconds;
 
@@ -1216,6 +1216,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
 
         this.isTimerEnabled = this.quizSettings.enableTimer || false;
         this.isCronometerEnabled = this.quizSettings.enableCronometer || false;
+        this.isCronometerVisible = this.isCronometerEnabled;
 
         if (this.isTimerEnabled && pausedAttempt.timeLeftOnPauseSeconds !== undefined && pausedAttempt.timeLeftOnPauseSeconds > 0) {
           this._timeLeftSeconds = pausedAttempt.timeLeftOnPauseSeconds;

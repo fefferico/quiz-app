@@ -623,7 +623,7 @@ export class DatabaseService implements OnDestroy {
     if (contestId !== null) {
       query = query.eq('fk_contest_id', contestId);
     }
-    
+
     // Apply pagination and a consistent order
     query = query.range(offset, offset + limit - 1).order('id', { ascending: true });
 
@@ -744,36 +744,71 @@ export class DatabaseService implements OnDestroy {
    *   getAllQuizAttempts({ userId: 1, contestId: [2, 3], status: 'paused' })
    */
   async getAllQuizAttempts(filters: { [key: string]: any } = {}): Promise<QuizAttempt[]> {
-    const operationName = `getAllQuizAttempts with filters: ${JSON.stringify(filters)}`;
     let query = this.supabase.from('quiz_attempts').select('*');
-
-    // Map camelCase keys to DB column names if needed
-    const columnMap: { [key: string]: string } = {
-      userId: 'fk_user_id',
-      contestId: 'fk_contest_id',
-      typeId: 'quiz_type',
-      attemptId: 'id',
-      // Add more mappings if needed
-    };
+    const columnMap: { [key: string]: string } = { userId: 'fk_user_id', contestId: 'fk_contest_id' };
 
     for (const [key, value] of Object.entries(filters)) {
-      const column = columnMap[key] || key;
-      if (Array.isArray(value)) {
-        query = query.in(column, value);
-      } else if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
+        const column = columnMap[key] || key;
         query = query.eq(column, value);
       }
     }
-
     query = query.order('timestamp_start', { ascending: false });
 
     const { data, error } = await query;
-
     if (error) {
       console.error('Supabase error in getAllQuizAttempts:', error);
       throw error;
     }
     return (data ?? []).map(this.mapQuizAttemptFromSupabase);
+  }
+
+  async getPaginatedQuizAttempts(filters: { [key: string]: any }, limit: number, offset: number): Promise<QuizAttempt[]> {
+    let query = this.supabase.from('quiz_attempts').select('*');
+    const columnMap: { [key: string]: string } = { userId: 'fk_user_id', contestId: 'fk_contest_id', attemptType: 'quiz_type', attemptId: 'id' };
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== '') {
+        const column = columnMap[key] || key;
+        if (key === 'attemptId') {
+          query = query.ilike(column, `%${value}%`);
+        } else {
+          query = query.eq(column, value);
+        }
+      }
+    }
+
+    query = query.order('timestamp_start', { ascending: false }).range(offset, offset + limit - 1);
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Supabase error in getPaginatedQuizAttempts:', error);
+      throw error;
+    }
+    return (data ?? []).map(this.mapQuizAttemptFromSupabase);
+  }
+
+  async countQuizAttempts(filters: { [key: string]: any }): Promise<number> {
+    let query = this.supabase.from('quiz_attempts').select('id', { count: 'exact', head: true });
+    const columnMap: { [key: string]: string } = { userId: 'fk_user_id', contestId: 'fk_contest_id', attemptType: 'quiz_type', attemptId: 'id' };
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== '') {
+        const column = columnMap[key] || key;
+        if (key === 'attemptId') {
+          query = query.ilike(column, `%${value}%`);
+        } else {
+          query = query.eq(column, value);
+        }
+      }
+    }
+
+    const { count, error } = await query;
+    if (error) {
+      console.error('Error counting quiz attempts:', error);
+      return 0;
+    }
+    return count ?? 0;
   }
 
   async deleteQuizAttempt(id: string): Promise<void> {

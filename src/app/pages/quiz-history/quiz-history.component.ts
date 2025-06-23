@@ -57,16 +57,19 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
 
   // --- Filter Properties ---
   filterDateStart: string = ''; // ISO date string e.g., "2023-01-01"
-  filterID: string = ''; 
+  filterID: string = '';
   filterDateEnd: string = '';   // ISO date string
   filterMinPercentage: number | null = null;
   filterMaxPercentage: number | null = null;
   filterSelectedTopic: string = ''; // Selected topic for filtering
   filterSelectedType: string = '';
   filterUser: number = -1;
+  filterContest: number = -1;
+  selectedContest: Contest | undefined = undefined;
   availableTopics: string[] = [];   // To populate topic dropdown
   availableTypes: string[] = [];
   availableUsers: User[] = [];
+  availableContests: Contest[] = [];
   // --- End Filter Properties ---
 
   // Getter to easily access the contest from the template
@@ -97,6 +100,7 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       await this.loadQuizHistory();
       this.spinnerService.hide();
       this.loadAvailableTopics();
+      this.loadAvailableContests();
       this.loadAvailableTypes();
     });
 
@@ -155,6 +159,15 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error loading available topics:', error);
       this.availableTopics = [];
+    }
+  }
+
+  async loadAvailableContests(): Promise<void> {
+    try {
+      this.availableContests = await this.dbService.getAllContests();
+    } catch (error) {
+      console.error('Error loading available contests:', error);
+      this.availableContests = [];
     }
   }
 
@@ -228,16 +241,25 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
       );
     }
 
-    // 6. Filter by User
-    if (this.filterUser && this.filterUser !== undefined && this.filterUser >= 0) {
+    // 6. Filter by USER and CONTEST
+    // Filter by USER
+    if (this.filterUser >= 0) {
       const currentContest = this.contestSelectionService.checkForContest();
       if (currentContest === null) {
         this.router.navigate(['/home']);
         return;
       }
 
-      this.spinnerService.show("Recupero quiz per l'utente " + this.availableUsers.find(user => user.id == this.filterUser)?.displayName);
-      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(currentContest.id, this.filterUser);
+      const contestId = (this.filterContest >= 0) ? Number(this.filterContest) : currentContest.id;
+      this.selectedContest = this.availableContests.find(cont => cont.id === contestId);
+      const userID = Number(this.filterUser);
+
+      this.spinnerService.show(
+        "Recupero quiz per l'utente " +
+        (this.availableUsers.find(user => user.id === this.filterUser)?.displayName || '')
+      );
+
+      this.allQuizAttempts = await this.dbService.getAllQuizAttemptsByContest(contestId, userID);
       this.spinnerService.hide();
       filtered = [...this.allQuizAttempts];
     }
@@ -266,16 +288,16 @@ export class QuizHistoryComponent implements OnInit, OnDestroy {
   }
 
   // --- Helper and existing methods ---
-  getTopicsSummary(topics: string[] | undefined): string {
-    if (!topics || topics.length === 0) {
+  getTopicsSummary(attempt: QuizAttempt): string {
+    if (!attempt?.settings?.selectedTopics || attempt?.settings?.selectedTopics?.length === 0) {
       // If a contest is selected and no specific topics, it implies all topics of that contest
       return this.selectedPublicContest ? `Tutti (Concorso: ${this.selectedPublicContest.name})` : 'Tutti gli argomenti';
     }
     const MAX_DISPLAY_TOPICS = 2;
-    if (topics.length > MAX_DISPLAY_TOPICS) {
-      return topics.slice(0, MAX_DISPLAY_TOPICS).join(', ') + ` e altri ${topics.length - MAX_DISPLAY_TOPICS}`;
+    if (attempt?.settings?.selectedTopics.length > MAX_DISPLAY_TOPICS) {
+      return attempt?.settings?.selectedTopics.slice(0, MAX_DISPLAY_TOPICS).join(', ') + ` e altri ${attempt?.settings?.selectedTopics.length - MAX_DISPLAY_TOPICS}`;
     }
-    return topics.join(', ');
+    return attempt?.settings?.selectedTopics.join(', ');
   }
 
   getQuizType(quizAttempt: QuizAttempt): string {
