@@ -1,8 +1,8 @@
 // src/app/core/services/auth.service.ts
-import {Injectable} from '@angular/core';
-import {SupabaseClient, User as SupabaseUser} from '@supabase/supabase-js'; // Renamed User to SupabaseUser
-import {BehaviorSubject, Observable} from 'rxjs';
-import {SupabaseService} from './supabase-service.service';
+import { Injectable } from '@angular/core';
+import { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js'; // Renamed User to SupabaseUser
+import { BehaviorSubject, Observable } from 'rxjs';
+import { SupabaseService } from './supabase-service.service';
 import { DatabaseService } from './database.service';
 import { User } from '../../models/user.model';
 
@@ -59,7 +59,7 @@ export class AuthService {
     }
 
     // Supabase session check - this might override a cached local user if a Supabase session is active.
-    this.supabase.auth.getSession().then(({data: {session}}) => {
+    this.supabase.auth.getSession().then(({ data: { session } }) => {
       const supabaseUser = session?.user ?? null;
       if (supabaseUser) {
         // If a Supabase session exists, it takes precedence or merges.
@@ -170,9 +170,6 @@ export class AuthService {
       return { success: false, user: null, error: 'Password is required' };
     }
 
-    // @ts-ignore
-    const specialUserEntry = this.specialUsers[username];
-
     const foundUser: User = await this.dbService.getUserByUsername(username);
 
     if (foundUser) {
@@ -181,7 +178,7 @@ export class AuthService {
         const user: AppUser = {
           id: username,
           userId: foundUser.id,
-          role: foundUser.id === 1 ? specialUserEntry.role : UserRole.QuizTaker,
+          role: this.specificUserTypeFn(foundUser),
           // email: specialUserEntry.email,
           app_metadata: { provider: 'local_special_user' },
           user_metadata: { name: username },
@@ -207,7 +204,7 @@ export class AuthService {
       this._currentUser.next(appUser); // Set current user, onAuthStateChange will also fire
       this.storeUserInCache(appUser);
     } else if (error) {
-        this.removeUserFromCache(); // Ensure cache is clean on error
+      this.removeUserFromCache(); // Ensure cache is clean on error
     }
     return { data, error };
   }
@@ -220,7 +217,7 @@ export class AuthService {
       this._currentUser.next(appUser); // Set current user, onAuthStateChange will also fire
       this.storeUserInCache(appUser);
     } else if (error || !data?.user) { // Added !data?.user for robustness
-        this.removeUserFromCache();
+      this.removeUserFromCache();
     }
     return { data, error };
   }
@@ -231,10 +228,10 @@ export class AuthService {
     this._currentUser.next(null);
     this.removeUserFromCache();
     if (error) {
-        console.error("Error signing out from Supabase:", error);
-        // Even if Supabase signout fails, ensure local state is cleared
-        this._currentUser.next(null);
-        this.removeUserFromCache();
+      console.error("Error signing out from Supabase:", error);
+      // Even if Supabase signout fails, ensure local state is cleared
+      this._currentUser.next(null);
+      this.removeUserFromCache();
     }
     return { error };
   }
@@ -271,5 +268,16 @@ export class AuthService {
 
   public isStatsViewer(): boolean {
     return this.hasRole(UserRole.StatsViewer);
+  }
+
+  private specificUserTypeFn(user: User): UserRole {
+    // @ts-ignore
+    const specialUserEntry = this.specialUsers[user.username];
+
+    if (user && (user.id === 1 || user.id === 2 || user.id === 3)) {
+      return specialUserEntry.role;
+    } else {
+      return UserRole.QuizTaker;
+    }
   }
 }
