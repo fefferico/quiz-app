@@ -17,7 +17,7 @@ export enum UserRole {
 export interface AppUser {
   id: string; // username for local users, or Supabase ID
   userId?: number;
-  role: UserRole;
+  role?: UserRole;
   email?: string;
   // Include other fields if needed, mirroring SupabaseUser for potential compatibility
   app_metadata?: { provider?: string, providers?: string[] };
@@ -181,8 +181,8 @@ export class AuthService {
         const user: AppUser = {
           id: username,
           userId: foundUser.id,
-          role: specialUserEntry.role,
-          email: specialUserEntry.email,
+          role: foundUser.id === 1 ? specialUserEntry.role : UserRole.QuizTaker,
+          // email: specialUserEntry.email,
           app_metadata: { provider: 'local_special_user' },
           user_metadata: { name: username },
           aud: 'authenticated_local',
@@ -255,7 +255,7 @@ export class AuthService {
   public hasRole(roles: UserRole | UserRole[]): boolean {
     const user = this._currentUser.value;
     if (!user) return false;
-    if (Array.isArray(roles)) {
+    if (Array.isArray(roles) && user.role) {
       return roles.includes(user.role);
     }
     return user.role === roles;

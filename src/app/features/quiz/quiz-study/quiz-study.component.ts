@@ -15,6 +15,7 @@ import { SpinnerService } from '../../../core/services/spinner.service';
 import { Contest } from '../../../models/contest.model';
 import { AlertComponent } from '../../../shared/alert/alert.component';
 import { AlertService } from '../../../services/alert.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-quiz-study',
@@ -32,6 +33,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
   private spinnerService = inject(SpinnerService);
   private alertService = inject(AlertService);
+  private authService = inject(AuthService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -178,7 +180,7 @@ export class QuizStudyComponent implements OnInit, OnDestroy {
 
   async toggleFavoriteCurrentQuestion(): Promise<void> {
     if (this.currentQuestion) {
-      const newFavStatus = await this.dbService.toggleFavoriteStatus(this.currentQuestion.id);
+      const newFavStatus = await this.dbService.toggleFavoriteStatus(this.currentQuestion.id, this.authService.getCurrentUserId());
       if (newFavStatus !== undefined && this.currentQuestion) {
         this.currentQuestion.isFavorite = newFavStatus;
         const qIndex = this.questions.findIndex(q => q.id === this.currentQuestion!.id);

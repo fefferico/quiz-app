@@ -796,7 +796,7 @@ export class QuizTakingComponent implements OnInit, OnDestroy, CanComponentDeact
   async toggleFavoriteCurrentQuestion(): Promise<void> {
     if (this.currentQuestion) {
       const originalQuestionId = this.questions[this.currentQuestionIndex].id;
-      const newFavStatus = await this.dbService.toggleFavoriteStatus(originalQuestionId);
+      const newFavStatus = await this.dbService.toggleFavoriteStatus(originalQuestionId, this.authService.getCurrentUserId());
       if (newFavStatus !== undefined) {
         this.currentQuestion.isFavorite = newFavStatus;
         const qIndex = this.questions.findIndex(q => q.id === originalQuestionId);

@@ -5,7 +5,7 @@ import { AnsweredQuestion, QuizAttempt, TopicCount, TopicDistribution } from '..
 import { SupabaseService } from './supabase-service.service'; // Your Supabase client wrapper
 import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { Subscription } from 'rxjs'; // Added import
-import { User } from '../../models/user.model';
+import { Role, User } from '../../models/user.model';
 import { Contest } from '../../models/contest.model';
 import { TopicCoverageData } from '../../models/statistics.model';
 
@@ -1314,7 +1314,7 @@ export class DatabaseService implements OnDestroy {
     return this.getAllQuestions(contestIdentifier); // Leverages existing Supabase-first logic
   }
 
-  async toggleFavoriteStatus(questionId: string): Promise<number | undefined> {
+  async toggleFavoriteStatusOLD(questionId: string): Promise<number | undefined> {
     // This involves a read then a write.
     const question = await this.getQuestionById(questionId); // Supabase-first read
     if (!question) {
@@ -1327,20 +1327,96 @@ export class DatabaseService implements OnDestroy {
     return newFavoriteStatus;
   }
 
-  async getFavoriteQuestions(contestId?: number | null): Promise<Question[]> {
-    const operationName = `getFavoriteQuestions` + (contestId ? ` for contest ${contestId}` : '');
-    let supabaseQuery = this.supabase.from('questions').select('*').eq('is_favorite', 1); // Assuming 1 for true
-    if (contestId) {
-      supabaseQuery = supabaseQuery.eq('fk_contest_id', contestId);
+  /**
+   * Toggles the favorite status for a question for the current user in the 'users_questions' join table.
+   * Returns the new favorite status (1 for favorite, 0 for not favorite), or undefined if not found.
+   */
+  async toggleFavoriteStatus(questionId: string, userId: number): Promise<number | undefined> {
+    // 1. Find the users_questions row for this user and question
+    const { data, error } = await this.supabase
+      .from('users_questions')
+      .select('id, is_favorite')
+      .eq('fk_user_id', userId)
+      .eq('fk_question_id', questionId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116: no row found, that's ok
+      console.error(`Supabase error fetching users_questions for toggleFavoriteStatus:`, error);
+      return undefined;
     }
 
+    let newFavoriteStatus: number;
+    if (data) {
+      // Row exists, toggle the value
+      newFavoriteStatus = data.is_favorite ? 0 : 1;
+      const { error: updateError } = await this.supabase
+        .from('users_questions')
+        .update({ is_favorite: newFavoriteStatus })
+        .eq('id', data.id);
+      if (updateError) {
+        console.error(`Supabase error updating favorite status:`, updateError);
+        return undefined;
+      }
+    } else {
+      // No row exists, insert a new one with is_favorite = 1
+      newFavoriteStatus = 1;
+      const { error: insertError } = await this.supabase
+        .from('users_questions')
+        .insert({
+          fk_user_id: userId,
+          fk_question_id: questionId,
+          is_favorite: newFavoriteStatus
+        });
+      if (insertError) {
+        console.error(`Supabase error inserting favorite status:`, insertError);
+        return undefined;
+      }
+    }
+    return newFavoriteStatus;
+  }
+
+  // In database.service.ts
+
+async getFavoriteQuestions(contestId?: number | null, userId?: number | null): Promise<Question[]> {
+    const operationName = `getFavoriteQuestions` +
+      (contestId ? ` for contest ${contestId}` : '') +
+      (userId ? ` and user ${userId}` : '');
+
+    // 1. Start the query from the 'users_questions' join table
+    let supabaseQuery = this.supabase
+      .from('users_questions')
+      // 2. The SELECT statement is the key.
+      //    It tells Supabase to fetch all columns (*) from the related 'questions' table.
+      //    Supabase automatically knows how to join based on your foreign key relationship.
+      .select('questions(*)');
+
+    // 3. Apply the primary filters on the 'users_questions' table
+    supabaseQuery = supabaseQuery.eq('is_favorite', true);
+
+    if (userId !== undefined && userId !== null) {
+      supabaseQuery = supabaseQuery.eq('fk_user_id', userId);
+    }
+
+    // 4. (Optional) If you need to filter the *results* by contestId
+    if (contestId !== undefined && contestId !== null) {
+      // This filters the joined 'questions' data.
+      // The syntax is 'foreign_table_name.column_name'
+      supabaseQuery = supabaseQuery.eq('questions.fk_contest_id', contestId);
+    }
+    
     const { data, error } = await supabaseQuery;
+
     if (error) {
       console.error('Supabase error in getFavoriteQuestions:', error);
       throw error;
     }
-    return (data ?? []).map(this.mapQuestionFromSupabase);
-  }
+    
+    // 5. The result is nested, so we need to map it correctly.
+    //    The data will look like: [ { questions: { id: '...', text: '...' } }, ... ]
+    const mappedQuestions = (data ?? []).map(item => this.mapQuestionFromSupabase(item.questions));
+    
+    return mappedQuestions;
+}
 
   async getPausedQuiz(contestId: number, userId: number): Promise<QuizAttempt | undefined> {
     const operationName = `getPausedQuiz` + (userId ? ` for user ${userId}` : '');
@@ -1600,10 +1676,18 @@ export class DatabaseService implements OnDestroy {
       hashedPassword: dbUser.password,
       isActive: dbUser.is_active,
       displayName: dbUser.display_name ?? dbUser.displayName,
-      // createdAt: supabaseUser.created_at ? new Date(supabaseUser.created_at) : undefined,
-      // Add other fields as needed, mapping snake_case to camelCase
+      roles: (dbUser.roles || []).map(this.mapRoleFromDB) // Map roles if they are joined
     };
     return userResult;
+  }
+  private mapRoleFromDB(dbRole: any): Role {
+    if (!dbRole) return undefined as any;
+    return {
+      id: dbRole.id,
+      name: dbRole.name,
+      isActive: dbRole.is_active,
+      createdAt: new Date(dbRole.created_at),
+    };
   }
 
   public async getAvailableTopics(contestId: number): Promise<{ topic: string; count: number }[]> {
@@ -1886,5 +1970,70 @@ export class DatabaseService implements OnDestroy {
   }
 
   // --- END: NEW ADMIN MANAGEMENT METHODS ---
+
+
+  // --- NEW ROLE MANAGEMENT METHODS ---
+
+  async getAllRoles(): Promise<Role[]> {
+    const { data, error } = await this.supabase.from('roles').select('*');
+    if (error) {
+      console.error('Supabase error fetching all roles:', error);
+      throw error;
+    }
+    return (data || []).map(this.mapRoleFromDB);
+  }
+
+  async getRolesForUser(userId: number): Promise<Role[]> {
+    const { data, error } = await this.supabase
+      .from('users_roles')
+      .select(`
+        fk_role_id,
+        roles!users_roles_fk_role_id_fkey (
+          id,
+          name,
+          is_active,
+          created_at
+        )
+      `)
+      .eq('fk_user_id', userId);
+
+    if (error) {
+      console.error(`Error fetching roles for user ${userId}:`, error);
+      throw error;
+    }
+    // The result is nested, e.g., [{ roles: {id: 1, name: 'Admin'} }]
+    return (data || []).map(item => this.mapRoleFromDB(item.roles));
+  }
+
+  async updateRolesForUser(userId: number, roleIds: number[]): Promise<void> {
+    // 1. Delete all existing role associations for this user
+    const { error: deleteError } = await this.supabase
+      .from('users_roles')
+      .delete()
+      .eq('fk_user_id', userId);
+
+    if (deleteError) {
+      console.error('Error clearing old user role associations:', deleteError);
+      throw deleteError;
+    }
+
+    // 2. Insert new associations if any are provided
+    if (roleIds.length > 0) {
+      const newAssociations = roleIds.map(roleId => ({
+        fk_user_id: userId,
+        fk_role_id: roleId
+      }));
+      const { error: insertError } = await this.supabase
+        .from('users_roles')
+        .insert(newAssociations);
+
+      if (insertError) {
+        console.error('Error inserting new user role associations:', insertError);
+        throw insertError;
+      }
+    }
+  }
+
+  // --- END NEW ROLE MANAGEMENT METHODS ---
 
 }

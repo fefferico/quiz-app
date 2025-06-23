@@ -9,6 +9,7 @@ import { IconDefinition, faHome, faLandmark } from '@fortawesome/free-solid-svg-
 import { AlertService } from '../../services/alert.service';
 import { ContestSelectionService } from '../../core/services/contest-selection.service';
 import { Contest } from '../../models/contest.model';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-favorite-questions',
@@ -22,6 +23,7 @@ export class FavoriteQuestionsComponent implements OnInit {
   private router = inject(Router);
   private alertService = inject(AlertService);
   private contestSelectionService = inject(ContestSelectionService); // Inject the new service
+  private authService = inject(AuthService);
 
   // -- icons
   homeIcon: IconDefinition = faHome; // This was already here, seems unused in the template you showed previously
@@ -58,7 +60,7 @@ export class FavoriteQuestionsComponent implements OnInit {
 
     this.isLoading = true;
     try {
-      this.favoriteQuestions = await this.dbService.getFavoriteQuestions(currentContest.id);
+      this.favoriteQuestions = await this.dbService.getFavoriteQuestions(currentContest.id, this.authService.getCurrentUserId());
     } catch (error) {
       console.error("Error loading favorite questions:", error);
     } finally {
@@ -68,7 +70,7 @@ export class FavoriteQuestionsComponent implements OnInit {
 
   async unmarkFavorite(questionId: string, event: MouseEvent): Promise<void> {
     event.stopPropagation(); // Prevent other click actions
-    const newFavStatus = await this.dbService.toggleFavoriteStatus(questionId);
+    const newFavStatus = await this.dbService.toggleFavoriteStatus(questionId, this.authService.getCurrentUserId());
     if (newFavStatus === 0) { // Successfully unfavorited
       this.favoriteQuestions = this.favoriteQuestions.filter(q => q.id !== questionId);
     }

@@ -228,7 +228,7 @@ export class QuizResultsComponent implements OnInit, OnDestroy {
 
   async toggleFavoriteFromResult(questionId: string, event: MouseEvent): Promise<void> {
     event.stopPropagation();
-    const newFavStatus = await this.dbService.toggleFavoriteStatus(questionId);
+    const newFavStatus = await this.dbService.toggleFavoriteStatus(questionId, this.authService.getCurrentUserId());
 
     if (newFavStatus !== undefined && this.quizAttempt) {
       // Update the specific question's favorite status within the groupedQuestions for immediate UI reflection

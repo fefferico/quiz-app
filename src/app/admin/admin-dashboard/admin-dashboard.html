@@ -326,17 +326,37 @@
                                 type="checkbox" formControlName="isActive"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">Is
                             Active</label></div>
-                    <div *ngIf="editingUserId" class="mb-4">
-                        <h3 class="text-md font-semibold text-gray-700 mb-2">Contest Permissions</h3>
-                        <ul class="space-y-1">
-                            <li *ngFor="let contest of allContestsForPermissions"><label
-                                    class="flex items-center gap-2 font-normal text-sm"><input type="checkbox"
-                                        [checked]="userContestPermissions[contest.id]"
-                                        (change)="toggleContestPermission(contest.id)"
-                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">{{
-                                    contest.name }}</label></li>
-                        </ul>
+
+                    <!-- UPDATED: Permissions Section -->
+                    <div *ngIf="editingUserId" class="space-y-4">
+                        <div>
+                            <h3 class="text-md font-semibold text-gray-700 mb-2">Roles</h3>
+                            <ul class="space-y-1">
+                                <li *ngFor="let role of allRoles">
+                                    <label class="flex items-center gap-2 font-normal text-sm">
+                                        <input type="checkbox" [checked]="userRolePermissions[role.id!]"
+                                            (change)="toggleRolePermission(role.id!)"
+                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        {{ role.name }}
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-md font-semibold text-gray-700 mb-2">Contest Permissions</h3>
+                            <ul class="space-y-1">
+                                <li *ngFor="let contest of allContestsForPermissions">
+                                    <label class="flex items-center gap-2 font-normal text-sm">
+                                        <input type="checkbox" [checked]="userContestPermissions[contest.id]"
+                                            (change)="toggleContestPermission(contest.id)"
+                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                        {{ contest.name }}
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
+
                     <div class="flex gap-x-4 mt-6">
                         <button type="submit" [disabled]="userForm.invalid"
                             class="px-4 py-2 rounded-md font-semibold text-white shadow-sm disabled:opacity-50 bg-indigo-600 hover:bg-indigo-700">{{

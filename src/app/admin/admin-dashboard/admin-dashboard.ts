@@ -4,7 +4,7 @@ import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DatabaseService } from '../../core/services/database.service';
 import { AlertService } from '../../services/alert.service';
-import { User } from '../../models/user.model';
+import { Role, User } from '../../models/user.model';
 import { Contest } from '../../models/contest.model';
 import { Question } from '../../models/question.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -31,6 +31,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     // Data stores
     users: User[] = [];
     contests: Contest[] = [];
+    allRoles: Role[] = []; // NEW: To store all available roles
     types: QuizType[] = ['Standard', 'Esame', 'Revisione errori', 'Domande mai risposte', 'Contest', 'Timed', 'Revisione errori globale'];
     questions: Question[] = [];
     filteredQuestions: Question[] = [];
@@ -53,6 +54,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     // For user permissions
     allContestsForPermissions: Contest[] = [];
     userContestPermissions: { [key: number]: boolean } = {};
+    userRolePermissions: { [key: number]: boolean } = {}; // NEW: For role checkboxes
 
     // For question management
     selectedContestForQuestions: number | '' = '';
@@ -175,12 +177,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     async loadInitialData(): Promise<void> {
         try {
-            const contests = await this.dbService.getAllContests();
-            this.contests = Array.isArray(contests) ? contests : [];
-            this.users = await this.dbService.getAllUsers();
+            this.spinnerService.show('Loading Admin Data...');
+            const [contests, users, roles] = await Promise.all([
+                this.dbService.getAllContests(),
+                this.dbService.getAllUsers(),
+                this.dbService.getAllRoles() // Fetch roles
+            ]);
+            this.contests = Array.isArray(contests) ? contests.sort((a, b) => a.id - b.id) : [];
+            this.users = Array.isArray(users) ? users : [];
+            this.allRoles = Array.isArray(roles) ? roles : [];
             this.allContestsForPermissions = [...this.contests];
         } catch (error) {
             this.alertService.showToast({ message: 'Failed to load initial admin data.', type: 'error' });
+        } finally {
+            this.spinnerService.hide();
         }
     }
 
@@ -219,75 +229,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             }
         }
     }
-
-    // --- USER MANAGEMENT --- (No changes)
-    async onUserFormSubmit(): Promise<void> {
-        if (this.userForm.invalid) return;
-        if (!this.editingUserId) this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
-        else this.userForm.controls['password'].clearValidators();
-        this.userForm.controls['password'].updateValueAndValidity();
-        if (this.userForm.invalid) {
-            this.alertService.showToast({ message: 'Please fill all required fields.', type: 'warning' });
-            return;
-        }
-
-        let userId = this.editingUserId;
-        if (!userId) {
-            try {
-                const maxId = await this.dbService.getHighestUserId();
-                userId = (Number(maxId) ?? 0) + 1;
-            } catch (err) {
-                this.alertService.showToast({ message: 'Failed to determine next user ID.', type: 'error' });
-                return;
-            }
-        }
-
-        const userData: User = { id: userId, ...this.userForm.value };
-        delete userData.hashedPassword;
-        if (this.userForm.value.password) userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
-
-        this.dbService.upsertUser(userData).then(async savedUser => {
-            if (this.editingUserId) {
-                const permissionIds = Object.entries(this.userContestPermissions).filter(([, h]) => h).map(([c]) => Number(c));
-                await this.dbService.updateContestsForUser(this.editingUserId, permissionIds);
-            }
-            this.alertService.showToast({ message: `User '${savedUser.username}' saved.`, type: 'success' });
-            this.resetUserForm(); this.loadInitialData();
-        }).catch(err => {
-            this.alertService.showToast({ message: `Failed to save user: ${err.message}`, type: 'error' });
-        });
-    }
-    private async hashPasswordSHA256(password: string): Promise<string> {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
-        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    async onSelectUserForEdit(user: User): Promise<void> {
-        this.resetUserForm(); this.editingUserId = user.id!;
-        this.userForm.patchValue(user); this.userForm.controls['username'].disable();
-        try {
-            const permittedIds = await this.dbService.getUserContestIds(user.id!);
-            this.userContestPermissions = this.allContestsForPermissions.reduce((acc, c) => ({ ...acc, [c.id]: permittedIds.includes(c.id) }), {});
-        } catch {
-            this.alertService.showToast({ message: 'Could not load user permissions.', type: 'error' });
-        }
-    }
-    resetUserForm(): void {
-        this.editingUserId = null; this.userForm.reset({ username: '', displayName: '', password: '', isActive: true });
-        this.userForm.controls['username'].enable(); this.userContestPermissions = {};
-    }
-    async onDeleteUser(id: number, username: string): Promise<void> {
-        if ((await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`))?.role === 'confirm') {
-            try {
-                await this.dbService.deleteUser(id);
-                this.alertService.showToast({ message: 'User deleted.', type: 'success' }); this.loadInitialData();
-            } catch (error) {
-                this.alertService.showToast({ message: 'Failed to delete user.', type: 'error' });
-            }
-        }
-    }
-    toggleContestPermission(contestId: number): void { this.userContestPermissions[contestId] = !this.userContestPermissions[contestId]; }
 
     // --- QUESTION MANAGEMENT --- (No changes)
     get options(): FormArray { return this.questionForm.get('options') as FormArray; }
@@ -604,4 +545,115 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         const pad = (n: number) => n.toString().padStart(2, '0');
         return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
+
+
+    // --- USER MANAGEMENT ---
+    async onUserFormSubmit(): Promise<void> {
+        if (this.userForm.invalid) return;
+        if (!this.editingUserId) this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(6)]);
+        else this.userForm.controls['password'].clearValidators();
+        this.userForm.controls['password'].updateValueAndValidity();
+        if (this.userForm.invalid) {
+            this.alertService.showToast({ message: 'Please fill all required fields.', type: 'warning' });
+            return;
+        }
+
+        let userId = this.editingUserId;
+        if (!userId) {
+            try {
+                const maxId = await this.dbService.getHighestUserId();
+                userId = (Number(maxId) ?? 0) + 1;
+            } catch (err) {
+                this.alertService.showToast({ message: 'Failed to determine next user ID.', type: 'error' });
+                return;
+            }
+        }
+        
+        const userData: User = { id: userId, ...this.userForm.value };
+        delete userData.hashedPassword;
+        if (this.userForm.value.password) userData.hashedPassword = await this.hashPasswordSHA256(this.userForm.value.password);
+
+        this.dbService.upsertUser(userData).then(async savedUser => {
+            if (this.editingUserId) {
+                const contestPermissionIds = Object.entries(this.userContestPermissions).filter(([, h]) => h).map(([c]) => Number(c));
+                await this.dbService.updateContestsForUser(this.editingUserId, contestPermissionIds);
+
+                // NEW: Save role permissions
+                const rolePermissionIds = Object.entries(this.userRolePermissions).filter(([, hasAccess]) => hasAccess).map(([roleId]) => Number(roleId));
+                await this.dbService.updateRolesForUser(this.editingUserId, rolePermissionIds);
+            }
+            this.alertService.showToast({ message: `User '${savedUser.username}' saved.`, type: 'success' });
+            this.resetUserForm(); this.loadInitialData();
+        }).catch(err => {
+            this.alertService.showToast({ message: `Failed to save user: ${err.message}`, type: 'error' });
+        });
+    }
+    private async hashPasswordSHA256(password: string): Promise<string> {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async onSelectUserForEdit(user: User): Promise<void> {
+        this.resetUserForm();
+        this.editingUserId = user.id!;
+        this.userForm.patchValue(user);
+        this.userForm.controls['username'].disable();
+
+        try {
+            this.spinnerService.show('Loading permissions...');
+            const [permittedContestIds, permittedRoles] = await Promise.all([
+                this.dbService.getUserContestIds(user.id!),
+                this.dbService.getRolesForUser(user.id!)
+            ]);
+            
+            this.userContestPermissions = this.allContestsForPermissions.reduce((acc, c) => {
+                if (c.id != null) {
+                    return { ...acc, [c.id]: permittedContestIds.includes(c.id) };
+                }
+                return acc;
+            }, {});
+            
+            const permittedRoleIds = permittedRoles
+                .filter(r => r.id != null)
+                .map(r => r.id as number);
+            this.userRolePermissions = this.allRoles.reduce<{ [key: number]: boolean }>(
+                (acc, r) => {
+                    if (r.id != null) {
+                        return { ...acc, [r.id]: permittedRoleIds.includes(r.id) };
+                    }
+                    return acc;
+                },
+                {}
+            );
+
+        } catch (error) {
+            console.log(error)
+            this.alertService.showToast({ message: 'Could not load user permissions.', type: 'error' });
+        } finally {
+            this.spinnerService.hide();
+        }
+    }
+
+    resetUserForm(): void {
+        this.editingUserId = null;
+        this.userForm.reset({ username: '', displayName: '', password: '', isActive: true });
+        this.userForm.controls['username'].enable();
+        this.userContestPermissions = {};
+        this.userRolePermissions = {};
+    }
+
+    async onDeleteUser(id: number, username: string): Promise<void> {
+        if ((await this.alertService.showConfirm('Delete User', `Are you sure you want to delete "${username}"? This is IRREVERSIBLE.`))?.role === 'confirm') {
+            try {
+                await this.dbService.deleteUser(id);
+                this.alertService.showToast({ message: 'User deleted.', type: 'success' }); this.loadInitialData();
+            } catch (error) {
+                this.alertService.showToast({ message: 'Failed to delete user.', type: 'error' });
+            }
+        }
+    }
+    toggleContestPermission(contestId: number): void { this.userContestPermissions[contestId] = !this.userContestPermissions[contestId]; }
+    toggleRolePermission(roleId: number): void { this.userRolePermissions[roleId] = !this.userRolePermissions[roleId]; }
 }
