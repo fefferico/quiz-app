@@ -165,7 +165,7 @@ export class HomeComponent implements OnInit, OnDestroy { // Implement OnDestroy
         await Promise.all([
           this.loadTodayProblematicQuestions(contest, userId),
           this.loadYesterdayProblematicQuestions(contest, userId),
-          this.loadOverallProblematicQuestions(contest, userId), // Added call
+          this.loadOverallProblematicQuestions(contest, userId),
           this.countNeverEncounteredQuestion(contest, userId),
           this.checkForPausedQuiz(),
           this.checkForInProgressQuiz()

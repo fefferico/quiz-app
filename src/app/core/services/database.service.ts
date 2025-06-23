@@ -1037,9 +1037,53 @@ export class DatabaseService implements OnDestroy {
     }
   }
 
+
   async getNeverAnsweredQuestionCount(contestId: number, userId: number): Promise<number> {
     const operationName = `getNeverAnsweredQuestionCount` + (contestId ? ` for contest ${contestId}` : '');
-    let neverAnsweredQuestions = this.supabase.from('quiz_attempts').select('*')
+    let neverAnsweredQuestions: any[] = [];
+    try {
+      // 1. Get the total number of questions for the contest
+      const totalQuestions = await this.countAllRows(contestId);
+
+      // 2. Get all quiz attempts for this contest and user
+      const { data, error } = await this.supabase
+        .from('quiz_attempts')
+        .select('answered_questions')
+        .eq('fk_contest_id', contestId)
+        .eq('fk_user_id', userId);
+
+      if (error) {
+        console.error(`Supabase error in ${operationName}:`, error);
+        throw error;
+      }
+
+      // 3. Collect all answered question IDs from all attempts
+      const answeredIds = new Set<string>();
+      if (data) {
+        for (const row of data) {
+          const answered = row.answered_questions;
+          if (Array.isArray(answered)) {
+            for (const q of answered) {
+              if (q && q.questionId) {
+                answeredIds.add(q.questionId);
+              }
+            }
+          }
+        }
+      }
+
+      // 4. Never answered = total questions - unique answered
+      return totalQuestions - answeredIds.size;
+    } catch (err) {
+      console.error(`Error in ${operationName}:`, err);
+      throw err;
+    }
+  }
+
+
+  async getNeverAnsweredQuestionCountOLD(contestId: number, userId: number): Promise<number> {
+    const operationName = `getNeverAnsweredQuestionCount` + (contestId ? ` for contest ${contestId}` : '');
+    let neverAnsweredQuestions = this.supabase.from('quiz_attempts').select('answered_questions')
       .eq('fk_contest_id', contestId)
       .eq('fk_user_id', userId);
 
@@ -1062,9 +1106,18 @@ export class DatabaseService implements OnDestroy {
       // Flatten all answered_questions arrays and collect unique question IDs
       const answeredIds = new Set<number>();
       if (data) {
-        for (const attempt of data) {
-          if (Array.isArray(attempt.answered_questions)) {
-            for (const q of attempt.answered_questions) {
+        for (const row of data) {
+          const answered = row.answered_questions;
+          if (Array.isArray(answered)) {
+            for (const q of answered) {
+              if (q && q.questionId) {
+                answeredIds.add(q.questionId);
+              }
+            }
+          } else if (answered && typeof answered === 'object') {
+            // If it's an object, iterate its values
+            for (const key in answered) {
+              const q = answered[key];
               if (q && q.questionId) {
                 answeredIds.add(q.questionId);
               }
