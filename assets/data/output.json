@@ -1,0 +1,28 @@
+[
+    {
+        "id": "0011",
+        "text": "eua ras ae a dll ea lep r se ec ge ud ee nn tt ie af cf ee rr tm aa mz ei no tn ee , l e l è ? Documento creato con il software",
+        "options": [
+            "sarebbe rimasta in c la eir r se gg fi oa st sa e, diq su ta rl ao ttr aa i ininterno.net - il portale",
+            "fc oa sr sr eg sg ti aa tt aa ats te enl tei e a per la preparazione",
+            "carreggiata, è p so ss si ab ri el be bec he isl tei atn to an i d r ai concorsi pubblici",
+            "lr eie g ng ii sa tt ra tfq u sa sl eo ra do n asi ao t App Android"
+        ],
+        "correct_answer_index": 3,
+        "topic": "Capacita verbale",
+        "explanation": "",
+        "difficulty": "Medium",
+        "times_correct": 0,
+        "times_incorrect": 0,
+        "is_favorite": 0,
+        "question_version": 0,
+        "last_answered_timestamp": -1,
+        "last_answer_correct": false,
+        "accuracy": 0,
+        "public_contest": "mininterno_general",
+        "scoreIsCorrect": 1.0,
+        "scoreIsWrong": -0.33,
+        "scoreIsSkip": 0,
+        "fk_contest_id": -1
+    }
+]
