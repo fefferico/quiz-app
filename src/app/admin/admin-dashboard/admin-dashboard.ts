@@ -93,7 +93,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     initializeForms(): void {
         this.contestForm = this.fb.group({
             name: ['', Validators.required],
-            isActive: [true]
+            is_active: [true]
         });
 
         this.userForm = this.fb.group({
@@ -203,9 +203,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     // --- CONTEST MANAGEMENT --- (No changes)
-    onContestFormSubmit(): void {
+    async onContestFormSubmit(): Promise<void> {
         if (this.contestForm.invalid) return;
         const contestData: Contest = { id: this.editingContestId!, ...this.contestForm.value };
+
+        const contests = await this.dbService.getAllContests();
+
+        const maxContestId = Math.max(...contests.map(o => o.id));
+
+        if (!contestData.id){
+            contestData.id = maxContestId+1;
+        }
 
         this.dbService.upsertContest(contestData).then(savedContest => {
             this.alertService.showToast({ message: `Contest '${savedContest.name}' saved successfully.`, type: 'success' });
@@ -216,7 +224,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         });
     }
     onSelectContestForEdit(contest: Contest): void { this.editingContestId = contest.id; this.contestForm.patchValue(contest); }
-    resetContestForm(): void { this.editingContestId = null; this.contestForm.reset({ name: '', isActive: true }); }
+    resetContestForm(): void { this.editingContestId = null; this.contestForm.reset({ name: '', is_active: true }); }
     async onDeleteContest(id: number, name: string): Promise<void> {
         const confirmation = await this.alertService.showConfirm('Delete Contest', `Are you sure you want to delete "${name}"? This will delete all associated questions and quiz attempts. This action is IRREVERSIBLE.`);
         if (confirmation?.role === 'confirm') {

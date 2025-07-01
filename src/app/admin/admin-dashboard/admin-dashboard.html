@@ -73,7 +73,7 @@
                             <tr *ngFor="let contest of contests" class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-4 py-3 font-medium">{{ contest.id }}</td>
                                 <td class="px-4 py-3">{{ contest.name }}</td>
-                                <td class="px-4 py-3">{{ contest.isActive ? 'Yes' : 'No' }}</td>
+                                <td class="px-4 py-3">{{ contest.is_active ? 'Yes' : 'No' }}</td>
                                 <td class="px-4 py-3 flex gap-2">
                                     <button
                                         class="px-2 py-1 text-xs rounded font-semibold text-white bg-gray-500 hover:bg-gray-600"
@@ -97,7 +97,7 @@
                             class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div class="mb-4"><label class="flex items-center gap-2 text-sm font-medium text-gray-700"><input
-                                type="checkbox" formControlName="isActive"
+                                type="checkbox" formControlName="is_active"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">Is
                             Active</label></div>
                     <div class="flex gap-x-4 mt-6">
