@@ -1,25 +1,16 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-
-// Re-using or defining a similar Question interface
-export interface Question {
-  id: string; // Or number, depending on your backend
-  text: string;
-  topic: string;
-  options: string[];
-  correctAnswerIndex: number;
-  explanation?: string;
-  difficulty?: 'Easy' | 'Medium' | 'Hard';
-  // Potentially: timesCorrect, timesIncorrect, isFavorite could be managed by backend
-}
+import { DatabaseService } from '../../core/services/database.service';
+import { Question } from '../../models/question.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QuestionAdminService {
   private apiUrl = '/api/admin/questions'; // Example API base URL
+  private dbService = inject(DatabaseService);
 
   constructor(private http: HttpClient) { }
 
@@ -33,10 +24,17 @@ export class QuestionAdminService {
       .pipe(catchError(this.handleError));
   }
 
+  getQuestionsByContextAndText(contenstId: number, text: string): Promise<Question[]> {
+    let params = new HttpParams();
+    if (text) {
+      params = params.set('text', text);
+    }
+    return this.dbService.searchQuestionsByContestAndText(contenstId, text);
+  }
+
   // GET a single question by ID
-  getQuestionById(id: string | number): Observable<Question> {
-    return this.http.get<Question>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(this.handleError));
+  getQuestionById(id: string): Promise<Question | undefined> {
+    return this.dbService.getQuestionById(id);
   }
 
   // POST - Create a new question

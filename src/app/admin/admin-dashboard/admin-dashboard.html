@@ -124,7 +124,7 @@
                 </select>
             </div>
 
-            <div *ngIf="selectedContestForQuestions !== null" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div *ngIf="selectedContestForQuestions" class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 <div class="lg:col-span-3 bg-gray-50 p-6 rounded-lg shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Questions for {{
                         getContestName(selectedContestForQuestions) }} ({{filteredQuestions.length}} /
@@ -164,7 +164,8 @@
                             <tbody>
                                 <tr *ngFor="let q of filteredQuestions" class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-4 py-3 font-mono text-xs">{{q.id}}</td>
-                                    <td class="px-4 py-3 truncate" [title]="q.text">{{q.text | slice:0:50}}...</td>
+                                    <td class="px-4 py-3" [title]="q.text">{{q.text | slice:0:200}}{{q.text.length > 200 ? '...' : ''}}</td>
+                                    <!-- <td class="px-4 py-3 truncate" [title]="q.text">{{q.text | slice:0:50}}...</td> -->
                                     <td class="px-4 py-3">{{q.topic}}</td>
                                     <td class="px-4 py-3 flex gap-2">
                                         <button (click)="onSelectQuestionForEdit(q)"
@@ -211,8 +212,8 @@
                     </div>
                 </div>
                 <div class="lg:col-span-2 bg-gray-50 p-6 rounded-lg shadow-inner">
-                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingQuestionId ? 'Edit
-                        Question' : 'Add New Question' }}</h4>
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">{{ editingQuestionId ? 'EDIT
+                        QUESTION' : 'Add New Question' }}</h4>
                     <form [formGroup]="questionForm" (ngSubmit)="onQuestionFormSubmit()">
                         <div class="mb-2">
                             <label class="block mb-1 text-sm font-medium">Contest</label>

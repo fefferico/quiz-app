@@ -12,6 +12,8 @@ import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, startWith, tap } from 'rxjs/operators';
 import { SpinnerService } from '../../core/services/spinner.service';
 import { QuizAttempt, QuizStatus, QuizType } from '../../models/quiz.model';
+import { inherits } from 'util';
+import { QuestionAdminService } from '../services/question-admin.service';
 
 @Component({
     selector: 'app-admin-dashboard',
@@ -25,6 +27,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
     private authService = inject(AuthService);
     private spinnerService = inject(SpinnerService);
+    private adminQuestionService = inject(QuestionAdminService);
 
     activeView: 'dashboard' | 'users' | 'contests' | 'questions' | 'attempts' = 'dashboard';
 
@@ -141,13 +144,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
     setupFilterListeners(): void {
         const questionFilter$ = this.questionFilterForm.valueChanges.pipe(
-            debounceTime(300),
+            debounceTime(500),
             distinctUntilChanged()
         ).subscribe(filters => this.applyQuestionFilters(filters));
         this.subscriptions.add(questionFilter$);
 
         const attemptFilter$ = this.attemptFilterForm.valueChanges.pipe(
-            debounceTime(400),
+            debounceTime(800),
             distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
             tap(() => this.attemptsCurrentPage = 1) // Reset page on any filter change
         ).subscribe(() => {
@@ -156,12 +159,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         this.subscriptions.add(attemptFilter$);
     }
 
-    applyQuestionFilters(filters: { text: string, topic: string, id: string }): void {
+    async applyQuestionFilters(filters: { text: string, topic: string, id: string }): Promise<void> {
         // This is a client-side filter for the currently loaded page of questions.
         // For a full DB search, this would need to call `loadQuestionsForContest`.
         const textFilter = filters.text.toLowerCase().trim();
         const topicFilter = filters.topic.toLowerCase().trim();
         const idFilter = filters.id.trim();
+
+        if (idFilter) {
+            const result = await this.adminQuestionService.getQuestionById(idFilter);
+            this.filteredQuestions = result ? [result] : [];
+            return;
+        }
+
+        if (textFilter && this.selectedContestForQuestions) {
+            const result = await this.adminQuestionService.getQuestionsByContextAndText(this.selectedContestForQuestions, textFilter);
+            this.filteredQuestions = result ? result : [];
+            return;
+        }
 
         this.filteredQuestions = this.questions.filter(q => {
             const textMatch = textFilter ? (
@@ -211,8 +226,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
         const maxContestId = Math.max(...contests.map(o => o.id));
 
-        if (!contestData.id){
-            contestData.id = maxContestId+1;
+        if (!contestData.id) {
+            contestData.id = maxContestId + 1;
         }
 
         this.dbService.upsertContest(contestData).then(savedContest => {
@@ -286,7 +301,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         return this.contests.find(c => c.id === contestId)?.name || 'Unknown';
     }
     onSelectQuestionForEdit(question: Question): void {
-        this.resetQuestionForm(); this.editingQuestionId = question.id;
+        this.resetQuestionForm();
+        this.editingQuestionId = question.id;
         this.questionForm.patchValue(question);
         question.options.forEach(optionText => this.addOption(optionText));
     }
@@ -320,9 +336,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             ? this.dbService.updateQuestion(this.editingQuestionId, questionData)
             : this.dbService.addQuestion(questionData as Question);
 
-        promise.then(() => {
+        promise.then((data) => {
             this.alertService.showToast({ message: `Question ${this.editingQuestionId ? 'updated' : 'created'}.`, type: 'success' });
-            this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), this.questionsCurrentPage);
+            this.adminQuestionService.getQuestionById(data.id).then((result) => {
+                this.filteredQuestions = result ? [result] : [];
+            });
+            // this.loadQuestionsForContest(this.selectedContestForQuestions.toString(), this.questionsCurrentPage);
             this.resetQuestionForm();
         }).catch(err => {
             this.alertService.showToast({ message: `Failed to save question: ${err.message}`, type: 'error' });

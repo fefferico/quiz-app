@@ -93,6 +93,9 @@ export class DatabaseService implements OnDestroy {
     if (appQuestion.accuracy !== undefined) supabaseQuestion.accuracy = appQuestion.accuracy;
     if (appQuestion.publicContest !== undefined) supabaseQuestion.public_contest = appQuestion.publicContest;
     if (appQuestion.contestId !== undefined) supabaseQuestion.fk_contest_id = appQuestion.contestId;
+    if (appQuestion.scoreIsCorrect !== undefined) supabaseQuestion.scoreIsCorrect = appQuestion.scoreIsCorrect;
+    if (appQuestion.scoreIsWrong !== undefined) supabaseQuestion.scoreIsWrong = appQuestion.scoreIsWrong;
+    if (appQuestion.scoreIsSkip !== undefined) supabaseQuestion.scoreIsSkip = appQuestion.scoreIsSkip;
     return supabaseQuestion;
   }
 
@@ -646,6 +649,37 @@ export class DatabaseService implements OnDestroy {
       true // isSingleItem
     ) as Promise<Question | undefined>;
   }
+
+ /**
+ * Searches for questions where the 'text' or 'options' array contains the
+ * provided search string, using Plain Full-Text Search.
+ *
+ * @param searchText The string to search for.
+ * @returns A promise that resolves to an array of matching Questions.
+ */
+async searchQuestionsByContestAndText(contestId: number, searchText: string): Promise<Question[]> {
+  const operationName = `searchQuestions for text "${searchText}"`;
+  const searchTerm = `%${searchText}%`;
+
+  // Query the VIEW, not the original table.
+  const query = this.supabase
+    .from('searchable_questions') // <-- Query the view here
+    .select('*')
+    // Now you can use a simple, fast `ilike` on the pre-computed text field.
+    .ilike('searchable_text', searchTerm).eq('fk_contest_id',contestId);
+
+  // Your existing fetch handler works perfectly.
+  return this.handleSupabaseFetch<Question>(
+    query,
+    this.mapQuestionFromSupabase, // This should still work if view columns match
+    async () => {},
+    async () => [],
+    operationName,
+    false // We expect an array of results
+  ) as Promise<Question[]>;
+}
+
+
 
   async getQuestionByIds(ids: string[]): Promise<Question[]> {
     if (!ids || ids.length === 0) return [];
